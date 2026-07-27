@@ -1,0 +1,153 @@
+const mongoose = require('mongoose');
+
+const BookingSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User is required'],
+    },
+    slotId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ParkingSlot',
+      required: [true, 'Parking slot is required'],
+    },
+    bookingTime: {
+      type: Date,
+      default: Date.now,
+    },
+    // Bookings are always for "now" — advance/scheduled booking has been
+    // removed. A booking stays in "Booked" status for at most 1 hour;
+    // if check-in doesn't happen before expiresAt, it is auto-expired
+    // (see BookingService.expireStaleBookings).
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
+    vehicleId: {
+      // Reference to the subdocument in User.vehicles that was used for
+      // this booking (if the user picked a saved vehicle). Null when the
+      // user typed in a one-off vehicle that wasn't saved.
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    vehicleCategory: {
+      type: String,
+      enum: ['2 Wheeler', '3 Wheeler', '4 Wheeler'],
+      required: [true, 'Vehicle category is required'],
+    },
+    vehicleNumber: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      maxlength: 20,
+      default: null,
+    },
+    registrationPending: {
+      type: Boolean,
+      default: false,
+    },
+    checkInTime: {
+      type: Date,
+      default: null,
+    },
+    checkOutTime: {
+      type: Date,
+      default: null,
+    },
+    totalHours: {
+      type: Number,
+      default: 0,
+    },
+    totalAmount: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: ['Booked', 'Cancelled', 'Completed', 'Active', 'Expired'],
+      default: 'Booked',
+    },
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    notes: {
+      type: String,
+      trim: true,
+      maxlength: 300,
+    },
+  },
+  { timestamps: true }
+);
+
+// ─── Indexes ───────────────────────────────────────────────────────────────────
+BookingSchema.index({ userId: 1, status: 1 });
+BookingSchema.index({ slotId: 1, status: 1 });
+BookingSchema.index({ status: 1, expiresAt: 1 });
+
+// ─── Virtual: Duration in readable format ─────────────────────────────────────
+BookingSchema.virtual('durationFormatted').get(function () {
+  if (!this.checkInTime || !this.checkOutTime) return null;
+  const diff = this.checkOutTime - this.checkInTime;
+  const hours = Math.floor(diff / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  return `${hours}h ${minutes}m`;
+});
+
+// ─── Static: Check for an unresolved "Booked" booking for user ────────────────
+// Business rule: a user may only have ONE booking in "Booked" status at a
+// time (i.e. awaiting check-in). Once that booking becomes "Active" (the
+// user has checked in), they are free to create a new booking for another
+// vehicle — so "Active" bookings do NOT block new bookings.
+BookingSchema.statics.hasBookedBooking = async function (userId) {
+  const booking = await this.findOne({
+    userId,
+    status: 'Booked',
+  });
+  return !!booking;
+};
+
+// ─── Static: Revenue aggregation ──────────────────────────────────────────────
+BookingSchema.statics.getRevenue = async function (startDate, endDate) {
+  const match = { status: 'Completed' };
+  if (startDate && endDate) {
+    match.checkOutTime = { $gte: new Date(startDate), $lte: new Date(endDate) };
+  }
+  const result = await this.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$totalAmount' },
+        totalBookings: { $sum: 1 },
+        avgAmount: { $avg: '$totalAmount' },
+      },
+    },
+  ]);
+  return result[0] || { totalRevenue: 0, totalBookings: 0, avgAmount: 0 };
+};
+
+// ─── Static: Daily revenue ────────────────────────────────────────────────────
+BookingSchema.statics.getDailyRevenue = async function (days = 7) {
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  return this.aggregate([
+    { $match: { status: 'Completed', checkOutTime: { $gte: start } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$checkOutTime' } },
+        revenue: { $sum: '$totalAmount' },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+};
+
+module.exports = mongoose.model('Booking', BookingSchema);
