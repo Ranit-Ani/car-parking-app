@@ -120,17 +120,25 @@ export default function CursorEffect() {
     document.addEventListener('mousemove', onMouseMove, { passive: true });
     document.addEventListener('mouseleave', onMouseLeave);
 
-    const hoverSel = 'a,button,input,textarea,select,[onclick],.sidebar-avatar,.btn-ag,.profile-avatar-wrap,.slot-tile,[role="button"]';
+    const hoverSel = 'a,button,input,textarea,select,[onclick],.sidebar-avatar,.btn-ag,.btn-close,.btn-logout,.profile-avatar-wrap,.slot-tile,[role="button"]';
     const onMouseOver = (e) => { if (e.target.closest && e.target.closest(hoverSel)) dot.classList.add('ag-hovered'); };
     const onMouseOut = (e) => { if (e.target.closest && e.target.closest(hoverSel)) dot.classList.remove('ag-hovered'); };
     document.addEventListener('mouseover', onMouseOver);
     document.addEventListener('mouseout', onMouseOut);
 
+    let lastThrow = 0, lastTarget = null;
     function throwWeb(target) {
-      const clickable = target && target.closest && target.closest('a,button,input,select,textarea,[onclick],[role="button"],.btn,.slot-tile');
+      const clickable = target && target.closest && target.closest(hoverSel + ',.btn,[role="button"]');
       if (!clickable) return;
       const rect = clickable.getBoundingClientRect();
-      if (!rect || rect.width === 0) return;
+      if (!rect || rect.width === 0 || rect.height === 0) return;
+
+      // mousedown + click (and touchstart) can all fire for the same user
+      // action — guard against throwing the net twice for one interaction.
+      const now = Date.now();
+      if (clickable === lastTarget && now - lastThrow < 150) return;
+      lastThrow = now; lastTarget = clickable;
+
       const PAD = 6;
       const x = rect.left - PAD, y = rect.top - PAD;
       const W = rect.width + PAD * 2, H = rect.height + PAD * 2;
@@ -159,7 +167,7 @@ export default function CursorEffect() {
       }
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('width', W); svg.setAttribute('height', H);
-      svg.className = 'ag-web-throw';
+      svg.setAttribute('class', 'ag-web-throw');
       svg.style.cssText = `position:fixed;left:${x}px;top:${y}px;pointer-events:none;z-index:9989;filter:drop-shadow(0 0 3px rgba(180,180,180,.5));opacity:0;transition:opacity .08s;`;
       svg.innerHTML = paths;
       document.body.appendChild(svg);
@@ -174,8 +182,16 @@ export default function CursorEffect() {
     }
     const onMouseDown = (e) => { dot.style.display = 'block'; throwWeb(e.target); };
     const onMouseUp = () => { dot.style.display = 'block'; };
+    const onClick = (e) => { throwWeb(e.target); };
+    const onTouchStart = (e) => {
+      if (e.touches && e.touches[0]) {
+        throwWeb(document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY));
+      }
+    };
     document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('click', onClick);
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
 
     function lerpAngle(a, b, t) {
       let d = b - a;
@@ -266,6 +282,8 @@ export default function CursorEffect() {
       document.removeEventListener('mouseout', onMouseOut);
       document.removeEventListener('mousedown', onMouseDown);
       document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('click', onClick);
+      document.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('resize', onResize);
       cvs.remove(); dot.remove(); style.remove();
     };
