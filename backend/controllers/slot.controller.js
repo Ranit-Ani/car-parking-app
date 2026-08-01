@@ -39,7 +39,7 @@ class SlotController {
   // GET /api/slots/all - Get all slots (with status), paginated
   async getAllSlots(req, res, next) {
     try {
-      const { status, type } = req.query;
+      const { status, type, search } = req.query;
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
       const skip = (page - 1) * limit;
@@ -47,6 +47,10 @@ class SlotController {
       const filter = { isActive: true };
       if (status) filter.status = status;
       if (type) filter.slotType = type;
+      if (search) {
+        const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        filter.$or = [{ slotNumber: re }, { location: re }, { floor: re }];
+      }
 
       const [slots, total] = await Promise.all([
         ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit),

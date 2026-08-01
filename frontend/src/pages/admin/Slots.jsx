@@ -11,78 +11,29 @@ import { getSocket } from '../../lib/socket';
 
 const emptyForm = { slotNumber: '', hourlyRate: '', slotType: 'standard', location: '', floor: '' };
 
-const CATEGORIES = [
-  { type: 'standard', title: 'Standard', icon: 'bi-p-square' },
-  { type: 'faculty', title: 'Faculty', icon: 'bi-mortarboard' },
-  { type: 'disabled', title: 'Disabled', icon: 'bi-universal-access-circle' },
-  { type: 'ev', title: 'EV Charging', icon: 'bi-ev-station' },
-];
-
-function SlotTable({ title, icon, slots, loading, loadingMore, hasMore, loadMore, total, onOpenPrice, onDelete, onAdd }) {
-  return (
-    <div className="table-card" style={{ marginBottom: '1.4rem' }}>
-      <div className="tc-header">
-        <h6>
-          <i className={`bi ${icon}`} style={{ marginRight: '0.4rem' }} />
-          {title} <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 400 }}>({slots.length}/{total} loaded)</span>
-        </h6>
-        <button className="btn-ag primary sm" onClick={onAdd}><i className="bi bi-plus-circle" /> Add</button>
-      </div>
-      <div className="table-responsive">
-        <table className="ag-table">
-          <thead><tr><th>Slot #</th><th>Location</th><th>Floor</th><th>Rate/hr</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>
-            {slots.length === 0 && loading ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading slots...</td></tr>
-            ) : slots.length === 0 ? (
-              <tr><td colSpan={6}><EmptyState icon="bi-grid-3x3-gap">No {title.toLowerCase()} slots yet.</EmptyState></td></tr>
-            ) : slots.map((s) => (
-              <tr key={s._id}>
-                <td><strong style={{ color: 'var(--neon-cyan)' }}>{s.slotNumber}</strong></td>
-                <td>{s.location}</td>
-                <td>{s.floor}</td>
-                <td style={{ color: 'var(--neon-green)' }}>
-                  ₹{s.hourlyRate}{' '}
-                  <button onClick={() => onOpenPrice(s._id, s.hourlyRate)} style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', padding: '0 0.25rem' }}>
-                    <i className="bi bi-pencil" />
-                  </button>
-                </td>
-                <td><StatusBadge status={s.status} /></td>
-                <td><button className="btn-ag red sm" onClick={() => onDelete(s._id, s.slotNumber)}><i className="bi bi-trash" /></button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {slots.length > 0 && (
-        <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
-      )}
-    </div>
-  );
-}
-
 export default function AdminSlots() {
-  // One independent, server-filtered, infinitely-scrollable list per slot
-  // category — mirrors the Admins/Staff/Users split on the Manage Users page.
-  const standardBuild = useCallback((page, limit) => `/slots/all?type=standard&page=${page}&limit=${limit}`, []);
-  const facultyBuild = useCallback((page, limit) => `/slots/all?type=faculty&page=${page}&limit=${limit}`, []);
-  const disabledBuild = useCallback((page, limit) => `/slots/all?type=disabled&page=${page}&limit=${limit}`, []);
-  const evBuild = useCallback((page, limit) => `/slots/all?type=ev&page=${page}&limit=${limit}`, []);
+  const [fType, setFType] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchDebounced, setSearchDebounced] = useState('');
 
-  const standardList = useInfiniteList(standardBuild, [], 20);
-  const facultyList = useInfiniteList(facultyBuild, [], 20);
-  const disabledList = useInfiniteList(disabledBuild, [], 20);
-  const evList = useInfiniteList(evBuild, [], 20);
+  // Debounce the search box so we're not firing a request on every
+  // keystroke — the type filter still applies instantly.
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounced(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  const listsByType = { standard: standardList, faculty: facultyList, disabled: disabledList, ev: evList };
+  const buildUrl = useCallback((page, limit) => {
+    let url = `/slots/all?page=${page}&limit=${limit}`;
+    if (fType) url += `&type=${encodeURIComponent(fType)}`;
+    if (searchDebounced) url += `&search=${encodeURIComponent(searchDebounced)}`;
+    return url;
+  }, [fType, searchDebounced]);
 
-  const refreshAll = useCallback(() => {
-    standardList.refresh();
-    facultyList.refresh();
-    disabledList.refresh();
-    evList.refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Slots load a page at a time (type + search filtered server-side) and
+  // grow as the admin scrolls, instead of pulling the entire registry.
+  const { items: slots, loading, loadingMore, hasMore, loadMore, refresh, total } =
+    useInfiniteList(buildUrl, [fType, searchDebounced], 30);
 
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -96,16 +47,18 @@ export default function AdminSlots() {
 
   useEffect(() => {
     const socket = getSocket();
-    socket.on('slotUpdated', refreshAll);
-    socket.on('slotDeleted', refreshAll);
+    socket.on('slotUpdated', refresh);
+    socket.on('slotDeleted', refresh);
     return () => {
-      socket.off('slotUpdated', refreshAll);
-      socket.off('slotDeleted', refreshAll);
+      socket.off('slotUpdated', refresh);
+      socket.off('slotDeleted', refresh);
     };
-  }, [refreshAll]);
+  }, [refresh]);
 
-  function openAdd(defaultType) {
-    setForm({ ...emptyForm, slotType: defaultType || 'standard' });
+  function clearF() { setFType(''); setSearch(''); }
+
+  function openAdd() {
+    setForm(emptyForm);
     setAddAlert({ message: '', type: 'info' });
     setAddOpen(true);
   }
@@ -126,7 +79,7 @@ export default function AdminSlots() {
     if (d && d.success) {
       setAddOpen(false);
       showToast('Slot added!', 'success');
-      refreshAll();
+      refresh();
     } else {
       setAddAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
     }
@@ -145,7 +98,7 @@ export default function AdminSlots() {
     if (d && d.success) {
       setPriceOpen(false);
       showToast('Pricing updated!', 'success');
-      refreshAll();
+      refresh();
     } else {
       showToast((d && d.message) || 'Failed.', 'danger');
     }
@@ -154,31 +107,68 @@ export default function AdminSlots() {
   async function delSlot(id, num) {
     if (!confirm('Delete slot ' + num + '?')) return;
     const d = await apiRequest('/admin/slots/' + id, { method: 'DELETE' });
-    if (d && d.success) { showToast('Slot deleted.', 'warning'); refreshAll(); }
+    if (d && d.success) { showToast('Slot deleted.', 'warning'); refresh(); }
     else showToast((d && d.message) || 'Failed.', 'danger');
   }
 
   return (
-    <Layout title="Slot Management" badge={false} right={<button className="btn-ag primary sm" onClick={() => openAdd('standard')}><i className="bi bi-plus-circle" /> Add Slot</button>}>
-      {CATEGORIES.map((cat) => {
-        const list = listsByType[cat.type];
-        return (
-          <SlotTable
-            key={cat.type}
-            title={cat.title}
-            icon={cat.icon}
-            slots={list.items}
-            loading={list.loading}
-            loadingMore={list.loadingMore}
-            hasMore={list.hasMore}
-            loadMore={list.loadMore}
-            total={list.total}
-            onOpenPrice={openPrice}
-            onDelete={delSlot}
-            onAdd={() => openAdd(cat.type)}
-          />
-        );
-      })}
+    <Layout title="Slot Management" badge={false} right={<button className="btn-ag primary sm" onClick={openAdd}><i className="bi bi-plus-circle" /> Add Slot</button>}>
+      <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '0.75rem', alignItems: 'end' }}>
+          <div>
+            <label className="ag-label">Slot Type</label>
+            <select className="ag-select" value={fType} onChange={(e) => setFType(e.target.value)}>
+              <option value="">All Types</option>
+              <option value="standard">Standard</option>
+              <option value="faculty">Faculty</option>
+              <option value="disabled">Disabled</option>
+              <option value="ev">EV Charging</option>
+            </select>
+          </div>
+          <div>
+            <label className="ag-label">Search</label>
+            <input className="ag-input" type="text" placeholder="Slot #, location, floor..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <button className="btn-ag ghost" onClick={clearF}><i className="bi bi-x-circle" /> Clear</button>
+        </div>
+      </div>
+
+      <div className="table-card">
+        <div className="tc-header">
+          <h6>Parking Slots Registry <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({slots.length}/{total} loaded)</span></h6>
+          <button className="btn-ag ghost sm" onClick={refresh}><i className="bi bi-arrow-clockwise" /> Refresh</button>
+        </div>
+        <div className="table-responsive">
+          <table className="ag-table">
+            <thead><tr><th>Slot #</th><th>Type</th><th>Location</th><th>Floor</th><th>Rate/hr</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              {slots.length === 0 && loading ? (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading slots...</td></tr>
+              ) : slots.length === 0 ? (
+                <tr><td colSpan={7}><EmptyState icon="bi-grid-3x3-gap">No slots found.</EmptyState></td></tr>
+              ) : slots.map((s) => (
+                <tr key={s._id}>
+                  <td><strong style={{ color: 'var(--neon-cyan)' }}>{s.slotNumber}</strong></td>
+                  <td><span className="ag-badge user" style={{ fontSize: '0.65rem' }}>{s.slotType}</span></td>
+                  <td>{s.location}</td>
+                  <td>{s.floor}</td>
+                  <td style={{ color: 'var(--neon-green)' }}>
+                    ₹{s.hourlyRate}{' '}
+                    <button onClick={() => openPrice(s._id, s.hourlyRate)} style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', padding: '0 0.25rem' }}>
+                      <i className="bi bi-pencil" />
+                    </button>
+                  </td>
+                  <td><StatusBadge status={s.status} /></td>
+                  <td><button className="btn-ag red sm" onClick={() => delSlot(s._id, s.slotNumber)}><i className="bi bi-trash" /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {slots.length > 0 && (
+          <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
+        )}
+      </div>
 
       <Modal
         show={addOpen}
