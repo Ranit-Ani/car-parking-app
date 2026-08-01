@@ -6,11 +6,8 @@ A full-stack campus parking management system with real-time slot booking, staff
 
 ## 🚀 Live Demo
 
-<<<<<<< HEAD
-> **URL:** *https://campus-parking.onrender.com*
-=======
-> **URL:** *https://car-parking-app-xofv.onrender.com*
->>>>>>> 68c5eefeac292cea8dfe2721809bff74889e28ef
+**URL:** *https://car-parking-app-xofv.onrender.com*
+
 
 ---
 
