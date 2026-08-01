@@ -2,15 +2,22 @@ import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
+import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { StatusBadge, ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
+import { useInfiniteList } from '../../lib/useInfiniteList';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
 
 const emptyForm = { slotNumber: '', hourlyRate: '', slotType: 'standard', location: '', floor: '' };
 
 export default function AdminSlots() {
-  const [slots, setSlots] = useState([]);
+  const buildUrl = useCallback((page, limit) => `/slots/all?page=${page}&limit=${limit}`, []);
+
+  // Slots load a page at a time and grow as the admin scrolls, instead of
+  // pulling the entire slot registry on every visit.
+  const { items: slots, loading, loadingMore, hasMore, loadMore, refresh, total } =
+    useInfiniteList(buildUrl, [], 30);
 
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -22,21 +29,15 @@ export default function AdminSlots() {
   const [priceVal, setPriceVal] = useState('');
   const [priceBusy, setPriceBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    const d = await apiRequest('/slots/all');
-    if (d && d.success) setSlots(d.data);
-  }, []);
-
   useEffect(() => {
-    load();
     const socket = getSocket();
-    socket.on('slotUpdated', load);
-    socket.on('slotDeleted', load);
+    socket.on('slotUpdated', refresh);
+    socket.on('slotDeleted', refresh);
     return () => {
-      socket.off('slotUpdated', load);
-      socket.off('slotDeleted', load);
+      socket.off('slotUpdated', refresh);
+      socket.off('slotDeleted', refresh);
     };
-  }, [load]);
+  }, [refresh]);
 
   function openAdd() {
     setForm(emptyForm);
@@ -60,7 +61,7 @@ export default function AdminSlots() {
     if (d && d.success) {
       setAddOpen(false);
       showToast('Slot added!', 'success');
-      load();
+      refresh();
     } else {
       setAddAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
     }
@@ -79,7 +80,7 @@ export default function AdminSlots() {
     if (d && d.success) {
       setPriceOpen(false);
       showToast('Pricing updated!', 'success');
-      load();
+      refresh();
     } else {
       showToast((d && d.message) || 'Failed.', 'danger');
     }
@@ -88,19 +89,24 @@ export default function AdminSlots() {
   async function delSlot(id, num) {
     if (!confirm('Delete slot ' + num + '?')) return;
     const d = await apiRequest('/admin/slots/' + id, { method: 'DELETE' });
-    if (d && d.success) { showToast('Slot deleted.', 'warning'); load(); }
+    if (d && d.success) { showToast('Slot deleted.', 'warning'); refresh(); }
     else showToast((d && d.message) || 'Failed.', 'danger');
   }
 
   return (
     <Layout title="Slot Management" badge={false} right={<button className="btn-ag primary sm" onClick={openAdd}><i className="bi bi-plus-circle" /> Add Slot</button>}>
       <div className="table-card">
-        <div className="tc-header"><h6>Parking Slots Registry</h6><button className="btn-ag ghost sm" onClick={load}><i className="bi bi-arrow-clockwise" /> Refresh</button></div>
+        <div className="tc-header">
+          <h6>Parking Slots Registry <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({slots.length}/{total} loaded)</span></h6>
+          <button className="btn-ag ghost sm" onClick={refresh}><i className="bi bi-arrow-clockwise" /> Refresh</button>
+        </div>
         <div className="table-responsive">
           <table className="ag-table">
             <thead><tr><th>Slot #</th><th>Type</th><th>Location</th><th>Floor</th><th>Rate/hr</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
-              {slots.length === 0 ? (
+              {slots.length === 0 && loading ? (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading slots...</td></tr>
+              ) : slots.length === 0 ? (
                 <tr><td colSpan={7}><EmptyState icon="bi-grid-3x3-gap">No slots yet. Add one above.</EmptyState></td></tr>
               ) : slots.map((s) => (
                 <tr key={s._id}>
@@ -121,6 +127,9 @@ export default function AdminSlots() {
             </tbody>
           </table>
         </div>
+        {slots.length > 0 && (
+          <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
+        )}
       </div>
 
       <Modal

@@ -4,42 +4,64 @@ const ParkingSlot = require('../models/ParkingSlot');
  * SlotController - Handles parking slot operations for users
  */
 class SlotController {
-  // GET /api/slots - Get all available slots
+  // GET /api/slots - Get all available slots (paginated)
   async getAvailableSlots(req, res, next) {
     try {
       const { type, location } = req.query;
-      const filter = { status: 'Available', isActive: true };
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+      const skip = (page - 1) * limit;
 
+      const filter = { status: 'Available', isActive: true };
       if (type) filter.slotType = type;
       if (location) filter.location = new RegExp(location, 'i');
 
-      const slots = await ParkingSlot.find(filter).sort({ slotNumber: 1 });
+      const [slots, total] = await Promise.all([
+        ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit),
+        ParkingSlot.countDocuments(filter),
+      ]);
 
       res.json({
         success: true,
         count: slots.length,
         data: slots,
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasMore: skip + slots.length < total,
       });
     } catch (err) {
       next(err);
     }
   }
 
-  // GET /api/slots/all - Get all slots (with status)
+  // GET /api/slots/all - Get all slots (with status), paginated
   async getAllSlots(req, res, next) {
     try {
       const { status, type } = req.query;
-      const filter = { isActive: true };
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+      const skip = (page - 1) * limit;
 
+      const filter = { isActive: true };
       if (status) filter.status = status;
       if (type) filter.slotType = type;
 
-      const slots = await ParkingSlot.find(filter).sort({ slotNumber: 1 });
+      const [slots, total] = await Promise.all([
+        ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit),
+        ParkingSlot.countDocuments(filter),
+      ]);
 
       res.json({
         success: true,
         count: slots.length,
         data: slots,
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasMore: skip + slots.length < total,
       });
     } catch (err) {
       next(err);

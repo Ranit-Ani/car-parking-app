@@ -33,6 +33,7 @@ export default function AdminDashboard() {
     const onRevenue = ({ amount }) => { showToast(`Payment received: ₹${amount}`, 'success'); load(); };
 
     socket.on('slotUpdated', refresh);
+    socket.on('slotDeleted', refresh);
     socket.on('bookingCreated', onNewBooking);
     socket.on('bookingUpdated', refresh);
     socket.on('revenueUpdated', onRevenue);
@@ -42,6 +43,7 @@ export default function AdminDashboard() {
     return () => {
       clearInterval(t);
       socket.off('slotUpdated', refresh);
+      socket.off('slotDeleted', refresh);
       socket.off('bookingCreated', onNewBooking);
       socket.off('bookingUpdated', refresh);
       socket.off('revenueUpdated', onRevenue);

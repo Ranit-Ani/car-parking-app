@@ -26,7 +26,7 @@ export default function CheckOut() {
   const [bill, setBill] = useState(null);
 
   const load = useCallback(async () => {
-    const d = await apiRequest('/staff/bookings/all?status=Active');
+    const d = await apiRequest('/staff/bookings/all?status=Active&limit=100');
     if (d && d.success) setAll(d.data);
   }, []);
 

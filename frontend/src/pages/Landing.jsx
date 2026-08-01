@@ -33,18 +33,18 @@ export default function Landing() {
       <nav className="pub-nav">
         <Link className="pub-nav-brand" to="/">
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
-          SMART CAMPUS CAR-PARKING
+          CAMPUS CAR-PARKING
         </Link>
         <div style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
           <Link to="/login" className="btn-ag ghost sm">Sign In</Link>
-          <Link to="/register" className="btn-ag primary sm"><i className="bi bi-person-plus" /> Register</Link>
+          <Link to="/register" className="btn-ag primary sm"><i className="bi bi-person-plus" /> Sign Up</Link>
         </div>
       </nav>
 
       <section className="hero-section">
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 680 }}>
           <div className="hero-badge"><span className="dot" /> QUANTUM CAMPUS INFRASTRUCTURE v2.0</div>
-          <h1 className="hero-title display-title">SMART CAR<br />PARKING SYSTEM</h1>
+          <h1 className="hero-title display-title">CAMPUS CAR<br />PARKING SYSTEM</h1>
           <p className="hero-sub">
             Zero-friction. Real-time. Role-based. The next generation campus parking infrastructure with
             automated billing and live slot tracking.
@@ -108,7 +108,7 @@ export default function Landing() {
 
       <footer className="pub-footer">
         <div className="pub-footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Smart Campus Car-Parking System. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} Campus Car-Parking System. All rights reserved.</span>
           <span className="pub-footer-credit">Built by Ranit Pramanick</span>
         </div>
       </footer>

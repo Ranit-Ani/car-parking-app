@@ -14,7 +14,7 @@ export default function CheckIn() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const d = await apiRequest('/staff/bookings/all?status=Booked');
+    const d = await apiRequest('/staff/bookings/all?status=Booked&limit=100');
     if (d && d.success) setAll(d.data);
   }, []);
 
