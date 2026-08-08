@@ -28,7 +28,7 @@ export default function UserSlots() {
   const buildUrl = useCallback((page, limit) => {
     let url = `/slots/all?page=${page}&limit=${limit}`;
     if (filterType) url += `&type=${encodeURIComponent(filterType)}`;
-    if (filterLoc) url += `&location=${encodeURIComponent(filterLoc)}`;
+    if (filterLoc) url += `&search=${encodeURIComponent(filterLoc)}`;
     return url;
   }, [filterType, filterLoc]);
 
