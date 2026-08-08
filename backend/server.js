@@ -12,12 +12,14 @@ require('dotenv').config();
 
 const { initSocket } = require('./socket');
 const BookingService = require('./services/BookingService');
+const { startAIProcess, stopAIProcess } = require('./utils/aiProcess');
 
 const authRoutes = require('./routes/auth.routes');
 const slotRoutes = require('./routes/slot.routes');
 const bookingRoutes = require('./routes/booking.routes');
 const staffRoutes = require('./routes/staff.routes');
 const adminRoutes = require('./routes/admin.routes');
+const aiRoutes = require('./routes/ai.routes');
 const errorHandler = require('./middleware/error.middleware');
 
 const app = express();
@@ -77,6 +79,7 @@ app.use('/api/slots', slotRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ai', aiRoutes);
 
 // ─── Frontend Routes (SPA fallback) ──────────────────────────────────────────
 app.get('*', (req, res) => {
@@ -111,6 +114,15 @@ connectDB().then(() => {
   server.listen(PORT, () => {
     console.log(`🚀 Home Page : http://localhost:${PORT}/index.html`);
   });
+
+  // ─── Local AI model ───────────────────────────────────────────────────────
+  // Boots the self-hosted TF-IDF/Logistic Regression intent classifier
+  // (ai/api/app.py) as a child process, so one `npm start` runs everything —
+  // no external LLM API key required.
+  startAIProcess();
+
+  process.on('SIGTERM', stopAIProcess);
+  process.on('SIGINT', stopAIProcess);
 
   // ─── Booking Auto-Expiry (Rule 2) ────────────────────────────────────────
   // A "Booked" booking that isn't checked in within 1 hour is automatically

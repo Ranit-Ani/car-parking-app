@@ -150,4 +150,51 @@ BookingSchema.statics.getDailyRevenue = async function (days = 7) {
   ]);
 };
 
+// ─── Static: Occupancy insights (peak hours / days / busiest slots) ──────────
+// Feeds the AI assistant's get_occupancy_insights tool, so the model owns the
+// aggregation once instead of duplicating it elsewhere.
+BookingSchema.statics.getOccupancyInsights = async function (days = 90) {
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  const match = { bookingTime: { $gte: start } };
+
+  const [byHour, byDay, avgDuration, topSlots] = await Promise.all([
+    this.aggregate([
+      { $match: match },
+      { $group: { _id: { $hour: '$bookingTime' }, count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
+    this.aggregate([
+      { $match: match },
+      { $group: { _id: { $dayOfWeek: '$bookingTime' }, count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
+    this.aggregate([
+      { $match: { status: 'Completed', checkInTime: { $ne: null }, checkOutTime: { $ne: null } } },
+      { $project: { minutes: { $divide: [{ $subtract: ['$checkOutTime', '$checkInTime'] }, 60000] } } },
+      { $group: { _id: null, avgMinutes: { $avg: '$minutes' } } },
+    ]),
+    this.aggregate([
+      { $match: match },
+      { $group: { _id: '$slotId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'parkingslots', localField: '_id', foreignField: '_id', as: 'slot' } },
+      { $unwind: { path: '$slot', preserveNullAndEmptyArrays: true } },
+      { $project: { count: 1, slotNumber: '$slot.slotNumber', location: '$slot.location' } },
+    ]),
+  ]);
+
+  const DAY_NAMES = ['', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  return {
+    windowDays: days,
+    peakHours: byHour.slice(0, 3).map((h) => ({ hour: h._id, count: h.count })),
+    quietHours: [...byHour].sort((a, b) => a.count - b.count).slice(0, 3).map((h) => ({ hour: h._id, count: h.count })),
+    busiestDays: byDay.map((d) => ({ day: DAY_NAMES[d._id], count: d.count })),
+    avgSessionMinutes: avgDuration[0] ? Math.round(avgDuration[0].avgMinutes) : null,
+    topSlots,
+  };
+};
+
 module.exports = mongoose.model('Booking', BookingSchema);
