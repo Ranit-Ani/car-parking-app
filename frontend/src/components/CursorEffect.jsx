@@ -1,11 +1,19 @@
 import { useEffect } from 'react';
+import useIsMobile from '../lib/useIsMobile';
 
 /**
  * Ports initAntigravityCursor() from the original js/app.js verbatim.
  * Mounted once at the app root so the effect persists across route changes.
+ *
+ * Desktop/laptop only: on mobile the custom cursor (and its antigravity
+ * web-particle canvas) is skipped entirely so the interface behaves like a
+ * normal touch UI (native cursor, no cursor:none override, no canvas).
  */
 export default function CursorEffect() {
+  const isMobile = useIsMobile();
+
   useEffect(() => {
+    if (isMobile) return undefined;
     if (document.getElementById('ag-web-canvas')) return undefined;
 
     const cvs = document.createElement('canvas');
@@ -287,7 +295,7 @@ export default function CursorEffect() {
       window.removeEventListener('resize', onResize);
       cvs.remove(); dot.remove(); style.remove();
     };
-  }, []);
+  }, [isMobile]);
 
   return null;
 }

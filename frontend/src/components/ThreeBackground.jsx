@@ -1,15 +1,23 @@
 import { useEffect, useRef } from 'react';
+import useIsMobile from '../lib/useIsMobile';
 
 /**
  * Renders the #bg-canvas element and drives the same Three.js particle-web
  * background used across every page in the original app (js/app.js ->
  * initThreeBackground). Logic is ported as-is, just scoped to this component
  * and cleaned up on unmount.
+ *
+ * Desktop/laptop only: on mobile the particle background is skipped
+ * entirely (Three.js is never even loaded) so the page renders as a plain,
+ * static background.
  */
 export default function ThreeBackground() {
   const canvasRef = useRef(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
+    if (isMobile) return undefined;
+
     let cleanup = () => {};
     let cancelled = false;
 
@@ -210,7 +218,7 @@ export default function ThreeBackground() {
       cancelled = true;
       cleanup();
     };
-  }, []);
+  }, [isMobile]);
 
   return <canvas id="bg-canvas" ref={canvasRef} />;
 }
