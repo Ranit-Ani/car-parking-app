@@ -30,12 +30,27 @@ const PAGE_WIDTH = PAGE_RIGHT - PAGE_LEFT;
 function generateReceiptPDF(booking, res) {
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader(
-    'Content-Disposition',
-    `attachment; filename="receipt-${booking._id.toString().slice(-8).toUpperCase()}.pdf"`
-  );
-  doc.pipe(res);
+  // Buffer the whole PDF in memory instead of piping it straight to the
+  // response. Piping directly (doc.pipe(res)) sends the response as chunked
+  // transfer encoding with no Content-Length, since the final size isn't
+  // known up front — some HTTP clients (notably react-native-blob-util on
+  // Android) treat that as an incomplete/interrupted download even when
+  // every byte actually arrived. Sending one complete buffer with an
+  // explicit Content-Length avoids that entirely.
+  const chunks = [];
+  doc.on('data', chunk => chunks.push(chunk));
+  doc.on('end', () => {
+    const pdfBuffer = Buffer.concat(chunks);
+    const receiptNo = booking._id.toString().slice(-8).toUpperCase();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="receipt-${receiptNo}.pdf"`
+    );
+    res.end(pdfBuffer);
+  });
 
   const receiptNo = booking._id.toString().slice(-8).toUpperCase();
 
