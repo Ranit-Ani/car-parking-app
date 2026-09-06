@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
-import { ActionButton, EmptyState } from '../../components/Bits';
+import { ActionButton, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
@@ -248,7 +248,7 @@ export default function AdminLocations() {
   return (
     <Layout title="Parking Locations" badge={false} right={<button className="btn-ag primary sm" onClick={openAdd}><i className="bi bi-plus-circle" /> Add Location</button>}>
       <div className="ag-alert info" style={{ marginBottom: '1.25rem' }}>
-        <i className="bi bi-info-circle" /> These geo-located sites power users&apos; <strong>Nearby Parking</strong> search (by distance or by searched address/landmark) and in-app navigation. Link slots to a location from the Slot Management page, and assign staff to a location right here.
+        <i className="bi bi-info-circle" /> These geo-located sites power users&apos; Nearby Parking search (by distance or by searched address/landmark) and in-app navigation. Link slots to a location from the Slot Management page, and assign staff to a location right here.
       </div>
 
       <div className="table-card">
@@ -281,9 +281,13 @@ export default function AdminLocations() {
                   </td>
                   <td><span className={`ag-badge ${loc.isActive ? 'available' : 'cancelled'}`}>{loc.isActive ? 'Active' : 'Inactive'}</span></td>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <button className="btn-ag cyan sm" onClick={() => navigate(`/admin/location-revenue?locationId=${loc._id}`)} title="View revenue for this location"><i className="bi bi-graph-up" /></button>{' '}
-                    <button className="btn-ag ghost sm" onClick={() => openEdit(loc)}><i className="bi bi-pencil" /></button>{' '}
-                    <button className="btn-ag red sm" onClick={() => remove(loc)}><i className="bi bi-trash" /></button>
+                    <RowActionsMenu
+                      items={[
+                        { label: 'View Revenue', icon: 'bi-graph-up', onClick: () => navigate(`/admin/location-revenue?locationId=${loc._id}`) },
+                        { label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(loc) },
+                        { label: 'Delete', icon: 'bi-trash', tone: 'danger', onClick: () => remove(loc) },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}
