@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NavProvider } from './context/NavContext';
 import RequireAuth from './components/RequireAuth';
@@ -12,7 +12,6 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 
 import UserDashboard from './pages/user/Dashboard';
-import UserSlots from './pages/user/Slots';
 import UserBookings from './pages/user/Bookings';
 import UserNearbyParking from './pages/user/NearbyParking';
 
@@ -44,9 +43,13 @@ export default function App() {
           <Route path="/profile" element={<RequireAuth roles={['user', 'staff', 'admin']}><Profile /></RequireAuth>} />
 
           <Route path="/user/dashboard" element={<RequireAuth roles={['user']}><UserDashboard /></RequireAuth>} />
-          <Route path="/user/slots" element={<RequireAuth roles={['user']}><UserSlots /></RequireAuth>} />
-          <Route path="/user/book" element={<RequireAuth roles={['user']}><UserSlots /></RequireAuth>} />
           <Route path="/user/nearby" element={<RequireAuth roles={['user']}><UserNearbyParking /></RequireAuth>} />
+          {/* The old Slots & Booking page showed slots from every parking
+              location at once. Users now book exclusively through Nearby
+              Parking (pick a location → see only that location's slots),
+              so these legacy links redirect there instead of 404ing. */}
+          <Route path="/user/slots" element={<Navigate to="/user/nearby" replace />} />
+          <Route path="/user/book" element={<Navigate to="/user/nearby" replace />} />
           <Route path="/user/bookings" element={<RequireAuth roles={['user']}><UserBookings /></RequireAuth>} />
 
           <Route path="/staff/dashboard" element={<RequireAuth roles={['staff', 'admin']}><StaffDashboard /></RequireAuth>} />

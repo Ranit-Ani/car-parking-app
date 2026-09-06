@@ -8,9 +8,9 @@ import { isValidVehicleNumber, normalizeVehicleNumber } from '../lib/vehicleVali
 /**
  * Self-contained "confirm booking" modal: loads the user's saved vehicles,
  * lets them pick one or enter a new vehicle, then POSTs to the existing
- * /api/bookings endpoint — the same booking system used by the Slots page.
- * Kept separate from pages/user/Slots.jsx so the Nearby Parking flow can
- * reuse it without touching that page's existing, working logic.
+ * /api/bookings endpoint. This is the only way users book a slot — always
+ * reached through Nearby Parking (pick a location → pick one of its
+ * slots), never a raw cross-location slot list.
  */
 export default function BookingModal({ slot, show, onClose, onBooked }) {
   const [savedVehicles, setSavedVehicles] = useState([]);

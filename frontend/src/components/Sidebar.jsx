@@ -13,7 +13,6 @@ const NAV = {
         links: [
           { to: '/user/dashboard', icon: 'bi-speedometer2', text: 'Dashboard' },
           { to: '/user/nearby', icon: 'bi-geo-alt-fill', text: 'Nearby Parking' },
-          { to: '/user/slots', icon: 'bi-grid-3x3-gap-fill', text: 'Slots & Booking' },
           { to: '/user/bookings', icon: 'bi-list-check', text: 'My Bookings' },
         ],
       },

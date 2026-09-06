@@ -61,7 +61,7 @@ export default function UserDashboard() {
       <PageHeader
         title={`Welcome, ${user?.name}!`}
         subtitle="Your parking mission overview"
-        action={<Link to="/user/book" className="btn-ag primary sm"><i className="bi bi-plus-circle me-1" /> Book Slot</Link>}
+        action={<Link to="/user/nearby" className="btn-ag primary sm"><i className="bi bi-plus-circle me-1" /> Book Slot</Link>}
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -83,7 +83,7 @@ export default function UserDashboard() {
               {loading ? (
                 <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading orbit data...</td></tr>
               ) : recent.length === 0 ? (
-                <tr><td colSpan={6}><EmptyState icon="bi-calendar-x">No bookings yet. <Link to="/user/book" style={{ color: 'var(--neon-cyan)' }}>Book your first slot!</Link></EmptyState></td></tr>
+                <tr><td colSpan={6}><EmptyState icon="bi-calendar-x">No bookings yet. <Link to="/user/nearby" style={{ color: 'var(--neon-cyan)' }}>Book your first slot!</Link></EmptyState></td></tr>
               ) : recent.map((r) => (
                 <tr key={r._id}>
                   <td><strong style={{ color: 'var(--neon-cyan)' }}>{r.slotId?.slotNumber || '—'}</strong><br /><small style={{ color: 'var(--text-muted)' }}>{r.slotId?.location || ''}</small></td>

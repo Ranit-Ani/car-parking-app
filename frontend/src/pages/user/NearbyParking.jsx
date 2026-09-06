@@ -130,7 +130,9 @@ export default function NearbyParking() {
     setActiveLocation(loc);
     setLocationSlots(null);
     setLoadingSlots(true);
-    const d = await apiRequest(`/slots?locationId=${loc._id}&limit=100`);
+    let url = `/slots?locationId=${loc._id}&limit=100`;
+    if (slotType) url += `&type=${encodeURIComponent(slotType)}`;
+    const d = await apiRequest(url);
     setLoadingSlots(false);
     if (d && d.success) setLocationSlots(d.data);
     else setLocationSlots([]);
@@ -143,7 +145,9 @@ export default function NearbyParking() {
     if (!activeLocation) return undefined;
     const socket = getSocket();
     const refreshSlots = async () => {
-      const d = await apiRequest(`/slots?locationId=${activeLocation._id}&limit=100`);
+      let url = `/slots?locationId=${activeLocation._id}&limit=100`;
+      if (slotType) url += `&type=${encodeURIComponent(slotType)}`;
+      const d = await apiRequest(url);
       if (d && d.success) setLocationSlots(d.data);
     };
     socket.on('slotUpdated', refreshSlots);
@@ -152,7 +156,7 @@ export default function NearbyParking() {
       socket.off('slotUpdated', refreshSlots);
       socket.off('slotDeleted', refreshSlots);
     };
-  }, [activeLocation]);
+  }, [activeLocation, slotType]);
 
   function handleBooked(booking) {
     setBookingSlot(null);
@@ -342,10 +346,17 @@ export default function NearbyParking() {
         {activeLocation && (
           <>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{activeLocation.address}</div>
+            {!loadingSlots && locationSlots && locationSlots.length > 0 && (
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: 'var(--neon-green)', marginRight: 4 }} />Available — Tap to book now</span>
+              </div>
+            )}
             {loadingSlots ? (
               <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading slots...</div>
             ) : !locationSlots || locationSlots.length === 0 ? (
-              <EmptyState icon="bi-slash-circle">No available slots at this location right now.</EmptyState>
+              <EmptyState icon="bi-slash-circle">
+                {slotType ? 'No available slots of this type at this location right now.' : 'No available slots at this location right now.'}
+              </EmptyState>
             ) : (
               <div className="slot-grid">
                 {locationSlots.map((s) => (
