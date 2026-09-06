@@ -331,3 +331,44 @@
   font-size: 0.65rem !important;
 }
 .leaflet-control-attribution a { color: var(--t2) !important; }
+
+/* Always-on name + availability caption above a parking pin (see LeafletMap's
+   `tag` marker option). Strip Leaflet's default tooltip box/arrow first,
+   then draw our own compact pill so it reads like part of the pin. */
+.ag-marker-tag.leaflet-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: inherit !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+.ag-marker-tag.leaflet-tooltip::before {
+  display: none !important; /* remove the little arrow */
+}
+.ag-marker-tag-title,
+.ag-marker-tag-sub {
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+.ag-marker-tag-title {
+  background: var(--card, #101a2e);
+  color: var(--t1, #eaf6ff);
+  border: 1px solid var(--neon-cyan, #00f0ff);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,.5);
+}
+.ag-marker-tag-sub {
+  margin-top: 0.2rem;
+  background: rgba(0, 255, 179, 0.15);
+  color: var(--neon-green, #00ffb3);
+  border-radius: 5px;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}

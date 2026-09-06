@@ -142,6 +142,7 @@ export default function NearbyParking() {
         lng: loc.longitude,
         icon: activeLocation && activeLocation._id === loc._id ? ICONS.parkingSelected : ICONS.parking,
         label: `${loc.name} — ${loc.availableSlots} available`,
+        tag: { title: loc.name, subtitle: `${loc.availableSlots}/${loc.totalSlots}` },
         onClick: () => openLocation(loc),
       });
     });

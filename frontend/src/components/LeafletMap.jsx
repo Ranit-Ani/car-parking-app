@@ -23,12 +23,24 @@ export const ICONS = {
   destination: makeIcon('#ff3c78', '🏁'),
 };
 
+// Minimal HTML-escaping for text we drop into a divIcon/tooltip via innerHTML.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 /**
  * Reusable in-app map for Nearby Parking + Navigate to Parking. Uses plain
  * Leaflet (not react-leaflet) for full imperative control over live
  * position updates and route redraws without extra dependency friction.
  *
- * @param {Array<{id, lat, lng, icon?, label?, onClick?}>} markers
+ * @param {Array<{id, lat, lng, icon?, label?, tag?, onClick?}>} markers
+ *   `tag: { title, subtitle? }` renders a small always-visible caption above the
+ *   pin (e.g. title="Parking 01", subtitle="20/30") — separate from `label`,
+ *   which is the click/tap popup.
  * @param {Array<[number, number]>} [route] - polyline coordinates, [lat,lng] pairs
  * @param {{lat, lng}} [center] - used before any markers/route exist
  * @param {boolean} [fitToData=true] - auto-fit bounds to markers/route when they change
@@ -88,6 +100,18 @@ export default function LeafletMap({ markers = [], route = null, center, zoom = 
       if (m.lat == null || m.lng == null) return;
       const marker = L.marker([m.lat, m.lng], { icon: m.icon || ICONS.parking, draggable: !!m.draggable });
       if (m.label) marker.bindPopup(m.label);
+      if (m.tag && m.tag.title) {
+        const html = `<div class="ag-marker-tag-title">${escapeHtml(m.tag.title)}</div>${
+          m.tag.subtitle != null ? `<div class="ag-marker-tag-sub">${escapeHtml(m.tag.subtitle)}</div>` : ''
+        }`;
+        marker.bindTooltip(html, {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -28],
+          className: 'ag-marker-tag',
+          interactive: false,
+        });
+      }
       if (m.onClick) marker.on('click', m.onClick);
       if (m.draggable && m.onDrag) {
         marker.on('dragend', (e) => {
