@@ -252,7 +252,7 @@ export default function NearbyParking() {
                 />
               </div>
             </div>
-            {searchQuery.trim() && !searching && searchCandidates.length === 0 && (
+            {searchQuery.trim() && !searching && searchCandidates.length === 0 && !(center && center.label === searchQuery) && (
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '-0.6rem', marginBottom: '0.6rem' }}>No matching places found. Try a different search.</div>
             )}
             <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', alignItems: 'end' }}>
