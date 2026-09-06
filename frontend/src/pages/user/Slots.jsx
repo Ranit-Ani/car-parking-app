@@ -196,7 +196,7 @@ export default function UserSlots() {
               <div className="slot-number">{s.slotNumber}</div>
               <div className="slot-type">{s.slotType}</div>
               <div className="slot-rate">₹{s.hourlyRate}/hr</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>{s.location}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>{s.location}{s.floor ? ` · Floor ${s.floor}` : ''}</div>
               {s.status === 'Available' && (
                 <div style={{ fontSize: '0.65rem', color: 'var(--neon-green)', marginTop: '0.3rem', letterSpacing: '0.05em' }}>TAP TO BOOK NOW</div>
               )}
@@ -235,12 +235,13 @@ export default function UserSlots() {
             <div className="bill-receipt">
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>SELECTED SLOT</div>
               <div className="font-orbit" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>{selSlot.slotNumber}</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>{selSlot.slotType} · {selSlot.location}</div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>{selSlot.slotType} · {selSlot.location}{selSlot.floor ? ` · Floor ${selSlot.floor}` : ''}</div>
             </div>
             <table className="bill-table">
               <tbody>
                 <tr><td>Type</td><td>{selSlot.slotType}</td></tr>
                 <tr><td>Location</td><td>{selSlot.location}</td></tr>
+                {selSlot.floor && <tr><td>Floor</td><td>{selSlot.floor}</td></tr>}
                 <tr><td>Rate</td><td>₹{selSlot.hourlyRate}/hour</td></tr>
                 <tr><td>Booking Time</td><td>{new Date().toLocaleString('en-IN')} (now)</td></tr>
               </tbody>

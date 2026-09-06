@@ -6,6 +6,7 @@ import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
+import LeafletMap, { ICONS } from '../../components/LeafletMap';
 
 const emptyForm = { name: '', address: '', description: '', amenities: '', latitude: '', longitude: '', isActive: true };
 
@@ -66,6 +67,22 @@ export default function AdminLocations() {
       setForm((f) => ({ ...f, latitude: String(pos.coords.latitude), longitude: String(pos.coords.longitude) }));
     });
   }
+
+  // Map picker: clicking or dragging the marker updates the form's
+  // lat/lng fields directly, keeping the number inputs as the single
+  // source of truth (typing in them still works and moves the marker too).
+  function pickOnMap({ lat, lng }) {
+    setForm((f) => ({ ...f, latitude: String(lat), longitude: String(lng) }));
+  }
+
+  const parsedLat = form.latitude !== '' && !Number.isNaN(Number(form.latitude)) ? Number(form.latitude) : null;
+  const parsedLng = form.longitude !== '' && !Number.isNaN(Number(form.longitude)) ? Number(form.longitude) : null;
+  const hasPin = parsedLat != null && parsedLng != null;
+  // Default the map to a sensible view before any pin is placed: the
+  // location being edited, or India's centroid for a brand-new one.
+  const mapCenter = hasPin
+    ? { lat: parsedLat, lng: parsedLng }
+    : { lat: 20.5937, lng: 78.9629 };
 
   async function save() {
     if (!form.name.trim()) return setAlert({ message: 'Location name is required.', type: 'warning' });
@@ -172,6 +189,29 @@ export default function AdminLocations() {
         <div className="ag-input-group" style={{ margin: 0, marginBottom: '0.9rem' }}>
           <label className="ag-label">Amenities (comma separated)</label>
           <input className="ag-input" placeholder="CCTV, Covered, EV Charging" value={form.amenities} onChange={(e) => setForm({ ...form, amenities: e.target.value })} />
+        </div>
+        <div className="ag-input-group" style={{ margin: 0, marginBottom: '0.5rem' }}>
+          <label className="ag-label">Pin the location on the map *</label>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+            Click anywhere on the map to drop a pin, or drag the pin once it's placed. The Latitude/Longitude fields below update automatically — you can also type coordinates directly.
+          </div>
+          <LeafletMap
+            key={editingId || 'new'}
+            height={260}
+            center={mapCenter}
+            zoom={hasPin ? 16 : 5}
+            fitToData={false}
+            onPick={pickOnMap}
+            markers={hasPin ? [{
+              id: 'picked',
+              lat: parsedLat,
+              lng: parsedLng,
+              icon: ICONS.parkingSelected,
+              draggable: true,
+              onDrag: pickOnMap,
+              label: form.name || 'New location',
+            }] : []}
+          />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.5rem' }}>
           <div className="ag-input-group" style={{ margin: 0 }}>

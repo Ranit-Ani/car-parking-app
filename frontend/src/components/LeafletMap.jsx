@@ -32,12 +32,18 @@ export const ICONS = {
  * @param {Array<[number, number]>} [route] - polyline coordinates, [lat,lng] pairs
  * @param {{lat, lng}} [center] - used before any markers/route exist
  * @param {boolean} [fitToData=true] - auto-fit bounds to markers/route when they change
+ * @param {function({lat, lng})} [onPick] - if provided, the map becomes a picker:
+ *   clicking anywhere calls onPick(latLng). Pair with a marker whose `draggable: true`
+ *   flag is set (and give it an `onDrag` handler) to let the same point be fine-tuned
+ *   by dragging instead of only clicking.
  */
-export default function LeafletMap({ markers = [], route = null, center, zoom = 14, height = 320, fitToData = true }) {
+export default function LeafletMap({ markers = [], route = null, center, zoom = 14, height = 320, fitToData = true, onPick = null }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerLayerRef = useRef(null);
   const routeLayerRef = useRef(null);
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
 
   // Init map once.
   useEffect(() => {
@@ -51,6 +57,10 @@ export default function LeafletMap({ markers = [], route = null, center, zoom = 
     markerLayerRef.current = L.layerGroup().addTo(map);
     routeLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+
+    map.on('click', (e) => {
+      if (onPickRef.current) onPickRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
+    });
 
     return () => {
       map.remove();
@@ -76,9 +86,15 @@ export default function LeafletMap({ markers = [], route = null, center, zoom = 
     const bounds = [];
     markers.forEach((m) => {
       if (m.lat == null || m.lng == null) return;
-      const marker = L.marker([m.lat, m.lng], { icon: m.icon || ICONS.parking });
+      const marker = L.marker([m.lat, m.lng], { icon: m.icon || ICONS.parking, draggable: !!m.draggable });
       if (m.label) marker.bindPopup(m.label);
       if (m.onClick) marker.on('click', m.onClick);
+      if (m.draggable && m.onDrag) {
+        marker.on('dragend', (e) => {
+          const pos = e.target.getLatLng();
+          m.onDrag({ lat: pos.lat, lng: pos.lng });
+        });
+      }
       marker.addTo(markerLayerRef.current);
       bounds.push([m.lat, m.lng]);
     });
