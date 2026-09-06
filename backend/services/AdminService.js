@@ -92,6 +92,8 @@ class AdminService {
       throw err;
     }
 
+    getIO().to('admin').emit('userUpdated', { userId: user._id, role: user.role });
+
     return user;
   }
 

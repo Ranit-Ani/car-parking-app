@@ -8,6 +8,7 @@ import NavigateModal from '../../components/NavigateModal';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
 import { getCurrentPosition, geocodeSearch, formatDistance, MAX_RADIUS_KM } from '../../lib/geo';
+import { getSocket } from '../../lib/socket';
 
 const TYPE_OPTIONS = [
   { value: '', label: 'All Types' },
@@ -40,17 +41,20 @@ export default function NearbyParking() {
   const [justBooked, setJustBooked] = useState(null); // booking returned right after a successful booking
   const [navDestination, setNavDestination] = useState(null);
 
-  const fetchNearby = useCallback(async (point, km, type) => {
+  const fetchNearby = useCallback(async (point, km, type, opts = {}) => {
     if (!point) return;
-    setLoadingResults(true);
+    // Skip the "Scanning..." loading state for background/live refreshes
+    // (e.g. triggered by a socket event) — only show it for a fresh search
+    // the user is actively waiting on.
+    if (!opts.silent) setLoadingResults(true);
     const clampedKm = Math.min(Math.max(km, 0.5), MAX_RADIUS_KM);
     let url = `/locations/nearby?lat=${point.lat}&lng=${point.lng}&radius=${clampedKm}`;
     if (type) url += `&type=${encodeURIComponent(type)}`;
     const d = await apiRequest(url);
-    setLoadingResults(false);
+    if (!opts.silent) setLoadingResults(false);
     if (d && d.success) {
       setResults(d.data);
-    } else {
+    } else if (!opts.silent) {
       setResults([]);
       showToast((d && d.message) || 'Could not load nearby parking.', 'danger');
     }
@@ -60,6 +64,21 @@ export default function NearbyParking() {
   useEffect(() => {
     if (center) fetchNearby(center, radiusKm, slotType);
   }, [center, radiusKm, slotType, fetchNearby]);
+
+  // Live sync: availability counts on the cards + map (and slots showing
+  // up/disappearing at nearby locations) should update the instant anyone
+  // books, cancels, or an admin edits a slot/location — not just on the
+  // next manual search.
+  const liveRefreshNearby = useCallback(() => {
+    if (center) fetchNearby(center, radiusKm, slotType, { silent: true });
+  }, [center, radiusKm, slotType, fetchNearby]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const events = ['slotUpdated', 'slotDeleted', 'locationUpdated', 'locationDeleted', 'bookingCreated', 'bookingCancelled', 'bookingUpdated'];
+    events.forEach((ev) => socket.on(ev, liveRefreshNearby));
+    return () => events.forEach((ev) => socket.off(ev, liveRefreshNearby));
+  }, [liveRefreshNearby]);
 
   async function useMyLocation() {
     setLocating(true);
@@ -116,6 +135,24 @@ export default function NearbyParking() {
     if (d && d.success) setLocationSlots(d.data);
     else setLocationSlots([]);
   }
+
+  // Live sync: while a location's slot grid is open, reflect any booking
+  // made elsewhere (by this user on another tab, or anyone else) right away
+  // so "TAP TO BOOK" never lets someone try to book a slot that's already gone.
+  useEffect(() => {
+    if (!activeLocation) return undefined;
+    const socket = getSocket();
+    const refreshSlots = async () => {
+      const d = await apiRequest(`/slots?locationId=${activeLocation._id}&limit=100`);
+      if (d && d.success) setLocationSlots(d.data);
+    };
+    socket.on('slotUpdated', refreshSlots);
+    socket.on('slotDeleted', refreshSlots);
+    return () => {
+      socket.off('slotUpdated', refreshSlots);
+      socket.off('slotDeleted', refreshSlots);
+    };
+  }, [activeLocation]);
 
   function handleBooked(booking) {
     setBookingSlot(null);

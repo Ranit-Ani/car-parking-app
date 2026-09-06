@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { EmptyState } from '../../components/Bits';
@@ -7,6 +7,7 @@ import { useInfiniteList } from '../../lib/useInfiniteList';
 import { formatDate } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
+import { getSocket } from '../../lib/socket';
 
 function RoleTable({ title, icon, rows, curUser, onRoleChange, onToggle, emptyText }) {
   return (
@@ -80,6 +81,15 @@ export default function AdminUsers() {
   // are split into the Admins/Staff/Users sections below as they arrive.
   const { items: users, setItems: setUsers, loading, loadingMore, hasMore, loadMore, refresh, total } =
     useInfiniteList(buildUrl, [], 30);
+
+  // Live sync: another admin changing a role or activation status (or a
+  // fresh signup landing in the list) should reflect here instantly instead
+  // of waiting for a manual refresh.
+  useEffect(() => {
+    const socket = getSocket();
+    socket.on('userUpdated', refresh);
+    return () => socket.off('userUpdated', refresh);
+  }, [refresh]);
 
   async function updateRole(id, role) {
     // optimistic UI: reflect selection immediately - this also moves the

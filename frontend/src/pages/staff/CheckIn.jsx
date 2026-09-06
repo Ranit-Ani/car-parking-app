@@ -6,6 +6,7 @@ import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
+import { getSocket } from '../../lib/socket';
 
 export default function CheckIn() {
   // Cached so this list shows the last-known pending check-ins instantly on
@@ -22,8 +23,23 @@ export default function CheckIn() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 30000);
-    return () => clearInterval(t);
+
+    // Live sync: a new booking landing here (bookingCreated) or one being
+    // cancelled/expired before staff got to it should update this queue
+    // immediately, without waiting on the poll interval.
+    const socket = getSocket();
+    socket.on('bookingCreated', load);
+    socket.on('bookingCancelled', load);
+    socket.on('bookingUpdated', load);
+
+    // Safety-net poll in case a socket event is ever missed.
+    const t = setInterval(load, 60000);
+    return () => {
+      clearInterval(t);
+      socket.off('bookingCreated', load);
+      socket.off('bookingCancelled', load);
+      socket.off('bookingUpdated', load);
+    };
   }, [load]);
 
   const rows = useMemo(() => {

@@ -6,6 +6,7 @@ import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
+import { getSocket } from '../../lib/socket';
 
 function dur(ci) {
   const ms = Date.now() - new Date(ci);
@@ -34,8 +35,21 @@ export default function CheckOut() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 30000);
-    return () => clearInterval(t);
+
+    // Live sync: a booking flips to Active the moment any staff member
+    // checks that vehicle in, so this active-sessions list should pick it
+    // up immediately — likewise when a session completes/cancels elsewhere.
+    const socket = getSocket();
+    socket.on('bookingUpdated', load);
+    socket.on('bookingCancelled', load);
+
+    // Safety-net poll in case a socket event is ever missed.
+    const t = setInterval(load, 60000);
+    return () => {
+      clearInterval(t);
+      socket.off('bookingUpdated', load);
+      socket.off('bookingCancelled', load);
+    };
   }, [load]);
 
   const rows = useMemo(() => {
