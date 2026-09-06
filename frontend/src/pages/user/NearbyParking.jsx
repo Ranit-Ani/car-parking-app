@@ -187,9 +187,9 @@ export default function NearbyParking() {
           </div>
         ) : (
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'nowrap' }}>
-              <label className="ag-label" style={{ margin: 0, whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.6rem', letterSpacing: '0.04em' }}>Address, Landmark, or Area</label>
-              <div className="ag-input-icon" style={{ flex: 1, minWidth: 0 }}>
+            <div className="ag-input-group" style={{ margin: 0 }}>
+              <label className="ag-label">Address, Landmark, or Area</label>
+              <div className="ag-input-icon">
                 <i className={searching ? 'bi bi-hourglass-split' : 'bi bi-search'} />
                 <input
                   className="ag-input"
@@ -201,7 +201,7 @@ export default function NearbyParking() {
               </div>
             </div>
             {searchQuery.trim() && !searching && searchCandidates.length === 0 && (
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>No matching places found. Try a different search.</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '-0.6rem', marginBottom: '0.6rem' }}>No matching places found. Try a different search.</div>
             )}
             <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', alignItems: 'end' }}>
               <div className="ag-input-group" style={{ margin: 0 }}>
