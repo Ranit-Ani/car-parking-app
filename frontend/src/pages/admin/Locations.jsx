@@ -121,7 +121,7 @@ export default function AdminLocations() {
   return (
     <Layout title="Parking Locations" badge={false} right={<button className="btn-ag primary sm" onClick={openAdd}><i className="bi bi-plus-circle" /> Add Location</button>}>
       <div className="ag-alert info" style={{ marginBottom: '1.25rem' }}>
-        <i className="bi bi-info-circle" /> These geo-located sites power users&apos; <strong>Nearby Parking</strong> search (by distance or by searched address/landmark) and in-app navigation. Link slots to a location from the Slot Management page, and assign staff to a location right here.
+        <i className="bi bi-info-circle" /> These geo-located sites power users&apos; Nearby Parking search (by distance or by searched address/landmark) and in-app navigation. Link slots to a location from the Slot Management page, and assign staff to a location right here.
       </div>
 
       <div className="table-card">
