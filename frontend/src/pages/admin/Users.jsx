@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import Modal from '../../components/Modal';
@@ -92,6 +93,13 @@ export default function AdminUsers() {
   const { user: curUser } = useAuth();
   const [locations, setLocations] = useState([]);
 
+  // Support deep-linking here from elsewhere (e.g. the "Staff" count button
+  // on the Parking Locations page) with ?roleView=staff&scope=location&locationId=...
+  const [searchParams] = useSearchParams();
+  const initialRoleView = searchParams.get('roleView') === 'staff' ? 'staff' : 'user';
+  const initialLocationId = searchParams.get('locationId') || '';
+  const initialScope = searchParams.get('scope') === 'location' && initialRoleView === 'staff' ? 'location' : 'all';
+
   // Needed so promoting someone to Staff (or reassigning an existing staff
   // member) can offer a location picker (multi-location support: every
   // staff account must be linked to exactly one parking location), and so
@@ -107,9 +115,9 @@ export default function AdminUsers() {
   // scope only applies to Staff — every staff account is tied to exactly
   // one parking location, whereas a User can book at any location, so
   // Users only ever show "All Users".
-  const [roleView, setRoleView] = useState('user'); // 'user' | 'staff'
-  const [scope, setScope] = useState('all'); // 'all' | 'location' (staff only)
-  const [locationId, setLocationId] = useState('');
+  const [roleView, setRoleView] = useState(initialRoleView); // 'user' | 'staff'
+  const [scope, setScope] = useState(initialScope); // 'all' | 'location' (staff only)
+  const [locationId, setLocationId] = useState(initialLocationId);
 
   // Switching to Users forces scope back to "all" — Location Wise isn't a
   // valid option for them.
