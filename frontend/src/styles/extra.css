@@ -365,8 +365,8 @@
 }
 .ag-marker-tag-sub {
   margin-top: 0.2rem;
-  background: rgba(0, 255, 179, 0.15);
-  color: var(--neon-green, #00ffb3);
+  background: rgba(0, 255, 179, 0.85);
+  color: #000;
   border-radius: 5px;
   padding: 0.05rem 0.4rem;
   font-size: 0.68rem;
