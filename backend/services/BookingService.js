@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Revenue = require('../models/Revenue');
 const BillingService = require('./BillingService');
 const { getIO } = require('../socket');
+const { isValidVehicleNumber, normalizeVehicleNumber } = require('../utils/vehicleValidation');
 
 const ALLOWED_CATEGORIES = ['2 Wheeler', '3 Wheeler', '4 Wheeler'];
 const BOOKED_TTL_MS = 60 * 60 * 1000; // Rule 2: 1 hour to check in before auto-expiry
@@ -83,8 +84,13 @@ class BookingService {
         err.statusCode = 400;
         throw err;
       }
+      if (!isPending && !isValidVehicleNumber(vehicleNumber)) {
+        const err = new Error('Please enter a valid vehicle registration number.');
+        err.statusCode = 400;
+        throw err;
+      }
       registrationPending = isPending;
-      vehicleNumber = isPending ? null : vehicleNumber.trim().toUpperCase();
+      vehicleNumber = isPending ? null : normalizeVehicleNumber(vehicleNumber);
 
       if (saveVehicle) {
         const user = await User.findById(userId);
@@ -128,7 +134,10 @@ class BookingService {
         status: 'Booked',
       });
 
-      const populated = await booking.populate(['userId', 'slotId']);
+      const populated = await booking.populate([
+        'userId',
+        { path: 'slotId', populate: { path: 'locationId', select: 'name address geo' } },
+      ]);
 
       // Notify every connected client (users, staff, admin) that a slot
       // just changed state, so their slot map / dashboard updates live.
@@ -240,7 +249,11 @@ class BookingService {
 
     const [bookings, total] = await Promise.all([
       Booking.find(query)
-        .populate('slotId', 'slotNumber location floor slotType hourlyRate')
+        .populate({
+          path: 'slotId',
+          select: 'slotNumber location floor slotType hourlyRate locationId',
+          populate: { path: 'locationId', select: 'name address geo' },
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -258,7 +271,11 @@ class BookingService {
   async getBookingById(bookingId) {
     const booking = await Booking.findById(bookingId)
       .populate('userId', 'name email role')
-      .populate('slotId', 'slotNumber location floor slotType hourlyRate');
+      .populate({
+        path: 'slotId',
+        select: 'slotNumber location floor slotType hourlyRate locationId',
+        populate: { path: 'locationId', select: 'name address geo' },
+      });
     if (!booking) {
       const err = new Error('Booking not found.');
       err.statusCode = 404;

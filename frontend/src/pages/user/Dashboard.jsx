@@ -3,21 +3,26 @@ import { Link } from 'react-router-dom';
 import Layout, { PageHeader } from '../../components/Layout';
 import { StatCard, StatusBadge, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
+import { useCachedState, wasCached } from '../../lib/useCachedState';
 import { formatDate, formatDateTime } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
 
+const CACHE_KEY = 'user:dashboard:bookings';
+
 export default function UserDashboard() {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useCachedState(CACHE_KEY, []);
+  // Already have cached bookings from a previous visit? Show them instantly
+  // instead of a loading state, and just refresh quietly in the background.
+  const [loading, setLoading] = useState(!wasCached(CACHE_KEY));
 
   const load = useCallback(async () => {
     const data = await apiRequest('/bookings');
     if (data && data.success) setBookings(data.data);
     setLoading(false);
-  }, []);
+  }, [setBookings]);
 
   useEffect(() => {
     load();

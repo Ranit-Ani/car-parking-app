@@ -2,6 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const ParkingSlot = require('../models/ParkingSlot');
+const ParkingLocation = require('../models/ParkingLocation');
 
 const seedData = async () => {
   try {
@@ -11,6 +12,7 @@ const seedData = async () => {
     // Clear existing data
     await User.deleteMany({});
     await ParkingSlot.deleteMany({});
+    await ParkingLocation.deleteMany({});
     console.log('🗑️  Cleared existing data');
 
     // Create Admin
@@ -43,17 +45,73 @@ const seedData = async () => {
     });
     console.log(`👤 User created: ${user.email}`);
 
+    // ─── Parking Locations (multi-location support) ───────────────────────────
+    // A handful of real-ish, geo-located sites spread within ~5km of each
+    // other so the "Nearby Parking" radius search (max 5km) and the
+    // location-search flow both have something meaningful to find.
+    // Coordinates are centered around a sample campus area in New Delhi.
+    const locationDefs = [
+      {
+        name: 'Block A - Main Gate',
+        address: 'Main Gate Road, Campus Sector 1',
+        description: 'Primary entrance parking, closest to the admin building.',
+        amenities: ['CCTV', 'Covered', 'Security Guard'],
+        coordinates: [77.2090, 28.6139], // [lng, lat]
+      },
+      {
+        name: 'Block B - Library Annex',
+        address: 'Library Road, Campus Sector 2',
+        description: 'Parking behind the central library, a short walk to lecture halls.',
+        amenities: ['CCTV', 'EV Charging'],
+        coordinates: [77.2125, 28.6180],
+      },
+      {
+        name: 'Block C - Sports Complex',
+        address: 'Stadium Avenue, Campus Sector 3',
+        description: 'Open-air lot next to the sports complex and gymnasium.',
+        amenities: ['Well Lit'],
+        coordinates: [77.2050, 28.6250],
+      },
+      {
+        name: 'North Campus Parking',
+        address: 'North Wing Extension Road',
+        description: 'Overflow parking for the north campus extension, a bit further out.',
+        amenities: ['CCTV', 'Covered'],
+        coordinates: [77.1950, 28.6400],
+      },
+      {
+        name: 'City Center Mall Parking',
+        address: 'City Center Mall, Sector 5',
+        description: 'Off-campus public parking facility, handy when campus lots are full.',
+        amenities: ['CCTV', 'Valet', 'EV Charging'],
+        coordinates: [77.2200, 28.5900],
+      },
+    ];
+
+    const parkingLocations = await ParkingLocation.insertMany(
+      locationDefs.map((l) => ({
+        name: l.name,
+        address: l.address,
+        description: l.description,
+        amenities: l.amenities,
+        geo: { type: 'Point', coordinates: l.coordinates },
+      }))
+    );
+    console.log(`📍 Created ${parkingLocations.length} parking locations`);
+
     // Create Parking Slots
     const slots = [];
     const types = ['standard', 'faculty', 'disabled', 'ev'];
-    const locations = ['Block A', 'Block B', 'Block C'];
 
-    // Generate 30 slots
+    // Generate 30 slots, cycled across the seeded parking locations so
+    // each location has a realistic mix of slot types/availability.
     for (let i = 1; i <= 30; i++) {
       const typeIndex = i <= 20 ? 0 : i <= 25 ? 1 : i <= 28 ? 2 : 3;
+      const loc = parkingLocations[i % parkingLocations.length];
       slots.push({
         slotNumber: `P${String(i).padStart(3, '0')}`,
-        location: locations[i % 3],
+        location: loc.name,
+        locationId: loc._id,
         floor: i <= 10 ? 'Ground' : i <= 20 ? 'First' : 'Second',
         slotType: types[typeIndex],
         status: 'Available',

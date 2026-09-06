@@ -30,27 +30,12 @@ const PAGE_WIDTH = PAGE_RIGHT - PAGE_LEFT;
 function generateReceiptPDF(booking, res) {
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-  // Buffer the whole PDF in memory instead of piping it straight to the
-  // response. Piping directly (doc.pipe(res)) sends the response as chunked
-  // transfer encoding with no Content-Length, since the final size isn't
-  // known up front — some HTTP clients (notably react-native-blob-util on
-  // Android) treat that as an incomplete/interrupted download even when
-  // every byte actually arrived. Sending one complete buffer with an
-  // explicit Content-Length avoids that entirely.
-  const chunks = [];
-  doc.on('data', chunk => chunks.push(chunk));
-  doc.on('end', () => {
-    const pdfBuffer = Buffer.concat(chunks);
-    const receiptNo = booking._id.toString().slice(-8).toUpperCase();
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', pdfBuffer.length);
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="receipt-${receiptNo}.pdf"`
-    );
-    res.end(pdfBuffer);
-  });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="receipt-${booking._id.toString().slice(-8).toUpperCase()}.pdf"`
+  );
+  doc.pipe(res);
 
   const receiptNo = booking._id.toString().slice(-8).toUpperCase();
 
@@ -60,7 +45,7 @@ function generateReceiptPDF(booking, res) {
     .fillColor('#00ff9d')
     .fontSize(22)
     .font('Helvetica-Bold')
-    .text('AG PARKING', PAGE_LEFT, 28);
+    .text('CAR PARKING', PAGE_LEFT, 28);
   doc
     .fillColor('#aaaaaa')
     .fontSize(9)
@@ -157,7 +142,7 @@ function generateReceiptPDF(booking, res) {
     .fillColor('#999999')
     .font('Helvetica')
     .text('This is a system-generated receipt and does not require a signature.', PAGE_LEFT, doc.y, { width: PAGE_WIDTH, align: 'center' })
-    .text('Thank you for using AG Parking.', { width: PAGE_WIDTH, align: 'center' });
+    .text('Thank you for using Car Parking.', { width: PAGE_WIDTH, align: 'center' });
 
   doc.end();
 }

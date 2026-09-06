@@ -21,6 +21,17 @@ export default function AIChatWidget() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, busy, open]);
 
+  // Lock the background page from scrolling while the assistant panel is
+  // open. Restore whatever the previous value was on close/unmount, so we
+  // don't clobber a lock set by some other overlay (e.g. a Modal open at
+  // the same time).
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, [open]);
+
   async function send(text) {
     const trimmed = (text ?? input).trim();
     if (!trimmed || busy) return;

@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Modal from './Modal';
 
 const NAV = {
   user: {
-    sub: 'Student Portal',
+    sub: 'User Portal',
     home: '/user/dashboard',
     sections: [
       {
         label: 'Navigation',
         links: [
           { to: '/user/dashboard', icon: 'bi-speedometer2', text: 'Dashboard' },
+          { to: '/user/nearby', icon: 'bi-geo-alt-fill', text: 'Nearby Parking' },
           { to: '/user/slots', icon: 'bi-grid-3x3-gap-fill', text: 'Slots & Booking' },
           { to: '/user/bookings', icon: 'bi-list-check', text: 'My Bookings' },
         ],
@@ -43,6 +45,7 @@ const NAV = {
         links: [
           { to: '/admin/dashboard', icon: 'bi-speedometer2', text: 'Dashboard' },
           { to: '/admin/slots', icon: 'bi-grid-3x3-gap-fill', text: 'Manage Slots' },
+          { to: '/admin/locations', icon: 'bi-geo-alt-fill', text: 'Parking Locations' },
           { to: '/admin/users', icon: 'bi-people-fill', text: 'Manage Users' },
           { to: '/admin/revenue', icon: 'bi-graph-up-arrow', text: 'Revenue' },
           { to: '/admin/bookings', icon: 'bi-list-check', text: 'All Bookings' },
@@ -56,6 +59,7 @@ const NAV = {
 export default function Sidebar({ open, onNavigate }) {
   const { user, logout } = useAuth();
   const [showPreview, setShowPreview] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   if (!user) return null;
 
   const cfg = NAV[user.role] || NAV.user;
@@ -70,7 +74,7 @@ export default function Sidebar({ open, onNavigate }) {
             <i className={`bi ${isAdmin ? 'bi-shield-lock-fill' : 'bi-p-square-fill'}`} />
           </div>
           <div>
-            <div className="brand-text">AG PARKING</div>
+            <div className="brand-text">CAR PARKING</div>
             <div className="brand-sub">{cfg.sub}</div>
           </div>
         </NavLink>
@@ -107,11 +111,32 @@ export default function Sidebar({ open, onNavigate }) {
               <div className="sidebar-user-role">{user.role}</div>
             </div>
           </div>
-          <a href="#" className="btn-logout" onClick={(e) => { e.preventDefault(); closeNav(); logout(); }}>
+          <a href="#" className="btn-logout" onClick={(e) => { e.preventDefault(); setShowLogoutConfirm(true); }}>
             <i className="bi bi-box-arrow-right" /> Log Out
           </a>
         </div>
       </aside>
+
+      <Modal
+        show={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Log Out"
+        icon="bi-box-arrow-right"
+        size="sm"
+        footer={(
+          <>
+            <button className="btn-ag ghost" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
+            <button
+              className="btn-ag nova"
+              onClick={() => { setShowLogoutConfirm(false); closeNav(); logout(); }}
+            >
+              <i className="bi bi-box-arrow-right" /> Log Out
+            </button>
+          </>
+        )}
+      >
+        <p style={{ fontSize: '.84rem', color: 'var(--t2)' }}>Are you sure you want to log out?</p>
+      </Modal>
 
       {showPreview && (
         <div

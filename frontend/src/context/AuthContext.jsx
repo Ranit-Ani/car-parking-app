@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import { useNavigate } from 'react-router-dom';
 import { clearSession, getToken, getUser, setSession } from '../lib/api';
 import { homeForRole } from '../lib/utils';
+import { clearPageCache } from '../lib/pageCache';
 
 const AuthContext = createContext(null);
 
@@ -10,18 +11,22 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   const login = useCallback((token, userObj) => {
+    // A new login means a (possibly different) account's data is about to
+    // load — never show a fresh login the previous session's cached pages.
+    clearPageCache();
     setSession(token, userObj);
     setUser(userObj);
   }, []);
 
   const updateUser = useCallback((patch) => {
     const merged = { ...getUser(), ...patch };
-    sessionStorage.setItem('agp_user', JSON.stringify(merged));
+    localStorage.setItem('agp_user', JSON.stringify(merged));
     setUser(merged);
   }, []);
 
   const logout = useCallback(() => {
     clearSession();
+    clearPageCache();
     setUser(null);
     navigate('/login', { replace: true });
   }, [navigate]);

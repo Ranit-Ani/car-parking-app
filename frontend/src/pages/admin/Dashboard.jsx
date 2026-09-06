@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Layout, { PageHeader } from '../../components/Layout';
 import { apiRequest } from '../../lib/api';
+import { useCachedState } from '../../lib/useCachedState';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
 import { showToast } from '../../lib/toast';
@@ -14,12 +15,14 @@ const empty = {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [d, setD] = useState(empty);
+  // Cached so navigating back here shows the last-known figures instantly
+  // instead of resetting to zeroes/"--" while a fresh copy loads.
+  const [d, setD] = useCachedState('admin:dashboard', empty);
 
   const load = useCallback(async () => {
     const res = await apiRequest('/admin/dashboard');
     if (res && res.success) setD(res.data);
-  }, []);
+  }, [setD]);
 
   useEffect(() => {
     load();

@@ -20,6 +20,7 @@ const bookingRoutes = require('./routes/booking.routes');
 const staffRoutes = require('./routes/staff.routes');
 const adminRoutes = require('./routes/admin.routes');
 const aiRoutes = require('./routes/ai.routes');
+const locationRoutes = require('./routes/location.routes');
 const errorHandler = require('./middleware/error.middleware');
 
 const app = express();
@@ -34,14 +35,40 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc:      ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
       fontSrc:       ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"],
-      imgSrc:        ["'self'", "data:", "blob:"],
-      connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
+      // Nearby Parking's in-app map needs: OpenStreetMap tile images, plus
+      // fetch() access to OSM's Nominatim (geocoding a searched place) and
+      // OSRM's public router (turn-by-turn distance/ETA) — both free,
+      // keyless services rendered on our own Leaflet map, never a redirect
+      // out to Google Maps or another navigation app.
+      imgSrc:        ["'self'", "data:", "blob:", "https://*.tile.openstreetmap.org"],
+      connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "https://nominatim.openstreetmap.org", "https://router.project-osrm.org"],
     },
   },
   crossOriginEmbedderPolicy: false,
 }));
 app.use(xssClean());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }));
+
+// CORS_ORIGIN can be a comma-separated list, e.g.:
+//   https://your-app.onrender.com,capacitor://localhost,https://localhost
+// The last two cover the Android app's WebView origin (Capacitor loads the
+// bundled frontend from capacitor://localhost, or https://localhost with
+// androidScheme: 'https'). Requests with no Origin header at all (some
+// native HTTP clients omit it) are also allowed through, since they can't
+// be spoofed via a browser the way a forged Origin header could be.
+const allowedOrigins = (process.env.CORS_ORIGIN || '*')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS: ' + origin));
+  },
+  credentials: true,
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -80,6 +107,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/locations', locationRoutes);
 
 // ─── Frontend Routes (SPA fallback) ──────────────────────────────────────────
 app.get('*', (req, res) => {

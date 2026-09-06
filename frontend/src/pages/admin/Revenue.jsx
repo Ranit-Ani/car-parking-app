@@ -2,55 +2,68 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Chart from 'chart.js/auto';
 import Layout from '../../components/Layout';
 import { apiRequest } from '../../lib/api';
+import { getCached, setCached } from '../../lib/pageCache';
 import { getSocket } from '../../lib/socket';
+
+const CACHE_KEY = 'admin:revenue';
+
+function drawChart(canvas, chartRef, daily) {
+  if (chartRef.current) chartRef.current.destroy();
+  chartRef.current = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: daily.map((x) => x._id),
+      datasets: [{
+        label: 'Revenue (₹)',
+        data: daily.map((x) => x.revenue),
+        backgroundColor: 'rgba(0,136,255,0.5)',
+        borderColor: '#0088ff',
+        borderWidth: 2,
+        borderRadius: 6,
+        hoverBackgroundColor: 'rgba(0,245,255,0.6)',
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(6,13,26,0.95)',
+          titleColor: '#00f5ff',
+          bodyColor: '#e8f4ff',
+          borderColor: 'rgba(0,245,255,0.2)',
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(0,136,255,0.08)' }, ticks: { color: '#5a7a9a' } },
+        x: { grid: { display: false }, ticks: { color: '#5a7a9a' } },
+      },
+    },
+  });
+}
 
 export default function Revenue() {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
-  const [summary, setSummary] = useState({ totalRevenue: 0, totalBookings: 0, avgAmount: 0 });
+  // Seed from cache so the stat cards and chart show real numbers on the
+  // very first paint after navigating back here, instead of zeroes/blank.
+  const cached = getCached(CACHE_KEY);
+  const [summary, setSummary] = useState(cached ? cached.summary : { totalRevenue: 0, totalBookings: 0, avgAmount: 0 });
 
   const load = useCallback(async () => {
     const d = await apiRequest('/admin/revenue');
     if (!d || !d.success) return;
     const { summary: s, daily } = d.data;
     setSummary(s);
-
-    if (chartRef.current) chartRef.current.destroy();
-    chartRef.current = new Chart(canvasRef.current, {
-      type: 'bar',
-      data: {
-        labels: daily.map((x) => x._id),
-        datasets: [{
-          label: 'Revenue (₹)',
-          data: daily.map((x) => x.revenue),
-          backgroundColor: 'rgba(0,136,255,0.5)',
-          borderColor: '#0088ff',
-          borderWidth: 2,
-          borderRadius: 6,
-          hoverBackgroundColor: 'rgba(0,245,255,0.6)',
-        }],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(6,13,26,0.95)',
-            titleColor: '#00f5ff',
-            bodyColor: '#e8f4ff',
-            borderColor: 'rgba(0,245,255,0.2)',
-            borderWidth: 1,
-          },
-        },
-        scales: {
-          y: { beginAtZero: true, grid: { color: 'rgba(0,136,255,0.08)' }, ticks: { color: '#5a7a9a' } },
-          x: { grid: { display: false }, ticks: { color: '#5a7a9a' } },
-        },
-      },
-    });
+    setCached(CACHE_KEY, { summary: s, daily });
+    drawChart(canvasRef.current, chartRef, daily);
   }, []);
 
   useEffect(() => {
+    // Paint the chart from cached data immediately (no blank canvas while
+    // the background refresh below is in flight), then always refresh.
+    if (cached) drawChart(canvasRef.current, chartRef, cached.daily);
     load();
 
     // Live sync: a completed check-out fires 'revenueUpdated' — refresh the

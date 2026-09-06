@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import ThreeBackground from '../components/ThreeBackground';
 import { apiRequest, getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 
 export default function Landing() {
-  const navigate = useNavigate();
   const [stats, setStats] = useState({ total: '--', avail: '--', occ: '--' });
 
+  // Checked during render (not in an effect) so a logged-in user is sent
+  // straight to <Navigate> before the landing markup ever paints — an
+  // effect-based redirect only fires *after* the first paint, which is
+  // what caused the landing page to flash for a moment on every load.
+  const token = getToken();
+  const user = getUser();
+
   useEffect(() => {
-    const t = getToken(), u = getUser();
-    if (t && u) {
-      navigate(homeForRole(u.role), { replace: true });
-      return;
-    }
+    if (token && user) return; // redirecting below; skip the stats fetch
     (async () => {
       const d = await apiRequest('/slots/stats');
       if (d && d.success) {
@@ -24,7 +26,12 @@ export default function Landing() {
         });
       }
     })();
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (token && user) {
+    return <Navigate to={homeForRole(user.role)} replace />;
+  }
 
   return (
     <>

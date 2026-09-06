@@ -14,6 +14,16 @@ const ParkingSlotSchema = new mongoose.Schema(
       trim: true,
       default: 'Main Campus',
     },
+    // Optional link to a ParkingLocation (a geo-located parking site).
+    // Kept optional so existing slots created before multi-location support
+    // keep working off the plain `location` text field above; slots that
+    // do have a locationId also get their `location` string kept in sync
+    // with the location's name (see AdminService).
+    locationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ParkingLocation',
+      default: null,
+    },
     floor: {
       type: String,
       trim: true,
@@ -45,6 +55,7 @@ const ParkingSlotSchema = new mongoose.Schema(
 // ─── Indexes ───────────────────────────────────────────────────────────────────
 ParkingSlotSchema.index({ status: 1 });
 ParkingSlotSchema.index({ slotType: 1 });
+ParkingSlotSchema.index({ locationId: 1 });
 
 // ─── Instance Methods ──────────────────────────────────────────────────────────
 ParkingSlotSchema.methods.isAvailable = function () {

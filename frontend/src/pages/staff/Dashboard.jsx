@@ -3,6 +3,7 @@ import Layout, { PageHeader } from '../../components/Layout';
 import Modal from '../../components/Modal';
 import { StatCard, StatusBadge, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
+import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
@@ -10,15 +11,17 @@ import { getSocket } from '../../lib/socket';
 
 export default function StaffDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ Booked: '--', Occupied: '--', Available: '--', total: '--' });
-  const [rows, setRows] = useState([]);
+  // Cached so revisiting this page shows the last-known numbers instantly
+  // instead of flashing back to "--" while a fresh copy loads.
+  const [stats, setStats] = useCachedState('staff:dashboard:stats', { Booked: '--', Occupied: '--', Available: '--', total: '--' });
+  const [rows, setRows] = useCachedState('staff:dashboard:rows', []);
   const [bill, setBill] = useState(null);
 
   const load = useCallback(async () => {
     const [s, bk] = await Promise.all([apiRequest('/slots/stats'), apiRequest('/staff/bookings?limit=100')]);
     if (s && s.success) setStats(s.data);
     if (bk && bk.success) setRows(bk.data);
-  }, []);
+  }, [setStats, setRows]);
 
   useEffect(() => {
     load();

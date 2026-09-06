@@ -111,6 +111,47 @@ class AdminController {
       next(err);
     }
   }
+
+  // ─── Parking Location Management (multi-location support) ─────────────────────
+  // GET /api/admin/locations
+  async getLocations(req, res, next) {
+    try {
+      const locations = await AdminService.listLocations();
+      res.json({ success: true, count: locations.length, data: locations });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /api/admin/locations
+  async createLocation(req, res, next) {
+    try {
+      const location = await AdminService.createLocation(req.body);
+      res.status(201).json({ success: true, message: 'Parking location created.', data: location });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // PUT /api/admin/locations/:id
+  async updateLocation(req, res, next) {
+    try {
+      const location = await AdminService.updateLocation(req.params.id, req.body);
+      res.json({ success: true, message: 'Parking location updated.', data: location });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // DELETE /api/admin/locations/:id
+  async deleteLocation(req, res, next) {
+    try {
+      const result = await AdminService.deleteLocation(req.params.id);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new AdminController();

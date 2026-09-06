@@ -9,7 +9,7 @@ import { useInfiniteList } from '../../lib/useInfiniteList';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
 
-const emptyForm = { slotNumber: '', hourlyRate: '', slotType: 'standard', location: '', floor: '' };
+const emptyForm = { slotNumber: '', hourlyRate: '', slotType: 'standard', location: '', floor: '', locationId: '' };
 
 export default function AdminSlots() {
   const [fType, setFType] = useState('');
@@ -45,6 +45,18 @@ export default function AdminSlots() {
   const [priceVal, setPriceVal] = useState('');
   const [priceBusy, setPriceBusy] = useState(false);
 
+  // Parking locations (multi-location support) — used as an optional
+  // picker in the Add Slot form so new slots can be geo-linked for
+  // Nearby Parking / in-app navigation. Existing free-text `location`
+  // entry still works exactly as before if left on "custom text".
+  const [locations, setLocations] = useState([]);
+  useEffect(() => {
+    (async () => {
+      const d = await apiRequest('/admin/locations');
+      if (d && d.success) setLocations(d.data);
+    })();
+  }, []);
+
   useEffect(() => {
     const socket = getSocket();
     socket.on('slotUpdated', refresh);
@@ -73,6 +85,7 @@ export default function AdminSlots() {
         slotType: form.slotType,
         location: form.location || 'Main Campus',
         floor: form.floor || 'Ground',
+        locationId: form.locationId || undefined,
       },
     });
     setAddBusy(false);
@@ -195,7 +208,25 @@ export default function AdminSlots() {
               <option value="ev">EV Charging</option>
             </select>
           </div>
-          <div className="ag-input-group" style={{ margin: 0 }}><label className="ag-label">Location</label><input className="ag-input" placeholder="Block A" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+          <div className="ag-input-group" style={{ margin: 0, gridColumn: '1 / -1' }}>
+            <label className="ag-label">Parking Location (multi-location — optional)</label>
+            <select
+              className="ag-select"
+              value={form.locationId}
+              onChange={(e) => {
+                const locationId = e.target.value;
+                const picked = locations.find((l) => l._id === locationId);
+                setForm({ ...form, locationId, location: picked ? picked.name : form.location });
+              }}
+            >
+              <option value="">— Use custom text field below —</option>
+              {locations.map((l) => <option key={l._id} value={l._id}>{l.name}</option>)}
+            </select>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>
+              Linking a geo-located parking location enables it to show up in users&apos; Nearby Parking search and in-app navigation. Manage locations from the Parking Locations page.
+            </div>
+          </div>
+          <div className="ag-input-group" style={{ margin: 0 }}><label className="ag-label">Location</label><input className="ag-input" placeholder="Block A" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} disabled={!!form.locationId} /></div>
           <div className="ag-input-group" style={{ margin: 0 }}><label className="ag-label">Floor</label><input className="ag-input" placeholder="Ground" value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value })} /></div>
         </div>
       </Modal>

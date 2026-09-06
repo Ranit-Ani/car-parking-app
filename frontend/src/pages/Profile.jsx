@@ -5,19 +5,23 @@ import Modal from '../components/Modal';
 import OtpInput from '../components/OtpInput';
 import { ActionButton } from '../components/Bits';
 import { apiRequest } from '../lib/api';
+import { useCachedState } from '../lib/useCachedState';
+import { showToast } from '../lib/toast';
 import { formatDate } from '../lib/utils';
+import { isValidVehicleNumber, normalizeVehicleNumber } from '../lib/vehicleValidation';
 import { useAuth } from '../context/AuthContext';
 
 export default function Profile() {
   const { user, updateUser, logout } = useAuth();
   const fileRef = useRef(null);
 
-  const [profile, setProfile] = useState(null);
-  const [name, setName] = useState('');
+  // Cached so navigating back to Profile shows the previously-loaded
+  // profile immediately instead of the "Loading..." placeholder again.
+  const [profile, setProfile] = useCachedState('profile:me', null);
+  const [name, setName] = useState(() => profile?.name || '');
   const [photoBase64, setPhotoBase64] = useState(undefined); // undefined = unchanged
-  const [preview, setPreview] = useState('');
+  const [preview, setPreview] = useState(() => profile?.profilePhoto || '');
   const [saveBusy, setSaveBusy] = useState(false);
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
 
   const [curPwd, setCurPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
@@ -37,7 +41,7 @@ export default function Profile() {
   const [deleteAlert, setDeleteAlert] = useState({ message: '', type: 'info' });
 
   // ─── Saved Vehicles (Rule 3) ───────────────────────────────────────────────
-  const [vehicles, setVehicles] = useState([]);
+  const [vehicles, setVehicles] = useCachedState('profile:vehicles', []);
   const [vehicleModal, setVehicleModal] = useState(false);
   const [vCategory, setVCategory] = useState('');
   const [vNumber, setVNumber] = useState('');
@@ -48,6 +52,7 @@ export default function Profile() {
   const [vScanBusy, setVScanBusy] = useState(false);
 
   const isUserRole = user?.role === 'user';
+  const vNumberValid = vPending || isValidVehicleNumber(vNumber);
 
   const loadVehicles = async () => {
     const d = await apiRequest('/auth/vehicles');
@@ -98,16 +103,17 @@ export default function Profile() {
   async function saveNewVehicle() {
     if (!vCategory) return setVAlert({ message: 'Select a vehicle category.', type: 'warning' });
     if (!vPending && !vNumber.trim()) return setVAlert({ message: 'Enter a registration number, or mark as Registration Pending.', type: 'warning' });
+    if (!vPending && !isValidVehicleNumber(vNumber)) return setVAlert({ message: 'Please enter a valid vehicle registration number.', type: 'warning' });
     setVBusy(true);
     const d = await apiRequest('/auth/vehicles', {
       method: 'POST',
-      body: { category: vCategory, vehicleNumber: vPending ? null : vNumber.trim(), registrationPending: vPending, nickname: vNickname.trim() || undefined },
+      body: { category: vCategory, vehicleNumber: vPending ? null : normalizeVehicleNumber(vNumber), registrationPending: vPending, nickname: vNickname.trim() || undefined },
     });
     setVBusy(false);
     if (d && d.success) {
       setVehicleModal(false);
       loadVehicles();
-      setAlert({ message: 'Vehicle saved.', type: 'success' });
+      showToast('Vehicle saved.', 'success');
     } else {
       setVAlert({ message: (d && d.message) || 'Failed to save vehicle.', type: 'danger' });
     }
@@ -116,8 +122,8 @@ export default function Profile() {
   async function removeVehicle(id) {
     if (!confirm('Remove this vehicle from your account?')) return;
     const d = await apiRequest('/auth/vehicles/' + id, { method: 'DELETE' });
-    if (d && d.success) { loadVehicles(); setAlert({ message: 'Vehicle removed.', type: 'success' }); }
-    else setAlert({ message: (d && d.message) || 'Failed to remove vehicle.', type: 'danger' });
+    if (d && d.success) { loadVehicles(); showToast('Vehicle removed.', 'success'); }
+    else showToast((d && d.message) || 'Failed to remove vehicle.', 'danger');
   }
 
   useEffect(() => {
@@ -135,7 +141,7 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      setAlert({ message: 'Photo must be under 2MB.', type: 'warning' });
+      showToast('Photo must be under 2MB.', 'warning');
       return;
     }
     const reader = new FileReader();
@@ -156,23 +162,23 @@ export default function Profile() {
     if (d && d.success) {
       updateUser(d.user);
       setProfile((p) => ({ ...p, ...d.user }));
-      setAlert({ message: 'Profile updated successfully!', type: 'success' });
+      showToast('Profile updated successfully!', 'success');
     } else {
-      setAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
   async function savePassword(e) {
     e.preventDefault();
-    if (newPwd !== confPwd) return setAlert({ message: 'New passwords do not match.', type: 'danger' });
+    if (newPwd !== confPwd) return showToast('New passwords do not match.', 'danger');
     setPwdBusy(true);
     const d = await apiRequest('/auth/change-password', { method: 'PUT', body: { currentPassword: curPwd, newPassword: newPwd } });
     setPwdBusy(false);
     if (d && d.success) {
-      setAlert({ message: 'Password updated!', type: 'success' });
+      showToast('Password updated!', 'success');
       setCurPwd(''); setNewPwd(''); setConfPwd('');
     } else {
-      setAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
@@ -204,7 +210,7 @@ export default function Profile() {
       updateUser(d.user);
       setProfile((p) => ({ ...p, email: d.user.email }));
       setEmailModal(false);
-      setAlert({ message: 'Email updated to ' + d.user.email, type: 'success' });
+      showToast('Email updated to ' + d.user.email, 'success');
     } else {
       setEmailAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
     }
@@ -226,7 +232,6 @@ export default function Profile() {
 
   return (
     <Layout title="Operator Profile" badge={false}>
-      <Alert message={alert.message} type={alert.type} />
       <div className="profile-grid">
 
         <div className="ag-card ag-card-body">
@@ -398,7 +403,13 @@ export default function Profile() {
           footer={(
             <>
               <button className="btn-ag ghost" onClick={() => setVehicleModal(false)}>Cancel</button>
-              <ActionButton busy={vBusy} busyLabel="Saving..." className="btn-ag green" onClick={saveNewVehicle}>
+              <ActionButton
+                busy={vBusy}
+                busyLabel="Saving..."
+                className="btn-ag green"
+                onClick={saveNewVehicle}
+                disabled={vBusy || !vCategory || !vNumberValid}
+              >
                 <i className="bi bi-check-circle" /> Save Vehicle
               </ActionButton>
             </>
@@ -422,15 +433,24 @@ export default function Profile() {
                 type="text"
                 placeholder="e.g. WB 02 AB 1234"
                 value={vPending ? '' : vNumber}
-                onChange={(e) => setVNumber(e.target.value.toUpperCase())}
+                onChange={(e) => setVNumber(e.target.value)}
                 disabled={vPending}
-                style={{ flex: 1, ...(vPending ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                autoComplete="off"
+                spellCheck={false}
+                style={{ flex: 1, textTransform: 'uppercase', ...(vPending ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
               />
               <label className="btn-ag plasma sm" style={{ flexShrink: 0, cursor: vPending || vScanBusy ? 'not-allowed' : 'pointer', opacity: vPending || vScanBusy ? 0.5 : 1 }}>
                 {vScanBusy ? <span className="spinner-border-sm" /> : <i className="bi bi-camera" />}
                 <input type="file" accept="image/*" capture="environment" onChange={scanVehiclePlate} disabled={vPending || vScanBusy} style={{ display: 'none' }} />
               </label>
             </div>
+            {!vPending && vNumber.trim() && !vNumberValid && (
+              <div style={{ fontSize: '.72rem', color: 'var(--nova, #ff3c78)', marginTop: '.35rem' }}>
+                Please enter a valid vehicle registration number.
+              </div>
+            )}
             <label className="ag-check-row">
               <input type="checkbox" checked={vPending} onChange={(e) => setVPending(e.target.checked)} />
               <span>Registration Pending (New Vehicle)</span>

@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const { generateOTP, sendOTP } = require('../utils/emailService');
 const AppError = require('../utils/AppError');
+const { isValidVehicleNumber, normalizeVehicleNumber } = require('../utils/vehicleValidation');
 
 const OTP_EXPIRE = parseInt(process.env.OTP_EXPIRE_MINUTES || '10');
 
@@ -195,7 +196,7 @@ exports.changePassword = async (req, res, next) => {
       return next(new AppError('New password must be at least 6 characters', 400));
     const user = await User.findById(req.user.id).select('+password');
     if (!(await user.matchPassword(currentPassword)))
-      return next(new AppError('Current password is incorrect', 401));
+      return next(new AppError('Current password is incorrect', 400));
     user.password = newPassword;
     await user.save();
     res.json({ success: true, message: 'Password updated successfully' });
@@ -320,7 +321,7 @@ exports.deleteAccount = async (req, res, next) => {
     const user = await User.findById(req.user.id).select('+password');
     if (!user) return next(new AppError('User not found', 404));
     if (!(await user.matchPassword(password)))
-      return next(new AppError('Incorrect password', 401));
+      return next(new AppError('Incorrect password', 400));
     await User.findByIdAndDelete(req.user.id);
     res.json({ success: true, message: 'Account permanently deleted.' });
   } catch (err) { next(err); }
@@ -348,13 +349,15 @@ exports.addVehicle = async (req, res, next) => {
     const isPending = !!registrationPending;
     if (!isPending && (!vehicleNumber || !vehicleNumber.trim()))
       return next(new AppError('Vehicle registration number is required, or mark as Registration Pending.', 400));
+    if (!isPending && !isValidVehicleNumber(vehicleNumber))
+      return next(new AppError('Please enter a valid vehicle registration number.', 400));
 
     const user = await User.findById(req.user.id);
     if (!user) return next(new AppError('User not found', 404));
 
     user.vehicles.push({
       category,
-      vehicleNumber: isPending ? null : vehicleNumber.trim().toUpperCase(),
+      vehicleNumber: isPending ? null : normalizeVehicleNumber(vehicleNumber),
       registrationPending: isPending,
       nickname: nickname ? nickname.trim() : null,
     });
@@ -380,11 +383,13 @@ exports.updateVehicle = async (req, res, next) => {
       vehicle.category = category;
     }
     if (registrationPending !== undefined) vehicle.registrationPending = !!registrationPending;
-    if (vehicleNumber !== undefined) vehicle.vehicleNumber = vehicle.registrationPending ? null : (vehicleNumber ? vehicleNumber.trim().toUpperCase() : null);
+    if (vehicleNumber !== undefined) vehicle.vehicleNumber = vehicle.registrationPending ? null : (vehicleNumber ? normalizeVehicleNumber(vehicleNumber) : null);
     if (nickname !== undefined) vehicle.nickname = nickname ? nickname.trim() : null;
 
     if (!vehicle.registrationPending && !vehicle.vehicleNumber)
       return next(new AppError('Vehicle registration number is required, or mark as Registration Pending.', 400));
+    if (!vehicle.registrationPending && !isValidVehicleNumber(vehicle.vehicleNumber))
+      return next(new AppError('Please enter a valid vehicle registration number.', 400));
 
     await user.save();
     res.json({ success: true, message: 'Vehicle updated.', data: vehicle });

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { slotValidator } = require('../middleware/validation.middleware');
+const { slotValidator, locationValidator } = require('../middleware/validation.middleware');
 
 router.use(protect);
 router.use(authorize('admin'));
@@ -21,5 +21,11 @@ router.post('/slots', slotValidator, adminController.createSlot);
 router.put('/slots/:id', adminController.updateSlot);
 router.delete('/slots/:id', adminController.deleteSlot);
 router.put('/slots/:id/pricing', adminController.updatePricing);
+
+// Parking Location Management (multi-location support for Nearby Parking)
+router.get('/locations', adminController.getLocations);
+router.post('/locations', locationValidator, adminController.createLocation);
+router.put('/locations/:id', adminController.updateLocation);
+router.delete('/locations/:id', adminController.deleteLocation);
 
 module.exports = router;

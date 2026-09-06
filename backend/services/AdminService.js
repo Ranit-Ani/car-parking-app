@@ -1,8 +1,26 @@
 const User = require('../models/User');
 const ParkingSlot = require('../models/ParkingSlot');
+const ParkingLocation = require('../models/ParkingLocation');
 const Booking = require('../models/Booking');
 const Revenue = require('../models/Revenue');
 const { getIO } = require('../socket');
+
+function parseAmenities(amenities) {
+  if (amenities === undefined) return undefined;
+  if (Array.isArray(amenities)) return amenities.map((a) => String(a).trim()).filter(Boolean);
+  return String(amenities).split(',').map((a) => a.trim()).filter(Boolean);
+}
+
+function parseLatLng(latitude, longitude) {
+  const lat = parseFloat(latitude);
+  const lng = parseFloat(longitude);
+  if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    const err = new Error('Please provide a valid latitude (-90 to 90) and longitude (-180 to 180).');
+    err.statusCode = 400;
+    throw err;
+  }
+  return { lat, lng };
+}
 
 /**
  * AdminService - Admin dashboard and management operations
@@ -14,7 +32,7 @@ class AdminService {
       ParkingSlot.getSlotStats(),
       Booking.getRevenue(),
       Booking.countDocuments({ status: { $in: ['Booked', 'Active'] } }),
-      User.countDocuments({ role: 'user' }),
+      User.countDocuments({ role: 'user', isEmailVerified: true }),
     ]);
 
     const occupancyRate =
@@ -43,9 +61,13 @@ class AdminService {
   // ─── User Management ──────────────────────────────────────────────────────────
   async getAllUsers(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
+    // Only show accounts that actually completed OTP verification.
+    // Records created by /register/initiate but never verified are
+    // pending signups, not real users, and should not appear here.
+    const filter = { isEmailVerified: true };
     const [users, total] = await Promise.all([
-      User.find().select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit),
-      User.countDocuments(),
+      User.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit),
+      User.countDocuments(filter),
     ]);
     return { users, total, page, pages: Math.ceil(total / limit) };
   }
@@ -96,12 +118,36 @@ class AdminService {
       err.statusCode = 400;
       throw err;
     }
+
+    // A slot linked to a ParkingLocation keeps its legacy `location` text
+    // field in sync with that location's name, so older UI/reports that
+    // just read `location` as a plain string keep working unchanged.
+    if (slotData.locationId) {
+      const loc = await ParkingLocation.findById(slotData.locationId);
+      if (!loc) {
+        const err = new Error('Selected parking location was not found.');
+        err.statusCode = 400;
+        throw err;
+      }
+      slotData.location = loc.name;
+    }
+
     const slot = await ParkingSlot.create(slotData);
     getIO().emit('slotUpdated', { slotId: slot._id, status: slot.status, created: true });
     return slot;
   }
 
   async updateSlot(slotId, updateData) {
+    if (updateData.locationId) {
+      const loc = await ParkingLocation.findById(updateData.locationId);
+      if (!loc) {
+        const err = new Error('Selected parking location was not found.');
+        err.statusCode = 400;
+        throw err;
+      }
+      updateData.location = loc.name;
+    }
+
     const slot = await ParkingSlot.findByIdAndUpdate(slotId, updateData, {
       new: true,
       runValidators: true,
@@ -143,6 +189,104 @@ class AdminService {
       throw err;
     }
     return this.updateSlot(slotId, { hourlyRate });
+  }
+
+  // ─── Parking Location Management (multi-location support) ─────────────────────
+  async listLocations() {
+    const [locations, counts] = await Promise.all([
+      ParkingLocation.find().sort({ name: 1 }),
+      ParkingSlot.aggregate([
+        {
+          $group: {
+            _id: '$locationId',
+            totalSlots: { $sum: 1 },
+            availableSlots: { $sum: { $cond: [{ $eq: ['$status', 'Available'] }, 1, 0] } },
+          },
+        },
+      ]),
+    ]);
+
+    const byId = new Map(counts.filter((c) => c._id).map((c) => [c._id.toString(), c]));
+
+    return locations.map((loc) => {
+      const obj = loc.toObject();
+      const c = byId.get(loc._id.toString());
+      obj.totalSlots = c ? c.totalSlots : 0;
+      obj.availableSlots = c ? c.availableSlots : 0;
+      return obj;
+    });
+  }
+
+  async createLocation(data) {
+    const { name, address, description, amenities, latitude, longitude } = data;
+    if (!name || !name.trim()) {
+      const err = new Error('Location name is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+    const { lat, lng } = parseLatLng(latitude, longitude);
+
+    const location = await ParkingLocation.create({
+      name: name.trim(),
+      address: (address || '').trim(),
+      description: (description || '').trim(),
+      amenities: parseAmenities(amenities) || [],
+      geo: { type: 'Point', coordinates: [lng, lat] },
+    });
+
+    getIO().emit('locationUpdated', { locationId: location._id, created: true });
+    return location;
+  }
+
+  async updateLocation(locationId, data) {
+    const update = {};
+    if (data.name !== undefined) update.name = data.name.trim();
+    if (data.address !== undefined) update.address = data.address.trim();
+    if (data.description !== undefined) update.description = data.description.trim();
+    if (data.amenities !== undefined) update.amenities = parseAmenities(data.amenities);
+    if (data.isActive !== undefined) update.isActive = !!data.isActive;
+    if (data.latitude !== undefined && data.longitude !== undefined) {
+      const { lat, lng } = parseLatLng(data.latitude, data.longitude);
+      update.geo = { type: 'Point', coordinates: [lng, lat] };
+    }
+
+    const location = await ParkingLocation.findByIdAndUpdate(locationId, update, {
+      new: true,
+      runValidators: true,
+    });
+    if (!location) {
+      const err = new Error('Parking location not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Slots linked to this location display its name, so keep them in sync
+    // if the name changed.
+    if (update.name) {
+      await ParkingSlot.updateMany({ locationId: location._id }, { location: update.name });
+    }
+
+    getIO().emit('locationUpdated', { locationId: location._id });
+    return location;
+  }
+
+  async deleteLocation(locationId) {
+    const slotCount = await ParkingSlot.countDocuments({ locationId });
+    if (slotCount > 0) {
+      const err = new Error('Cannot delete a location that still has parking slots assigned to it. Reassign or remove those slots first.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const location = await ParkingLocation.findByIdAndDelete(locationId);
+    if (!location) {
+      const err = new Error('Parking location not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    getIO().emit('locationDeleted', { locationId });
+    return { message: 'Parking location deleted successfully.' };
   }
 }
 

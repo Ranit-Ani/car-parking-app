@@ -80,13 +80,8 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   display:flex;align-items:center;justify-content:center;font-size:1.1rem;
   background:linear-gradient(135deg,var(--plasma),var(--pulse));color:var(--void);
   box-shadow:0 0 25px rgba(0,240,255,.5);flex-shrink:0;
-  animation:iconOrbit 4s ease-in-out infinite;
 }
 .brand-icon.admin-icon{background:linear-gradient(135deg,var(--nova),#cc003a);box-shadow:0 0 25px rgba(255,60,120,.5)}
-@keyframes iconOrbit{
-  0%,100%{transform:translateY(0) scale(1)}
-  50%{transform:translateY(-4px) scale(1.05)}
-}
 .brand-text{font-family:'Exo 2',sans-serif;font-size:.78rem;font-weight:700;color:var(--t1);letter-spacing:.1em}
 .brand-sub{font-family:'Syne',sans-serif;font-size:.6rem;color:var(--plasma);letter-spacing:.18em;text-transform:uppercase}
 .sidebar-nav{flex:1;padding:.9rem .7rem;display:flex;flex-direction:column;gap:.2rem}
@@ -122,7 +117,10 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.4rem;
   text-decoration:none;font-family:'DM Sans',sans-serif;
 }
-.btn-logout:hover{background:rgba(255,60,120,.18);color:var(--nova);transform:translateY(-1px)}
+.btn-logout:hover{background:rgba(255,60,120,.18);color:var(--nova)}
+@media (hover:hover) and (pointer:fine){
+  .btn-logout:hover{transform:translateY(-1px)}
+}
 
 /* ══════════════════════════════════════════════════════════════
    MAIN LAYOUT
@@ -158,8 +156,10 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,var(--plasma),transparent);opacity:0;transition:.3s;
 }
-.ag-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-float);border-color:rgba(0,240,255,.15)}
-.ag-card:hover::before{opacity:1}
+@media (hover:hover) and (pointer:fine){
+  .ag-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-float);border-color:rgba(0,240,255,.15)}
+  .ag-card:hover::before{opacity:1}
+}
 .ag-card-body{padding:1.4rem}
 
 /* ── Stat Cards ───────────────────────────────────────────────── */
@@ -175,7 +175,9 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .stat-card.nova::after{background:var(--nova);box-shadow:var(--glow-nova)}
 .stat-card.nebula::after{background:var(--nebula);box-shadow:0 0 10px rgba(139,92,246,.4)}
 .stat-card.pulse::after{background:var(--pulse);box-shadow:0 0 10px rgba(0,117,255,.4)}
-.stat-card:hover{transform:translateY(-5px) scale(1.01);box-shadow:var(--shadow-float);border-color:rgba(0,240,255,.15)}
+@media (hover:hover) and (pointer:fine){
+  .stat-card:hover{transform:translateY(-5px) scale(1.01);box-shadow:var(--shadow-float);border-color:rgba(0,240,255,.15)}
+}
 .stat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
 .stat-icon.plasma{background:rgba(0,240,255,.1);color:var(--plasma);box-shadow:0 0 18px rgba(0,240,255,.15)}
 .stat-icon.aurora{background:rgba(0,255,179,.1);color:var(--aurora);box-shadow:0 0 18px rgba(0,255,179,.12)}
@@ -185,11 +187,11 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .stat-icon.pulse{background:rgba(0,117,255,.1);color:var(--pulse);box-shadow:0 0 18px rgba(0,117,255,.12)}
 .stat-value{font-family:'Exo 2',sans-serif;font-size:1.7rem;font-weight:700;line-height:1;margin:.5rem 0 .2rem}
 .stat-label{font-family:'Syne',sans-serif;font-size:.65rem;color:var(--t2);letter-spacing:.1em;text-transform:uppercase}
-/* Staggered levitation */
-.stat-card:nth-child(1){animation:riseIn .5s ease forwards,levitate 5s ease-in-out .3s infinite}
-.stat-card:nth-child(2){animation:riseIn .5s .06s ease forwards,levitate 5s ease-in-out .9s infinite}
-.stat-card:nth-child(3){animation:riseIn .5s .12s ease forwards,levitate 5s ease-in-out 1.5s infinite}
-.stat-card:nth-child(4){animation:riseIn .5s .18s ease forwards,levitate 5s ease-in-out 2.1s infinite}
+/* Staggered entrance only — no infinite motion after mount */
+.stat-card:nth-child(1){animation:riseIn .5s ease forwards}
+.stat-card:nth-child(2){animation:riseIn .5s .06s ease forwards}
+.stat-card:nth-child(3){animation:riseIn .5s .12s ease forwards}
+.stat-card:nth-child(4){animation:riseIn .5s .18s ease forwards}
 
 /* ══════════════════════════════════════════════════════════════
    TABLES
@@ -216,7 +218,9 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 }
 .btn-ag::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);opacity:0;transition:.2s}
 .btn-ag:hover::before{opacity:1}
-.btn-ag:hover{transform:translateY(-2px)}
+@media (hover:hover) and (pointer:fine){
+  .btn-ag:hover{transform:translateY(-2px)}
+}
 .btn-ag:active{transform:translateY(0)}
 .btn-ag.primary{background:linear-gradient(135deg,var(--pulse),#004db3);color:white;box-shadow:0 4px 20px rgba(0,117,255,.3)}
 .btn-ag.primary:hover{box-shadow:0 6px 28px rgba(0,117,255,.5);color:white}
@@ -339,7 +343,9 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .slot-tile::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
 .slot-tile.available{border-color:rgba(0,255,179,.2);cursor:pointer}
 .slot-tile.available::after{background:var(--aurora);box-shadow:0 0 8px var(--aurora)}
-.slot-tile.available:hover{transform:translateY(-7px) scale(1.04);box-shadow:0 14px 40px rgba(0,255,179,.15);border-color:var(--aurora);background:rgba(0,255,179,.04)}
+@media (hover:hover) and (pointer:fine){
+  .slot-tile.available:hover{transform:translateY(-7px) scale(1.04);box-shadow:0 14px 40px rgba(0,255,179,.15);border-color:var(--aurora);background:rgba(0,255,179,.04)}
+}
 .slot-tile.booked{border-color:rgba(255,184,0,.15);opacity:.7}
 .slot-tile.booked::after{background:var(--solar)}
 .slot-tile.occupied{border-color:rgba(255,60,120,.15);opacity:.7}
@@ -383,7 +389,6 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   width:58px;height:58px;background:linear-gradient(135deg,var(--plasma),var(--pulse));
   border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;
   color:var(--void);margin:0 auto .7rem;box-shadow:0 0 35px rgba(0,240,255,.45);
-  animation:iconOrbit 4s ease-in-out infinite;
 }
 .auth-logo h1{font-family:'Exo 2',sans-serif;font-size:1rem;letter-spacing:.12em;color:var(--t1)}
 .auth-logo p{font-family:'Syne',sans-serif;font-size:.68rem;color:var(--plasma);letter-spacing:.15em;text-transform:uppercase;margin-top:.25rem}
@@ -419,7 +424,9 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .hero-actions{display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap;animation:fadeUp .65s .3s ease both}
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;max-width:980px;margin:4rem auto 0;padding:0 1.5rem}
 .feature-card{background:var(--card);border:1px solid var(--t4);border-radius:var(--r-card);padding:1.65rem;text-align:center;transition:all .3s;animation:riseIn .5s ease forwards}
-.feature-card:hover{transform:translateY(-6px);border-color:rgba(0,240,255,.15);box-shadow:var(--shadow-float)}
+@media (hover:hover) and (pointer:fine){
+  .feature-card:hover{transform:translateY(-6px);border-color:rgba(0,240,255,.15);box-shadow:var(--shadow-float)}
+}
 .feature-icon{width:58px;height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 1.2rem}
 
 /* ══════════════════════════════════════════════════════════════
@@ -457,7 +464,6 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes toastIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
-@keyframes levitate{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes rotateScan{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 @keyframes shimmer{from{left:-100%}to{left:100%}}
@@ -473,7 +479,18 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;max-width:900px}
 .dash-two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%);transition:transform .3s ease}
+  .sidebar{
+    transform:translateX(-100%);
+    transition:transform .3s ease;
+    will-change:transform;
+    /* Backdrop blur is expensive to recomposite every frame while the
+       sidebar is animating — swap it for a solid panel on mobile so the
+       open/close slide stays smooth. */
+    backdrop-filter:none;
+    background:rgba(4,9,18,.99);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
   .sidebar.open{transform:translateX(0)}
   .main-content{margin-left:0}
   .page-content{padding:1rem}
@@ -486,11 +503,18 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   }
   .sidebar-overlay{
     position:fixed;inset:0;z-index:190;
-    background:rgba(0,0,0,.55);backdrop-filter:blur(2px)
+    background:rgba(0,0,0,.55);
+    touch-action:none;
+    overscroll-behavior:contain;
   }
   .profile-grid{grid-template-columns:1fr}
   .dash-two-col{grid-template-columns:1fr}
 }
+
+/* Locks the page behind the mobile nav so scrolling inside the open
+   sidebar can't drag the underlying content with it. Toggled by JS
+   (see Layout.jsx) via a class on <body>. */
+body.nav-locked{overflow:hidden;height:100vh}
 
 /* ── Public Footer ────────────────────────────────────────────── */
 .pub-footer{position:relative;z-index:1;border-top:1px solid var(--t4);padding:1.5rem 1.5rem;max-width:980px;margin:0 auto}
@@ -498,3 +522,10 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .pub-footer-credit{color:var(--t2);font-weight:600;letter-spacing:.03em}
 
 @media(max-width:560px){.pub-footer-bottom{justify-content:center;text-align:center}}
+
+/* ── Motion safety net ────────────────────────────────────────── */
+/* Anyone with reduced-motion set (common default on lower-end phones)
+   gets a static, non-animated UI instead of fighting janky transitions. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}

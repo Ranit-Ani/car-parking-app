@@ -6,13 +6,17 @@ import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
+import { useCachedState } from '../../lib/useCachedState';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
+import { isValidVehicleNumber, normalizeVehicleNumber } from '../../lib/vehicleValidation';
 
 export default function UserSlots() {
   const [filterType, setFilterType] = useState('');
   const [filterLoc, setFilterLoc] = useState('');
-  const [counts, setCounts] = useState({ Available: '--', Booked: '--', Occupied: '--', total: '--' });
+  // Cached so the header counts don't flash back to "--" every time this
+  // page is revisited.
+  const [counts, setCounts] = useCachedState('user:slots:counts', { Available: '--', Booked: '--', Occupied: '--', total: '--' });
   const [alert, setAlert] = useState({ message: '', type: 'info' });
 
   const [selSlot, setSelSlot] = useState(null);
@@ -24,6 +28,8 @@ export default function UserSlots() {
   const [saveVehicle, setSaveVehicle] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [invalidField, setInvalidField] = useState(null); // 'category' | 'number' | null
+
+  const isNewVehicleNumberValid = registrationPending || isValidVehicleNumber(vehicleNumber);
 
   const buildUrl = useCallback((page, limit) => {
     let url = `/slots/all?page=${page}&limit=${limit}`;
@@ -41,7 +47,7 @@ export default function UserSlots() {
   const loadStats = useCallback(async () => {
     const stats = await apiRequest('/slots/stats');
     if (stats && stats.success) setCounts(stats.data);
-  }, []);
+  }, [setCounts]);
 
   useEffect(() => {
     loadStats();
@@ -117,8 +123,12 @@ export default function UserSlots() {
         pulseInvalid('number');
         return setAlert({ message: 'Enter your vehicle registration number, or check "Registration Pending".', type: 'warning' });
       }
+      if (!registrationPending && !isValidVehicleNumber(vehicleNumber)) {
+        pulseInvalid('number');
+        return setAlert({ message: 'Please enter a valid vehicle registration number.', type: 'warning' });
+      }
       body.vehicleCategory = vehicleCategory;
-      body.vehicleNumber = registrationPending ? null : vehicleNumber.trim();
+      body.vehicleNumber = registrationPending ? null : normalizeVehicleNumber(vehicleNumber);
       body.registrationPending = registrationPending;
       body.saveVehicle = saveVehicle;
     }
@@ -207,7 +217,13 @@ export default function UserSlots() {
         footer={(
           <>
             <button className="btn-ag ghost" onClick={() => setSelSlot(null)}>Cancel</button>
-            <ActionButton busy={confirmBusy} busyLabel="Booking..." className="btn-ag green" onClick={confirmBooking}>
+            <ActionButton
+              busy={confirmBusy}
+              busyLabel="Booking..."
+              className="btn-ag green"
+              onClick={confirmBooking}
+              disabled={confirmBusy || (!vehicleChoice && (!vehicleCategory || !isNewVehicleNumberValid))}
+            >
               <i className="bi bi-check-circle" /> Confirm Booking
             </ActionButton>
           </>
@@ -272,12 +288,21 @@ export default function UserSlots() {
                       type="text"
                       placeholder="e.g. WB 02 AB 1234"
                       value={registrationPending ? '' : vehicleNumber}
-                      onChange={(e) => { setVehicleNumber(e.target.value.toUpperCase()); setInvalidField(null); }}
+                      onChange={(e) => { setVehicleNumber(e.target.value); setInvalidField(null); }}
                       disabled={registrationPending}
                       required={!registrationPending}
-                      style={registrationPending ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      autoComplete="off"
+                      spellCheck={false}
+                      style={{ textTransform: 'uppercase', ...(registrationPending ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
                     />
                   </div>
+                  {!registrationPending && vehicleNumber.trim() && !isNewVehicleNumberValid && (
+                    <div style={{ fontSize: '0.72rem', color: 'var(--neon-orange)', marginTop: '0.35rem' }}>
+                      Please enter a valid vehicle registration number.
+                    </div>
+                  )}
                   <label className="ag-check-row">
                     <input
                       type="checkbox"

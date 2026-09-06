@@ -7,7 +7,7 @@ class SlotController {
   // GET /api/slots - Get all available slots (paginated)
   async getAvailableSlots(req, res, next) {
     try {
-      const { type, location } = req.query;
+      const { type, location, locationId } = req.query;
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
       const skip = (page - 1) * limit;
@@ -15,9 +15,12 @@ class SlotController {
       const filter = { status: 'Available', isActive: true };
       if (type) filter.slotType = type;
       if (location) filter.location = new RegExp(location, 'i');
+      // Restrict to a single ParkingLocation - used by the Nearby Parking
+      // flow once the user has picked a location to see its available slots.
+      if (locationId) filter.locationId = locationId;
 
       const [slots, total] = await Promise.all([
-        ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit),
+        ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit).populate('locationId', 'name address geo'),
         ParkingSlot.countDocuments(filter),
       ]);
 
@@ -39,7 +42,7 @@ class SlotController {
   // GET /api/slots/all - Get all slots (with status), paginated
   async getAllSlots(req, res, next) {
     try {
-      const { status, type, search } = req.query;
+      const { status, type, search, locationId } = req.query;
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
       const skip = (page - 1) * limit;
@@ -47,13 +50,14 @@ class SlotController {
       const filter = { isActive: true };
       if (status) filter.status = status;
       if (type) filter.slotType = type;
+      if (locationId) filter.locationId = locationId;
       if (search) {
         const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         filter.$or = [{ slotNumber: re }, { location: re }, { floor: re }];
       }
 
       const [slots, total] = await Promise.all([
-        ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit),
+        ParkingSlot.find(filter).sort({ slotNumber: 1 }).skip(skip).limit(limit).populate('locationId', 'name address geo'),
         ParkingSlot.countDocuments(filter),
       ]);
 
@@ -75,7 +79,7 @@ class SlotController {
   // GET /api/slots/:id
   async getSlotById(req, res, next) {
     try {
-      const slot = await ParkingSlot.findById(req.params.id);
+      const slot = await ParkingSlot.findById(req.params.id).populate('locationId', 'name address geo');
       if (!slot) {
         return res.status(404).json({ success: false, message: 'Slot not found.' });
       }

@@ -3,12 +3,23 @@ import Layout from '../../components/Layout';
 import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
+import NavigateModal from '../../components/NavigateModal';
 import { StatusBadge, EmptyState } from '../../components/Bits';
 import { apiRequest, downloadFile } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { formatDate, formatDateTime } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
+
+// A booking's slot may be linked to a geo-located ParkingLocation (multi-
+// location support); when it is, we can offer in-app turn-by-turn
+// navigation to it. Older bookings whose slot has no location link simply
+// don't show the Navigate button.
+function destinationFor(booking) {
+  const loc = booking && booking.slotId && booking.slotId.locationId;
+  if (!loc || !loc.geo || !Array.isArray(loc.geo.coordinates)) return null;
+  return { lat: loc.geo.coordinates[1], lng: loc.geo.coordinates[0], name: loc.name };
+}
 
 const FILTERS = [
   { key: 'all', label: 'All', cls: 'primary' },
@@ -23,6 +34,7 @@ export default function UserBookings() {
   const [filter, setFilter] = useState('all');
   const [alert, setAlert] = useState({ message: '', type: 'info' });
   const [bill, setBill] = useState(null);
+  const [navBooking, setNavBooking] = useState(null);
 
   const buildUrl = useCallback((page, limit) => {
     let url = `/bookings?page=${page}&limit=${limit}`;
@@ -55,7 +67,11 @@ export default function UserBookings() {
   async function downloadReceipt(booking) {
     const filename = `receipt-${booking._id.slice(-8).toUpperCase()}.pdf`;
     const res = await downloadFile(`/bookings/${booking._id}/receipt`, filename);
-    if (!res.success) showToast(res.message || 'Could not download receipt.', 'danger');
+    if (res.success) {
+      if (res.message) showToast(res.message, 'success');
+    } else {
+      showToast(res.message || 'Could not download receipt.', 'danger');
+    }
   }
 
   return (
@@ -93,6 +109,11 @@ export default function UserBookings() {
                   <td><StatusBadge status={b.status} /></td>
                   <td>
                     {b.status === 'Booked' && <button className="btn-ag red sm" onClick={() => cancel(b._id)}>Cancel</button>}
+                    {(b.status === 'Booked' || b.status === 'Active') && destinationFor(b) && (
+                      <button className="btn-ag plasma sm" style={{ marginLeft: '0.35rem' }} onClick={() => setNavBooking(b)} title="Navigate to Parking">
+                        <i className="bi bi-signpost-2" /> Navigate
+                      </button>
+                    )}
                     {b.status === 'Completed' && (
                       <button className="btn-ag ghost sm" onClick={() => setBill(b)}><i className="bi bi-receipt" /></button>
                     )}
@@ -135,6 +156,8 @@ export default function UserBookings() {
           </>
         )}
       </Modal>
+
+      <NavigateModal show={!!navBooking} onClose={() => setNavBooking(null)} destination={navBooking ? destinationFor(navBooking) : null} />
     </Layout>
   );
 }

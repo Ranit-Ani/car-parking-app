@@ -4,10 +4,13 @@ import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
+import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
 
 export default function CheckIn() {
-  const [all, setAll] = useState([]);
+  // Cached so this list shows the last-known pending check-ins instantly on
+  // revisit instead of briefly looking empty while a fresh copy loads.
+  const [all, setAll] = useCachedState('staff:checkin:list', []);
   const [search, setSearch] = useState('');
   const [alert, setAlert] = useState({ message: '', type: 'info' });
   const [sel, setSel] = useState(null);
@@ -16,7 +19,7 @@ export default function CheckIn() {
   const load = useCallback(async () => {
     const d = await apiRequest('/staff/bookings/all?status=Booked&limit=100');
     if (d && d.success) setAll(d.data);
-  }, []);
+  }, [setAll]);
 
   useEffect(() => {
     load();
