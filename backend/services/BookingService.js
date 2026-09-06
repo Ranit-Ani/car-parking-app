@@ -102,23 +102,34 @@ class BookingService {
       }
     }
 
-    // Business Rule: Slot must be available
-    const slot = await ParkingSlot.findById(slotId);
-    if (!slot) {
-      const err = new Error('Parking slot not found.');
-      err.statusCode = 404;
-      throw err;
-    }
+    // Business Rule: Slot must be available.
+    //
+    // This must be a single atomic database operation, not a
+    // read-then-write (findById + save). Under concurrent requests for the
+    // same slot, two requests could both read status:'Available' before
+    // either one writes 'Booked', both pass the check, and both end up
+    // creating a Booking for the same slot. findOneAndUpdate() with the
+    // 'Available' condition baked into the filter closes that window:
+    // MongoDB only lets one matching update through, so only the first
+    // request to arrive can flip the slot to 'Booked' — every other
+    // concurrent request's filter simply stops matching and gets null back.
+    const slot = await ParkingSlot.findOneAndUpdate(
+      { _id: slotId, status: 'Available', isActive: true },
+      { $set: { status: 'Booked' } },
+      { new: true }
+    );
 
-    if (!slot.isAvailable()) {
-      const err = new Error(`Slot ${slot.slotNumber} is not available. Current status: ${slot.status}`);
+    if (!slot) {
+      const existing = await ParkingSlot.findById(slotId);
+      if (!existing) {
+        const err = new Error('Parking slot not found.');
+        err.statusCode = 404;
+        throw err;
+      }
+      const err = new Error(`Slot ${existing.slotNumber} is not available. Current status: ${existing.status}`);
       err.statusCode = 400;
       throw err;
     }
-
-    // Atomic update: change slot to Booked & create booking
-    slot.status = 'Booked';
-    await slot.save();
 
     try {
       const now = new Date();
