@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import { EmptyState } from '../../components/Bits';
@@ -29,6 +29,10 @@ export default function NearbyParking() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCandidates, setSearchCandidates] = useState([]);
   const [searching, setSearching] = useState(false);
+  // Set right after a suggestion is picked so the debounced search-as-you-type
+  // effect doesn't immediately re-query and reopen the suggestion list for
+  // the text we just programmatically filled in.
+  const skipNextSearchRef = useRef(false);
 
   const [results, setResults] = useState(null); // null = not searched yet
   const [loadingResults, setLoadingResults] = useState(false);
@@ -117,12 +121,18 @@ export default function NearbyParking() {
   // Debounced so we don't hit the geocoder on every keystroke.
   useEffect(() => {
     if (mode !== 'search') return undefined;
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return undefined;
+    }
     const t = setTimeout(() => runSearch(searchQuery), 450);
     return () => clearTimeout(t);
   }, [searchQuery, mode, runSearch]);
 
   function pickCandidate(c) {
     setCenter({ lat: c.lat, lng: c.lng, label: c.label });
+    skipNextSearchRef.current = true;
+    setSearchQuery(c.label);
     setSearchCandidates([]);
   }
 
