@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import Modal from '../../components/Modal';
-import { ActionButton, EmptyState } from '../../components/Bits';
+import { ActionButton, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { formatDate } from '../../lib/utils';
@@ -11,31 +11,31 @@ import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
 
-function RoleTable({ title, icon, rows, curUser, showLocation, onRoleChange, onReassign, onToggle, emptyText }) {
+function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onReassign, onToggle, onDelete, emptyText, hideHeader }) {
   return (
     <div className="table-card" style={{ marginBottom: '1.4rem' }}>
-      <div className="tc-header"><h6><i className={`bi ${icon}`} style={{ marginRight: '0.4rem' }} />{title} ({rows.length})</h6></div>
+      {!hideHeader && (
+        <div className="tc-header"><h6><i className={`bi ${icon}`} style={{ marginRight: '0.4rem' }} />{title} ({rows.length})</h6></div>
+      )}
       <div className="table-responsive">
-        <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: showLocation ? 900 : 760 }}>
+        <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: 760 }}>
           <colgroup>
-            <col style={{ width: '170px' }} />
             <col style={{ width: '190px' }} />
+            <col style={{ width: '210px' }} />
+            <col style={{ width: '110px' }} />
             <col style={{ width: '100px' }} />
-            {showLocation && <col style={{ width: '160px' }} />}
-            <col style={{ width: '90px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '160px' }} />
+            <col style={{ width: '110px' }} />
+            <col style={{ width: '70px' }} />
           </colgroup>
           <thead>
             <tr>
               <th>Name</th><th>Email</th><th>Role</th>
-              {showLocation && <th>Location</th>}
               <th>Status</th><th>Joined</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td colSpan={showLocation ? 7 : 6}><EmptyState icon="bi-people">{emptyText}</EmptyState></td></tr>
+              <tr><td colSpan={6}><EmptyState icon="bi-people">{emptyText}</EmptyState></td></tr>
             ) : rows.map((u) => (
               <tr key={u._id}>
                 <td>
@@ -62,20 +62,21 @@ function RoleTable({ title, icon, rows, curUser, showLocation, onRoleChange, onR
                     <option value="admin">Admin</option>
                   </select>
                 </td>
-                {showLocation && (
-                  <td>
-                    {u.role === 'staff' ? (
-                      <button className="btn-ag ghost sm" onClick={() => onReassign(u)} title="Reassign to a different location">
-                        <i className="bi bi-geo-alt" /> {u.locationId?.name || 'Unassigned'}
-                      </button>
-                    ) : '—'}
-                  </td>
-                )}
                 <td>{u.isActive ? <span className="ag-badge available">Active</span> : <span className="ag-badge cancelled">Inactive</span>}</td>
                 <td style={{ color: 'var(--text-muted)' }}>{formatDate(u.createdAt)}</td>
                 <td>
                   {u._id !== curUser.id ? (
-                    <button className={`btn-ag ${u.isActive ? 'orange' : 'green'} sm`} onClick={() => onToggle(u._id)}>{u.isActive ? 'Deactivate' : 'Activate'}</button>
+                    isStaffTable ? (
+                      <RowActionsMenu
+                        items={[
+                          { label: 'Change Location', icon: 'bi-geo-alt', onClick: () => onReassign(u) },
+                          { label: u.isActive ? 'Deactivate' : 'Activate', icon: u.isActive ? 'bi-slash-circle' : 'bi-check-circle', onClick: () => onToggle(u._id) },
+                          { label: 'Delete', icon: 'bi-trash', tone: 'danger', onClick: () => onDelete(u) },
+                        ]}
+                      />
+                    ) : (
+                      <button className={`btn-ag ${u.isActive ? 'orange' : 'green'} sm`} onClick={() => onToggle(u._id)}>{u.isActive ? 'Deactivate' : 'Activate'}</button>
+                    )
                   ) : (
                     <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>You</span>
                   )}
@@ -231,8 +232,41 @@ export default function AdminUsers() {
     refreshAll();
   }
 
+  async function deleteStaff(user) {
+    const staffLocationId = user.locationId?._id;
+    if (!staffLocationId) {
+      showToast('This staff member has no assigned location on record.', 'danger');
+      return;
+    }
+    if (!confirm(`Remove ${user.name} from ${user.locationId?.name || 'their location'}? Their account reverts to a regular user.`)) return;
+    const d = await apiRequest(`/admin/locations/${staffLocationId}/staff/${user._id}`, { method: 'DELETE' });
+    if (d && d.success) showToast('Staff member removed.', 'warning');
+    else showToast((d && d.message) || 'Failed.', 'danger');
+    refreshAll();
+  }
+
   const roleLabel = roleView === 'staff' ? 'Staff' : 'Users';
   const selectedLocationName = locations.find((l) => l._id === locationId)?.name;
+
+  // "All Staff" view: group the loaded staff rows by their assigned
+  // location so each location's team is shown under its own heading,
+  // instead of one long mixed list.
+  const groupedStaffByLocation = useMemo(() => {
+    if (roleView !== 'staff' || scope !== 'all') return null;
+    const map = new Map();
+    users.forEach((u) => {
+      const locId = u.locationId?._id || 'unassigned';
+      const locName = u.locationId?.name || 'Unassigned';
+      if (!map.has(locId)) map.set(locId, { id: locId, name: locName, rows: [] });
+      map.get(locId).rows.push(u);
+    });
+    const ordered = [];
+    locations.forEach((l) => {
+      if (map.has(l._id)) { ordered.push(map.get(l._id)); map.delete(l._id); }
+    });
+    map.forEach((v) => ordered.push(v)); // any remaining (unassigned, or inactive locations)
+    return ordered;
+  }, [users, locations, roleView, scope]);
 
   return (
     <Layout title="User Management" badge={false}>
@@ -286,17 +320,51 @@ export default function AdminUsers() {
 
       {users.length === 0 && loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading {roleLabel.toLowerCase()}...</div>
+      ) : roleView === 'staff' && scope === 'all' ? (
+        groupedStaffByLocation.length === 0 ? (
+          <RoleTable
+            title="Staff"
+            icon="bi-person-badge"
+            rows={[]}
+            curUser={curUser}
+            isStaffTable
+            onRoleChange={updateRole}
+            onReassign={reassignStaff}
+            onToggle={toggleUser}
+            onDelete={deleteStaff}
+            emptyText="No staff members found."
+          />
+        ) : groupedStaffByLocation.map((g) => (
+          <div key={g.id} style={{ marginBottom: '1.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+              <i className="bi bi-geo-alt-fill" style={{ color: 'var(--neon-cyan)' }} />
+              <h6 style={{ margin: 0, fontSize: '0.85rem', letterSpacing: '0.04em' }}>{g.name}</h6>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({g.rows.length})</span>
+            </div>
+            <RoleTable
+              rows={g.rows}
+              curUser={curUser}
+              isStaffTable
+              onRoleChange={updateRole}
+              onReassign={reassignStaff}
+              onToggle={toggleUser}
+              onDelete={deleteStaff}
+              hideHeader
+            />
+          </div>
+        ))
       ) : roleView === 'staff' ? (
         <RoleTable
           title="Staff"
           icon="bi-person-badge"
           rows={users}
           curUser={curUser}
-          showLocation
+          isStaffTable
           onRoleChange={updateRole}
           onReassign={reassignStaff}
           onToggle={toggleUser}
-          emptyText={scope === 'location' ? `No staff assigned to ${selectedLocationName || 'this location'}.` : 'No staff members found.'}
+          onDelete={deleteStaff}
+          emptyText={`No staff assigned to ${selectedLocationName || 'this location'}.`}
         />
       ) : (
         <RoleTable
