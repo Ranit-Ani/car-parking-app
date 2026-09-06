@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
-import { EmptyState } from '../../components/Bits';
+import Modal from '../../components/Modal';
+import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { formatDate } from '../../lib/utils';
@@ -9,24 +10,31 @@ import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
 
-function RoleTable({ title, icon, rows, curUser, onRoleChange, onToggle, emptyText }) {
+function RoleTable({ title, icon, rows, curUser, showLocation, onRoleChange, onReassign, onToggle, emptyText }) {
   return (
     <div className="table-card" style={{ marginBottom: '1.4rem' }}>
       <div className="tc-header"><h6><i className={`bi ${icon}`} style={{ marginRight: '0.4rem' }} />{title} ({rows.length})</h6></div>
       <div className="table-responsive">
-        <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: 760 }}>
+        <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: showLocation ? 900 : 760 }}>
           <colgroup>
+            <col style={{ width: '170px' }} />
             <col style={{ width: '190px' }} />
-            <col style={{ width: '210px' }} />
-            <col style={{ width: '110px' }} />
             <col style={{ width: '100px' }} />
-            <col style={{ width: '110px' }} />
-            <col style={{ width: '140px' }} />
+            {showLocation && <col style={{ width: '160px' }} />}
+            <col style={{ width: '90px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '160px' }} />
           </colgroup>
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Name</th><th>Email</th><th>Role</th>
+              {showLocation && <th>Location</th>}
+              <th>Status</th><th>Joined</th><th>Actions</th>
+            </tr>
+          </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td colSpan={6}><EmptyState icon="bi-people">{emptyText}</EmptyState></td></tr>
+              <tr><td colSpan={showLocation ? 7 : 6}><EmptyState icon="bi-people">{emptyText}</EmptyState></td></tr>
             ) : rows.map((u) => (
               <tr key={u._id}>
                 <td>
@@ -46,13 +54,22 @@ function RoleTable({ title, icon, rows, curUser, onRoleChange, onToggle, emptyTe
                     style={{ width: 'auto', padding: '0.35rem 1.75rem 0.35rem 0.6rem', fontSize: '0.8rem' }}
                     value={u.role}
                     disabled={u._id === curUser.id}
-                    onChange={(e) => onRoleChange(u._id, e.target.value)}
+                    onChange={(e) => onRoleChange(u, e.target.value)}
                   >
                     <option value="user">User</option>
                     <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
                   </select>
                 </td>
+                {showLocation && (
+                  <td>
+                    {u.role === 'staff' ? (
+                      <button className="btn-ag ghost sm" onClick={() => onReassign(u)} title="Reassign to a different location">
+                        <i className="bi bi-geo-alt" /> {u.locationId?.name || 'Unassigned'}
+                      </button>
+                    ) : '—'}
+                  </td>
+                )}
                 <td>{u.isActive ? <span className="ag-badge available">Active</span> : <span className="ag-badge cancelled">Inactive</span>}</td>
                 <td style={{ color: 'var(--text-muted)' }}>{formatDate(u.createdAt)}</td>
                 <td>
@@ -73,6 +90,17 @@ function RoleTable({ title, icon, rows, curUser, onRoleChange, onToggle, emptyTe
 
 export default function AdminUsers() {
   const { user: curUser } = useAuth();
+  const [locations, setLocations] = useState([]);
+
+  // Needed so promoting someone to Staff (or reassigning an existing staff
+  // member) can offer a location picker (multi-location support: every
+  // staff account must be linked to exactly one parking location).
+  useEffect(() => {
+    (async () => {
+      const d = await apiRequest('/admin/locations');
+      if (d && d.success) setLocations(d.data.filter((l) => l.isActive !== false));
+    })();
+  }, []);
 
   const buildUrl = useCallback((page, limit) => `/admin/users?page=${page}&limit=${limit}`, []);
 
@@ -88,17 +116,57 @@ export default function AdminUsers() {
   useEffect(() => {
     const socket = getSocket();
     socket.on('userUpdated', refresh);
-    return () => socket.off('userUpdated', refresh);
+    socket.on('staffUpdated', refresh);
+    return () => {
+      socket.off('userUpdated', refresh);
+      socket.off('staffUpdated', refresh);
+    };
   }, [refresh]);
 
-  async function updateRole(id, role) {
-    // optimistic UI: reflect selection immediately - this also moves the
-    // row between the User / Staff sections since they're derived from
-    // the same `users` state by filtering on `role`.
-    setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, role } : u)));
-    const d = await apiRequest('/admin/users/' + id + '/role', { method: 'PUT', body: { role } });
-    if (d && d.success) showToast('Role updated: ' + role, 'success');
-    else { showToast((d && d.message) || 'Failed.', 'danger'); refresh(); }
+  // Location picker modal state — shared by "promote to Staff" and
+  // "reassign an existing staff member's location".
+  const [picker, setPicker] = useState(null); // { user, targetRole } | null
+  const [pickedLocation, setPickedLocation] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function applyRoleChange(user, role, locationId) {
+    setUsers((prev) => prev.map((u) => (u._id === user._id ? { ...u, role } : u)));
+    const d = await apiRequest('/admin/users/' + user._id + '/role', { method: 'PUT', body: { role, locationId } });
+    if (d && d.success) {
+      showToast('Role updated: ' + role, 'success');
+      refresh();
+    } else {
+      showToast((d && d.message) || 'Failed.', 'danger');
+      refresh();
+    }
+  }
+
+  function updateRole(user, role) {
+    if (role === 'staff') {
+      // Every staff member must be linked to one parking location — ask
+      // which one before applying the change.
+      if (locations.length === 0) {
+        showToast('Add a parking location first (Parking Locations page) before assigning staff.', 'warning');
+        return;
+      }
+      setPickedLocation(user.locationId?._id || locations[0]._id);
+      setPicker({ user, targetRole: 'staff' });
+      return;
+    }
+    applyRoleChange(user, role, undefined);
+  }
+
+  function reassignStaff(user) {
+    setPickedLocation(user.locationId?._id || (locations[0] && locations[0]._id) || '');
+    setPicker({ user, targetRole: 'staff' });
+  }
+
+  async function confirmPicker() {
+    if (!picker || !pickedLocation) return;
+    setBusy(true);
+    await applyRoleChange(picker.user, 'staff', pickedLocation);
+    setBusy(false);
+    setPicker(null);
   }
 
   async function toggleUser(id) {
@@ -139,7 +207,9 @@ export default function AdminUsers() {
             icon="bi-person-badge"
             rows={staffUsers}
             curUser={curUser}
+            showLocation
             onRoleChange={updateRole}
+            onReassign={reassignStaff}
             onToggle={toggleUser}
             emptyText="No staff members found."
           />
@@ -157,6 +227,35 @@ export default function AdminUsers() {
           <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
         </>
       )}
+
+      <Modal
+        show={!!picker}
+        onClose={() => setPicker(null)}
+        title={picker && picker.user.role === 'staff' ? 'Reassign Parking Location' : 'Assign Parking Location'}
+        icon="bi-geo-alt-fill"
+        footer={(
+          <>
+            <button className="btn-ag ghost" onClick={() => setPicker(null)}>Cancel</button>
+            <ActionButton busy={busy} busyLabel="Saving..." className="btn-ag primary" onClick={confirmPicker} disabled={!pickedLocation}>
+              <i className="bi bi-check-circle" /> Confirm
+            </ActionButton>
+          </>
+        )}
+      >
+        {picker && (
+          <>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 0 }}>
+              <strong style={{ color: 'var(--text-main, #e8f4ff)' }}>{picker.user.name}</strong> will only be able to see and manage bookings, slots, and vehicles for the location you choose here.
+            </p>
+            <div className="ag-input-group" style={{ margin: 0 }}>
+              <label className="ag-label">Parking Location *</label>
+              <select className="ag-select" value={pickedLocation} onChange={(e) => setPickedLocation(e.target.value)}>
+                {locations.map((l) => <option key={l._id} value={l._id}>{l.name}</option>)}
+              </select>
+            </div>
+          </>
+        )}
+      </Modal>
     </Layout>
   );
 }

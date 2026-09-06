@@ -12,13 +12,26 @@ class StaffService {
   /**
    * Perform Check-In: Booked → Active (Occupied)
    * @param {string} bookingId
+   * @param {string|null} [staffLocationId] - if set, the booking must
+   *   belong to this location (multi-location support: a staff member can
+   *   only operate on bookings for their own assigned location). Admins
+   *   pass null/undefined to bypass this check.
    * @returns {Promise<Booking>}
    */
-  async checkIn(bookingId) {
+  async checkIn(bookingId, staffLocationId = null) {
     const booking = await Booking.findById(bookingId).populate('slotId');
     if (!booking) {
       const err = new Error('Booking not found.');
       err.statusCode = 404;
+      throw err;
+    }
+
+    if (
+      staffLocationId &&
+      (!booking.locationId || booking.locationId.toString() !== staffLocationId.toString())
+    ) {
+      const err = new Error('This booking belongs to a different parking location.');
+      err.statusCode = 403;
       throw err;
     }
 
@@ -45,13 +58,23 @@ class StaffService {
   /**
    * Perform Check-Out: Active → Completed + Generate Bill
    * @param {string} bookingId
+   * @param {string|null} [staffLocationId] - see checkIn() above.
    * @returns {Promise<{booking, bill}>}
    */
-  async checkOut(bookingId) {
+  async checkOut(bookingId, staffLocationId = null) {
     const booking = await Booking.findById(bookingId).populate('slotId');
     if (!booking) {
       const err = new Error('Booking not found.');
       err.statusCode = 404;
+      throw err;
+    }
+
+    if (
+      staffLocationId &&
+      (!booking.locationId || booking.locationId.toString() !== staffLocationId.toString())
+    ) {
+      const err = new Error('This booking belongs to a different parking location.');
+      err.statusCode = 403;
       throw err;
     }
 
@@ -108,12 +131,17 @@ class StaffService {
    * @param {object} [opts]
    * @param {number} [opts.page=1]
    * @param {number} [opts.limit=30]
+   * @param {string|null} [opts.locationId] - multi-location support: when
+   *   set, only bookings for this parking location are returned (a staff
+   *   member's own assigned location). Omitted/null returns every
+   *   location's bookings (admin view).
    * @returns {Promise<{bookings: Booking[], total: number}>}
    */
   async getActiveBookings(opts = {}) {
-    const { page = 1, limit = 30 } = opts;
+    const { page = 1, limit = 30, locationId } = opts;
     const skip = (page - 1) * limit;
     const query = { status: { $in: ['Booked', 'Active'] } };
+    if (locationId) query.locationId = locationId;
 
     const [bookings, total] = await Promise.all([
       Booking.find(query)
@@ -133,6 +161,7 @@ class StaffService {
    * @param {object} [filters]
    * @param {string} [filters.status]
    * @param {string} [filters.date]
+   * @param {string|null} [filters.locationId] - see getActiveBookings() above.
    * @param {number} [filters.page=1]
    * @param {number} [filters.limit=30]
    * @returns {Promise<{bookings: Booking[], total: number}>}
@@ -142,6 +171,7 @@ class StaffService {
     const skip = (page - 1) * limit;
     const query = {};
     if (filters.status) query.status = filters.status;
+    if (filters.locationId) query.locationId = filters.locationId;
     if (filters.date) {
       const start = new Date(filters.date);
       const end = new Date(filters.date);
@@ -160,6 +190,17 @@ class StaffService {
     ]);
 
     return { bookings, total };
+  }
+
+  /**
+   * Slot status counts, optionally scoped to one parking location.
+   * Powers the staff dashboard's "SLOT STATUS MATRIX" — a staff member
+   * should only see their own location's slot numbers, not the whole
+   * system's (see /api/staff/stats vs the system-wide /api/slots/stats).
+   * @param {string|null} [locationId]
+   */
+  async getSlotStats(locationId = null) {
+    return ParkingSlot.getSlotStats(locationId || undefined);
   }
 }
 

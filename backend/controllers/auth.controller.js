@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const ParkingLocation = require('../models/ParkingLocation');
 const { generateOTP, sendOTP } = require('../utils/emailService');
 const AppError = require('../utils/AppError');
 const { isValidVehicleNumber, normalizeVehicleNumber } = require('../utils/vehicleValidation');
@@ -6,8 +7,16 @@ const { isValidVehicleNumber, normalizeVehicleNumber } = require('../utils/vehic
 const OTP_EXPIRE = parseInt(process.env.OTP_EXPIRE_MINUTES || '10');
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
-const sendToken = (res, user, statusCode, message) => {
+// Multi-location support: staff accounts carry a locationId, so we look up
+// that location's name here once so the frontend can show "which location
+// am I managing" (sidebar/dashboard) without an extra round trip.
+const sendToken = async (res, user, statusCode, message) => {
   const token = user.generateJWT();
+  let locationName = null;
+  if (user.role === 'staff' && user.locationId) {
+    const loc = await ParkingLocation.findById(user.locationId).select('name');
+    locationName = loc ? loc.name : null;
+  }
   res.status(statusCode).json({
     success: true,
     message,
@@ -19,6 +28,8 @@ const sendToken = (res, user, statusCode, message) => {
       role:            user.role,
       isEmailVerified: user.isEmailVerified,
       profilePhoto:    user.profilePhoto,
+      locationId:      user.locationId || null,
+      locationName,
     },
   });
 };
@@ -119,7 +130,7 @@ exports.verifyRegister = async (req, res, next) => {
 
     // Fetch fresh user for token
     const activated = await User.findById(user._id);
-    sendToken(res, activated, 201, 'Account activated! Welcome aboard.');
+    await sendToken(res, activated, 201, 'Account activated! Welcome aboard.');
   } catch (err) {
     next(err);
   }
@@ -142,7 +153,7 @@ exports.login = async (req, res, next) => {
     if (!user.isActive)
       return next(new AppError('Account has been deactivated. Contact admin.', 403));
 
-    sendToken(res, user, 200, 'Login successful');
+    await sendToken(res, user, 200, 'Login successful');
   } catch (err) {
     next(err);
   }
@@ -153,6 +164,11 @@ exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return next(new AppError('User not found', 404));
+    let locationName = null;
+    if (user.role === 'staff' && user.locationId) {
+      const loc = await ParkingLocation.findById(user.locationId).select('name');
+      locationName = loc ? loc.name : null;
+    }
     res.json({
       success: true,
       user: {
@@ -164,6 +180,8 @@ exports.getMe = async (req, res, next) => {
         profilePhoto:    user.profilePhoto,
         createdAt:       user.createdAt,
         vehicles:        user.vehicles,
+        locationId:      user.locationId || null,
+        locationName,
       },
     });
   } catch (err) { next(err); }
@@ -252,7 +270,7 @@ exports.verifyEmailChange = async (req, res, next) => {
     );
 
     const updated = await User.findById(user._id);
-    sendToken(res, updated, 200, 'Email updated successfully');
+    await sendToken(res, updated, 200, 'Email updated successfully');
   } catch (err) { next(err); }
 };
 

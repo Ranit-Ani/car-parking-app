@@ -9,6 +9,15 @@ const { isValidVehicleNumber, normalizeVehicleNumber } = require('../utils/vehic
 const ALLOWED_CATEGORIES = ['2 Wheeler', '3 Wheeler', '4 Wheeler'];
 const BOOKED_TTL_MS = 60 * 60 * 1000; // Rule 2: 1 hour to check in before auto-expiry
 
+// Multi-location support: staff/admin-facing booking events (new booking,
+// cancellation, expiry) should only reach the location's own staff — not
+// every staff member system-wide. Admins always get everything. A slot
+// with no locationId (legacy data) falls back to the old blanket 'staff'
+// broadcast so nothing silently stops working for un-migrated data.
+function staffBroadcastTargets(locationId) {
+  return locationId ? ['admin', `loc:${locationId}`] : ['admin', 'staff'];
+}
+
 /**
  * BookingService - Handles all booking business logic
  * OOP-based service layer following clean architecture
@@ -136,6 +145,9 @@ class BookingService {
       const booking = await Booking.create({
         userId,
         slotId,
+        // Denormalized from the slot so this booking is instantly
+        // filterable by location (see the model comment on this field).
+        locationId: slot.locationId || null,
         bookingTime: now,
         expiresAt: new Date(now.getTime() + BOOKED_TTL_MS),
         vehicleId: resolvedVehicleId,
@@ -153,9 +165,9 @@ class BookingService {
       // Notify every connected client (users, staff, admin) that a slot
       // just changed state, so their slot map / dashboard updates live.
       getIO().emit('slotUpdated', { slotId: slot._id, status: slot.status });
-      // Staff need this too (to see it appear on their check-in queue),
-      // not just admins.
-      getIO().to('admin').to('staff').emit('bookingCreated', { booking: populated });
+      // Staff need this too (to see it appear on their check-in queue) —
+      // but only the staff assigned to this booking's location.
+      getIO().to(staffBroadcastTargets(slot.locationId)).emit('bookingCreated', { booking: populated });
 
       return populated;
     } catch (err) {
@@ -172,7 +184,7 @@ class BookingService {
    * @param {string} userId
    * @returns {Promise<Booking>}
    */
-  async cancelBooking(bookingId, userId, cancelledBy = null) {
+  async cancelBooking(bookingId, userId, cancelledBy = null, staffLocationId = null) {
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       const err = new Error('Booking not found.');
@@ -183,6 +195,19 @@ class BookingService {
     // Check ownership (unless admin/staff is cancelling)
     if (!cancelledBy && booking.userId.toString() !== userId.toString()) {
       const err = new Error('Not authorized to cancel this booking.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    // Multi-location support: a staff member (staffLocationId set) may
+    // only cancel bookings that belong to their own assigned location.
+    // Admins pass no staffLocationId and bypass this check entirely.
+    if (
+      cancelledBy &&
+      staffLocationId &&
+      (!booking.locationId || booking.locationId.toString() !== staffLocationId.toString())
+    ) {
+      const err = new Error('This booking belongs to a different parking location.');
       err.statusCode = 403;
       throw err;
     }
@@ -209,7 +234,7 @@ class BookingService {
     await booking.save();
 
     getIO().emit('slotUpdated', { slotId: booking.slotId, status: 'Available' });
-    getIO().to('admin').to('staff').emit('bookingCancelled', { bookingId: booking._id });
+    getIO().to(staffBroadcastTargets(booking.locationId)).emit('bookingCancelled', { bookingId: booking._id });
 
     return booking;
   }
@@ -237,7 +262,7 @@ class BookingService {
 
       getIO().emit('slotUpdated', { slotId: booking.slotId, status: 'Available' });
       getIO().emit('bookingUpdated', { bookingId: booking._id, status: 'Expired' });
-      getIO().to('admin').to('staff').emit('bookingExpired', { bookingId: booking._id });
+      getIO().to(staffBroadcastTargets(booking.locationId)).emit('bookingExpired', { bookingId: booking._id });
     }
 
     return stale.length;

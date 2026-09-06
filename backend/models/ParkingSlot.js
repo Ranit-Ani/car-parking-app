@@ -67,9 +67,14 @@ ParkingSlotSchema.statics.getAvailableSlots = function () {
   return this.find({ status: 'Available', isActive: true });
 };
 
-ParkingSlotSchema.statics.getSlotStats = async function () {
+// Optional `locationId` scopes the counts to a single parking location
+// (used by staff, whose dashboard should only reflect their own location's
+// slots). Omitted, this returns the system-wide counts exactly as before.
+ParkingSlotSchema.statics.getSlotStats = async function (locationId) {
+  const match = { isActive: true };
+  if (locationId) match.locationId = locationId;
   const stats = await this.aggregate([
-    { $match: { isActive: true } },
+    { $match: match },
     {
       $group: {
         _id: '$status',

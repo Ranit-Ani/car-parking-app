@@ -12,6 +12,17 @@ const BookingSchema = new mongoose.Schema(
       ref: 'ParkingSlot',
       required: [true, 'Parking slot is required'],
     },
+    // Denormalized from the slot at booking time (multi-location support).
+    // Stored directly on the booking — rather than always joining through
+    // slotId — so location-scoped queries (a staff member's own bookings,
+    // per-location revenue) are a simple indexed match instead of a slot
+    // lookup on every request. Null for bookings on slots that aren't
+    // linked to a ParkingLocation (legacy data).
+    locationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ParkingLocation',
+      default: null,
+    },
     bookingTime: {
       type: Date,
       default: Date.now,
@@ -90,6 +101,9 @@ const BookingSchema = new mongoose.Schema(
 BookingSchema.index({ userId: 1, status: 1 });
 BookingSchema.index({ slotId: 1, status: 1 });
 BookingSchema.index({ status: 1, expiresAt: 1 });
+// Powers a staff member's "my location's bookings" queries and per-location
+// revenue/booking aggregation for the admin.
+BookingSchema.index({ locationId: 1, status: 1 });
 
 // ─── Virtual: Duration in readable format ─────────────────────────────────────
 BookingSchema.virtual('durationFormatted').get(function () {
@@ -139,6 +153,91 @@ BookingSchema.statics.getDailyRevenue = async function (days = 7) {
   start.setDate(start.getDate() - days);
   return this.aggregate([
     { $match: { status: 'Completed', checkOutTime: { $gte: start } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$checkOutTime' } },
+        revenue: { $sum: '$totalAmount' },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+};
+
+// ─── Static: Revenue broken down by parking location ──────────────────────────
+// Feeds the Admin Revenue page's location-wise revenue section. This is
+// ADDITIVE alongside getRevenue()/getDailyRevenue() above — those keep
+// powering the existing "Overall Revenue" figures unchanged.
+BookingSchema.statics.getRevenueByLocation = async function (startDate, endDate) {
+  const match = { status: 'Completed' };
+  if (startDate && endDate) {
+    match.checkOutTime = { $gte: new Date(startDate), $lte: new Date(endDate) };
+  }
+  return this.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: '$locationId',
+        totalRevenue: { $sum: '$totalAmount' },
+        totalBookings: { $sum: 1 },
+        avgAmount: { $avg: '$totalAmount' },
+      },
+    },
+    {
+      $lookup: {
+        from: 'parkinglocations',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'location',
+      },
+    },
+    { $unwind: { path: '$location', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: 0,
+        locationId: '$_id',
+        name: { $ifNull: ['$location.name', 'Unassigned'] },
+        totalRevenue: 1,
+        totalBookings: 1,
+        avgAmount: 1,
+      },
+    },
+    { $sort: { totalRevenue: -1 } },
+  ]);
+};
+
+// ─── Static: Revenue summary for ONE parking location ─────────────────────────
+BookingSchema.statics.getLocationRevenue = async function (locationId, startDate, endDate) {
+  const match = { status: 'Completed', locationId: new mongoose.Types.ObjectId(locationId) };
+  if (startDate && endDate) {
+    match.checkOutTime = { $gte: new Date(startDate), $lte: new Date(endDate) };
+  }
+  const result = await this.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$totalAmount' },
+        totalBookings: { $sum: 1 },
+        avgAmount: { $avg: '$totalAmount' },
+      },
+    },
+  ]);
+  return result[0] || { totalRevenue: 0, totalBookings: 0, avgAmount: 0 };
+};
+
+// ─── Static: Daily revenue for ONE parking location ───────────────────────────
+BookingSchema.statics.getDailyRevenueForLocation = async function (locationId, days = 30) {
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  return this.aggregate([
+    {
+      $match: {
+        status: 'Completed',
+        locationId: new mongoose.Types.ObjectId(locationId),
+        checkOutTime: { $gte: start },
+      },
+    },
     {
       $group: {
         _id: { $dateToString: { format: '%Y-%m-%d', date: '$checkOutTime' } },

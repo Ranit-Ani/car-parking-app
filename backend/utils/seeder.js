@@ -25,16 +25,6 @@ const seedData = async () => {
     });
     console.log(`👤 Admin created: ${admin.email}`);
 
-    // Create Staff
-    const staff = await User.create({
-      name: 'Parking Staff',
-      email: 'staff@campus.edu',
-      password: 'Staff@123',
-      role: 'staff',
-      isEmailVerified: true,
-    });
-    console.log(`👤 Staff created: ${staff.email}`);
-
     // Create Test User
     const user = await User.create({
       name: 'Test Student',
@@ -99,6 +89,28 @@ const seedData = async () => {
     );
     console.log(`📍 Created ${parkingLocations.length} parking locations`);
 
+    // Create Staff — each assigned to one parking location (multi-location
+    // support: every staff account must be linked to exactly one location).
+    const staff = await User.create({
+      name: 'Parking Staff',
+      email: 'staff@campus.edu',
+      password: 'Staff@123',
+      role: 'staff',
+      locationId: parkingLocations[0]._id,
+      isEmailVerified: true,
+    });
+    console.log(`👤 Staff created: ${staff.email} (assigned to ${parkingLocations[0].name})`);
+
+    const staff2 = await User.create({
+      name: 'Parking Staff 2',
+      email: 'staff2@campus.edu',
+      password: 'Staff@123',
+      role: 'staff',
+      locationId: parkingLocations[1]._id,
+      isEmailVerified: true,
+    });
+    console.log(`👤 Staff created: ${staff2.email} (assigned to ${parkingLocations[1].name})`);
+
     // Create Parking Slots
     const slots = [];
     const types = ['standard', 'faculty', 'disabled', 'ev'];
@@ -125,7 +137,8 @@ const seedData = async () => {
     console.log('\n✅ Seeding complete!');
     console.log('─────────────────────────────────────');
     console.log('  Admin:   admin@campus.edu / Admin@123');
-    console.log('  Staff:   staff@campus.edu / Staff@123');
+    console.log(`  Staff:   staff@campus.edu / Staff@123 (${parkingLocations[0].name})`);
+    console.log(`  Staff 2: staff2@campus.edu / Staff@123 (${parkingLocations[1].name})`);
     console.log('  Student: student@campus.edu / Student@123');
     console.log('─────────────────────────────────────');
 

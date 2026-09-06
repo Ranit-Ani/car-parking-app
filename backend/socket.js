@@ -31,9 +31,14 @@ function initSocket(server) {
     console.log('🔌 Client connected:', socket.id);
 
     // Optional: let clients join a room for their role, so admin-only
-    // events don't need to be broadcast to every single user.
+    // events don't need to be broadcast to every single user. Staff also
+    // join a room scoped to their assigned parking location
+    // (`loc:<locationId>`) so multi-location booking events (new booking,
+    // cancellation, expiry) only reach the staff who should see them —
+    // see BookingService's staffBroadcastTargets().
+    const LOCATION_ROOM = /^loc:[a-f0-9]{24}$/i;
     socket.on('join', (room) => {
-      if (['admin', 'staff', 'user'].includes(room)) {
+      if (['admin', 'staff', 'user'].includes(room) || LOCATION_ROOM.test(room)) {
         socket.join(room);
       }
     });

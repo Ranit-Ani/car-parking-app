@@ -8,6 +8,7 @@ router.use(authorize('staff', 'admin'));
 
 router.get('/bookings', staffController.getActiveBookings);
 router.get('/bookings/all', staffController.getAllBookings);
+router.get('/stats', staffController.getStats); // Location-scoped slot counts
 router.post('/checkin/:bookingId', staffController.checkIn);
 router.post('/checkout/:bookingId', staffController.checkOut);
 router.post('/cancel/:bookingId', staffController.cancelBooking);

@@ -3,12 +3,19 @@ const BookingService = require('../services/BookingService');
 
 /**
  * StaffController - Handles check-in/check-out for parking staff
+ *
+ * Multi-location support: every method below is reachable by both 'staff'
+ * and 'admin' (see routes/staff.routes.js). A staff account always carries
+ * req.user.locationId and is locked to it. An admin account has no
+ * locationId, so passing it straight through naturally means "no location
+ * restriction" for admins, while staff are transparently scoped to their
+ * own assigned location.
  */
 class StaffController {
   // POST /api/staff/checkin/:bookingId
   async checkIn(req, res, next) {
     try {
-      const booking = await StaffService.checkIn(req.params.bookingId);
+      const booking = await StaffService.checkIn(req.params.bookingId, req.user.locationId);
       res.json({
         success: true,
         message: `Check-in successful for slot ${booking.slotId.slotNumber}.`,
@@ -22,7 +29,7 @@ class StaffController {
   // POST /api/staff/checkout/:bookingId
   async checkOut(req, res, next) {
     try {
-      const { booking, bill } = await StaffService.checkOut(req.params.bookingId);
+      const { booking, bill } = await StaffService.checkOut(req.params.bookingId, req.user.locationId);
       res.json({
         success: true,
         message: `Check-out successful. Total amount: ₹${bill.totalAmount}`,
@@ -41,8 +48,13 @@ class StaffController {
     try {
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+      // A staff member is always locked to their own location. An admin
+      // has no locationId of their own, but may explicitly ask to view one
+      // location's queue (e.g. drilling into a location from the Admin
+      // Locations page) via ?locationId=.
+      const locationId = req.user.locationId || (req.user.role === 'admin' ? req.query.locationId : undefined);
 
-      const { bookings, total } = await StaffService.getActiveBookings({ page, limit });
+      const { bookings, total } = await StaffService.getActiveBookings({ page, limit, locationId });
       res.json({
         success: true,
         count: bookings.length,
@@ -64,8 +76,9 @@ class StaffController {
       const { status, date } = req.query;
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+      const locationId = req.user.locationId || (req.user.role === 'admin' ? req.query.locationId : undefined);
 
-      const { bookings, total } = await StaffService.getAllBookings({ status, date, page, limit });
+      const { bookings, total } = await StaffService.getAllBookings({ status, date, page, limit, locationId });
       res.json({
         success: true,
         count: bookings.length,
@@ -81,13 +94,26 @@ class StaffController {
     }
   }
 
+  // GET /api/staff/stats - Slot status counts, scoped to the caller's
+  // location if they have one (staff), otherwise system-wide (admin).
+  async getStats(req, res, next) {
+    try {
+      const locationId = req.user.locationId || (req.user.role === 'admin' ? req.query.locationId : undefined);
+      const stats = await StaffService.getSlotStats(locationId);
+      res.json({ success: true, data: stats });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // POST /api/staff/cancel/:bookingId - Staff-initiated cancel
   async cancelBooking(req, res, next) {
     try {
       const booking = await BookingService.cancelBooking(
         req.params.bookingId,
         null,
-        req.user._id
+        req.user._id,
+        req.user.locationId
       );
       res.json({
         success: true,

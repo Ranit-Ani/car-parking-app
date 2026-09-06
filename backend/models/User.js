@@ -58,6 +58,19 @@ const UserSchema = new mongoose.Schema(
       enum: ['admin', 'staff', 'user'],
       default: 'user',
     },
+
+    // Multi-location staff support: a 'staff' user is always tied to
+    // exactly one ParkingLocation and may only see/manage bookings,
+    // slots, and vehicles for that location (enforced in the service
+    // layer — see AdminService.updateUserRole / addLocationStaff and
+    // StaffService's location-scoped queries). Null for admin/user
+    // accounts, and for legacy staff created before this feature.
+    locationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ParkingLocation',
+      default: null,
+    },
+
     isActive: { type: Boolean, default: true },
     isEmailVerified: { type: Boolean, default: false },
     profilePhoto: { type: String, default: null },
@@ -87,11 +100,14 @@ UserSchema.methods.matchPassword = async function (entered) {
 
 UserSchema.methods.generateJWT = function () {
   return jwt.sign(
-    { id: this._id, role: this.role, name: this.name },
+    { id: this._id, role: this.role, name: this.name, locationId: this.locationId || null },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
 };
+
+// Powers "staff assigned to this location" lookups.
+UserSchema.index({ role: 1, locationId: 1 });
 
 UserSchema.statics.findByEmail = function (email) {
   return this.findOne({ email: email.toLowerCase() }).select('+password');

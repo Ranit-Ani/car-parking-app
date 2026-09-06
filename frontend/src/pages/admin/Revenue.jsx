@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Chart from 'chart.js/auto';
 import Layout from '../../components/Layout';
+import { EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { getCached, setCached } from '../../lib/pageCache';
 import { getSocket } from '../../lib/socket';
@@ -50,13 +51,17 @@ export default function Revenue() {
   // very first paint after navigating back here, instead of zeroes/blank.
   const cached = getCached(CACHE_KEY);
   const [summary, setSummary] = useState(cached ? cached.summary : { totalRevenue: 0, totalBookings: 0, avgAmount: 0 });
+  // Location-wise revenue — additive, shown alongside (never replacing) the
+  // overall totals above.
+  const [locationBreakdown, setLocationBreakdown] = useState(cached ? cached.locationBreakdown || [] : []);
 
   const load = useCallback(async () => {
     const d = await apiRequest('/admin/revenue');
     if (!d || !d.success) return;
-    const { summary: s, daily } = d.data;
+    const { summary: s, daily, locationBreakdown: lb } = d.data;
     setSummary(s);
-    setCached(CACHE_KEY, { summary: s, daily });
+    setLocationBreakdown(lb || []);
+    setCached(CACHE_KEY, { summary: s, daily, locationBreakdown: lb || [] });
     drawChart(canvasRef.current, chartRef, daily);
   }, []);
 
@@ -93,6 +98,30 @@ export default function Revenue() {
       <div className="ag-card" style={{ padding: '1.5rem' }}>
         <div style={{ fontFamily: 'Orbitron,monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>DAILY REVENUE — LAST 30 DAYS</div>
         <canvas ref={canvasRef} height={80} />
+      </div>
+
+      {/* Location-wise revenue — additive alongside the Overall Revenue
+          cards above; the Admin can drill into a location's full detail
+          from the Parking Locations page. */}
+      <div className="table-card" style={{ marginTop: '1.5rem' }}>
+        <div className="tc-header"><h6><i className="bi bi-geo-alt" style={{ marginRight: '0.4rem' }} />Revenue by Parking Location</h6></div>
+        <div className="table-responsive">
+          <table className="ag-table">
+            <thead><tr><th>Location</th><th>Total Revenue</th><th>Completed Bookings</th><th>Avg Booking Value</th></tr></thead>
+            <tbody>
+              {locationBreakdown.length === 0 ? (
+                <tr><td colSpan={4}><EmptyState icon="bi-geo-alt">No completed bookings at any location yet.</EmptyState></td></tr>
+              ) : locationBreakdown.map((l) => (
+                <tr key={l.locationId || 'unassigned'}>
+                  <td><strong style={{ color: 'var(--neon-cyan)' }}>{l.name}</strong></td>
+                  <td className="text-green">₹{(l.totalRevenue || 0).toFixed(2)}</td>
+                  <td>{l.totalBookings}</td>
+                  <td className="text-orange">₹{(l.avgAmount || 0).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Layout>
   );

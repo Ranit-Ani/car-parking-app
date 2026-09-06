@@ -49,7 +49,7 @@ class AdminController {
   // PUT /api/admin/users/:id/role
   async updateUserRole(req, res, next) {
     try {
-      const user = await AdminService.updateUserRole(req.params.id, req.body.role);
+      const user = await AdminService.updateUserRole(req.params.id, req.body.role, req.body.locationId);
       res.json({ success: true, message: 'User role updated.', data: user });
     } catch (err) {
       next(err);
@@ -147,6 +147,58 @@ class AdminController {
   async deleteLocation(req, res, next) {
     try {
       const result = await AdminService.deleteLocation(req.params.id);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // GET /api/admin/locations/:id/detail - revenue, bookings & occupancy for one location
+  async getLocationDetail(req, res, next) {
+    try {
+      const { startDate, endDate } = req.query;
+      const detail = await AdminService.getLocationDetail(req.params.id, startDate, endDate);
+      res.json({ success: true, data: detail });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // ─── Per-location Staff Management (multi-location support) ─────────────────────
+  // GET /api/admin/locations/:id/staff
+  async getLocationStaff(req, res, next) {
+    try {
+      const staff = await AdminService.getLocationStaff(req.params.id);
+      res.json({ success: true, count: staff.length, data: staff });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /api/admin/locations/:id/staff
+  async addLocationStaff(req, res, next) {
+    try {
+      const staff = await AdminService.addLocationStaff(req.params.id, req.body);
+      res.status(201).json({ success: true, message: 'Staff member added.', data: staff });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // PUT /api/admin/locations/:id/staff/:staffId
+  async updateLocationStaff(req, res, next) {
+    try {
+      const staff = await AdminService.updateLocationStaff(req.params.id, req.params.staffId, req.body);
+      res.json({ success: true, message: 'Staff member updated.', data: staff });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // DELETE /api/admin/locations/:id/staff/:staffId
+  async removeLocationStaff(req, res, next) {
+    try {
+      const result = await AdminService.removeLocationStaff(req.params.id, req.params.staffId);
       res.json({ success: true, ...result });
     } catch (err) {
       next(err);

@@ -59,6 +59,16 @@ const locationValidator = [
   validate,
 ];
 
+// ─── Staff Validators (per-location staff management) ──────────────────────────
+const staffCreateValidator = [
+  body('name').trim().notEmpty().withMessage('Staff name is required'),
+  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+  validate,
+];
+
 // ─── Booking Validators ────────────────────────────────────────────────────────
 const bookingValidator = [
   body('slotId').notEmpty().withMessage('Slot ID is required').isMongoId().withMessage('Invalid slot ID'),
@@ -71,4 +81,5 @@ module.exports = {
   slotValidator,
   bookingValidator,
   locationValidator,
+  staffCreateValidator,
 };

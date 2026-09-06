@@ -18,7 +18,9 @@ export default function StaffDashboard() {
   const [bill, setBill] = useState(null);
 
   const load = useCallback(async () => {
-    const [s, bk] = await Promise.all([apiRequest('/slots/stats'), apiRequest('/staff/bookings?limit=100')]);
+    // /staff/stats (not the system-wide /slots/stats) so this only ever
+    // reflects the staff member's own assigned parking location.
+    const [s, bk] = await Promise.all([apiRequest('/staff/stats'), apiRequest('/staff/bookings?limit=100')]);
     if (s && s.success) setStats(s.data);
     if (bk && bk.success) setRows(bk.data);
   }, [setStats, setRows]);
@@ -63,7 +65,7 @@ export default function StaffDashboard() {
     <Layout title="Operations Control" badge="Parking Staff">
       <PageHeader
         title={`Welcome, ${user?.name}!`}
-        subtitle="Real-time parking management"
+        subtitle={user?.locationName ? `Real-time parking management — ${user.locationName}` : 'Real-time parking management'}
         action={<button className="btn-ag cyan sm" onClick={load}><i className="bi bi-arrow-clockwise" /> Refresh</button>}
       />
 

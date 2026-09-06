@@ -23,6 +23,10 @@ export function getSocket() {
       // Join a room matching the user's role so admin-only events
       // (e.g. new bookings, revenue) don't get sent to every visitor.
       if (user?.role) socket.emit('join', user.role);
+      // Multi-location support: a staff member also joins a room scoped
+      // to their assigned parking location, so booking events from other
+      // locations don't reach them.
+      if (user?.role === 'staff' && user?.locationId) socket.emit('join', `loc:${user.locationId}`);
     });
   }
   return socket;
