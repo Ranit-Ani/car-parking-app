@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { statusClass } from '../lib/utils';
 
 /** Status pill, mirrors statusBadge(s) from app.js */
@@ -37,27 +38,54 @@ export function ActionButton({ busy, busyLabel = 'Processing...', className = ''
  */
 export function RowActionsMenu({ items }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const computeCoords = () => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const menuWidth = 176; // matches minWidth below
+    // Align the menu's right edge to the button's right edge, but keep it
+    // fully on-screen (useful on narrow / mobile viewports).
+    let left = rect.right - menuWidth;
+    left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+    setCoords({ top: rect.bottom + 6, left });
+  };
 
   useEffect(() => {
     if (!open) return undefined;
+    computeCoords();
     function onDocClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (
+        btnRef.current && !btnRef.current.contains(e.target) &&
+        menuRef.current && !menuRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
     }
     function onKeyDown(e) {
       if (e.key === 'Escape') setOpen(false);
     }
+    function onReposition() { computeCoords(); }
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('scroll', onReposition, true);
+    window.addEventListener('resize', onReposition);
     return () => {
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('scroll', onReposition, true);
+      window.removeEventListener('resize', onReposition);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       <button
+        ref={btnRef}
         type="button"
         className="btn-ag ghost sm"
         onClick={() => setOpen((v) => !v)}
@@ -67,11 +95,12 @@ export function RowActionsMenu({ items }) {
       >
         <i className="bi bi-three-dots-vertical" />
       </button>
-      {open && (
+      {open && createPortal(
         <div
+          ref={menuRef}
           role="menu"
           style={{
-            position: 'absolute', top: 'calc(100% + 0.3rem)', right: 0, minWidth: '10rem', zIndex: 20,
+            position: 'fixed', top: coords.top, left: coords.left, minWidth: '11rem', zIndex: 1000,
             background: 'var(--card)', border: '1px solid var(--t4)', borderRadius: '10px',
             boxShadow: 'var(--shadow-float)', overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0.3rem',
           }}
@@ -97,9 +126,10 @@ export function RowActionsMenu({ items }) {
               {it.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   );
 }
 
