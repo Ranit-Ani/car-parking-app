@@ -79,23 +79,28 @@ export default function NearbyParking() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function runSearch() {
-    if (!searchQuery.trim()) return;
+  const runSearch = useCallback(async (query) => {
+    if (!query.trim()) { setSearchCandidates([]); return; }
     setSearching(true);
-    setSearchCandidates([]);
     try {
-      const candidates = await geocodeSearch(searchQuery.trim());
-      if (candidates.length === 0) {
-        showToast('No matching places found. Try a different search.', 'warning');
-      } else {
-        setSearchCandidates(candidates);
-      }
+      const candidates = await geocodeSearch(query.trim());
+      setSearchCandidates(candidates);
     } catch (err) {
       showToast(err.message || 'Search failed.', 'warning');
+      setSearchCandidates([]);
     } finally {
       setSearching(false);
     }
-  }
+  }, []);
+
+  // Search-as-you-type: no manual "Search" button — results (and the final
+  // nearby-parking search once a candidate is picked) happen automatically.
+  // Debounced so we don't hit the geocoder on every keystroke.
+  useEffect(() => {
+    if (mode !== 'search') return undefined;
+    const t = setTimeout(() => runSearch(searchQuery), 450);
+    return () => clearTimeout(t);
+  }, [searchQuery, mode, runSearch]);
 
   function pickCandidate(c) {
     setCenter({ lat: c.lat, lng: c.lng, label: c.label });
@@ -146,11 +151,11 @@ export default function NearbyParking() {
   return (
     <Layout title="Nearby Parking">
       <div className="ag-card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-          <button className={`btn-ag ${mode === 'radius' ? 'primary' : 'ghost'} sm`} onClick={() => setMode('radius')}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          <button className={`btn-ag ${mode === 'radius' ? 'primary' : 'ghost'} sm`} style={{ flex: 1, whiteSpace: 'nowrap' }} onClick={() => setMode('radius')}>
             <i className="bi bi-broadcast" /> Search by Distance
           </button>
-          <button className={`btn-ag ${mode === 'search' ? 'primary' : 'ghost'} sm`} onClick={() => setMode('search')}>
+          <button className={`btn-ag ${mode === 'search' ? 'primary' : 'ghost'} sm`} style={{ flex: 1, whiteSpace: 'nowrap' }} onClick={() => setMode('search')}>
             <i className="bi bi-geo-alt" /> Search a Location
           </button>
         </div>
@@ -182,25 +187,22 @@ export default function NearbyParking() {
           </div>
         ) : (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.75rem', alignItems: 'end' }}>
-              <div className="ag-input-group" style={{ margin: 0 }}>
-                <label className="ag-label">Address, Landmark, or Area</label>
-                <div className="ag-input-icon">
-                  <i className="bi bi-search" />
-                  <input
-                    className="ag-input"
-                    type="text"
-                    placeholder="e.g. City Center Mall, Sector 5"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') runSearch(); }}
-                  />
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'nowrap' }}>
+              <label className="ag-label" style={{ margin: 0, whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.6rem', letterSpacing: '0.04em' }}>Address, Landmark, or Area</label>
+              <div className="ag-input-icon" style={{ flex: 1, minWidth: 0 }}>
+                <i className={searching ? 'bi bi-hourglass-split' : 'bi bi-search'} />
+                <input
+                  className="ag-input"
+                  type="text"
+                  placeholder="e.g. City Center Mall, Sector 5"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <button className="btn-ag primary" onClick={runSearch} disabled={searching}>
-                {searching ? <><span className="spinner-border-sm" /> Searching...</> : <><i className="bi bi-search" /> Search</>}
-              </button>
             </div>
+            {searchQuery.trim() && !searching && searchCandidates.length === 0 && (
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>No matching places found. Try a different search.</div>
+            )}
             <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', alignItems: 'end' }}>
               <div className="ag-input-group" style={{ margin: 0 }}>
                 <label className="ag-label">Radius — up to {MAX_RADIUS_KM} km</label>
