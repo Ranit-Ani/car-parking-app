@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import Alert from './Alert';
 import Modal from './Modal';
 import { ActionButton } from './Bits';
 import { apiRequest } from '../lib/api';
@@ -21,7 +20,6 @@ export default function BookingModal({ slot, show, onClose, onBooked }) {
   const [registrationPending, setRegistrationPending] = useState(false);
   const [saveVehicle, setSaveVehicle] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
   const [invalidField, setInvalidField] = useState(null);
 
   const isNewVehicleNumberValid = registrationPending || isValidVehicleNumber(vehicleNumber);
@@ -33,7 +31,6 @@ export default function BookingModal({ slot, show, onClose, onBooked }) {
     setRegistrationPending(false);
     setSaveVehicle(false);
     setVehicleChoice('');
-    setAlert({ message: '', type: 'info' });
     setInvalidField(null);
 
     (async () => {
@@ -68,15 +65,15 @@ export default function BookingModal({ slot, show, onClose, onBooked }) {
     } else {
       if (!vehicleCategory) {
         pulseInvalid('category');
-        return setAlert({ message: 'Select a vehicle category.', type: 'warning' });
+        return showToast('Select a vehicle category.', 'warning');
       }
       if (!registrationPending && !vehicleNumber.trim()) {
         pulseInvalid('number');
-        return setAlert({ message: 'Enter your vehicle registration number, or check "Registration Pending".', type: 'warning' });
+        return showToast('Enter your vehicle registration number, or check "Registration Pending".', 'warning');
       }
       if (!registrationPending && !isValidVehicleNumber(vehicleNumber)) {
         pulseInvalid('number');
-        return setAlert({ message: 'Please enter a valid vehicle registration number.', type: 'warning' });
+        return showToast('Please enter a valid vehicle registration number.', 'warning');
       }
       body.vehicleCategory = vehicleCategory;
       body.vehicleNumber = registrationPending ? null : normalizeVehicleNumber(vehicleNumber);
@@ -91,7 +88,7 @@ export default function BookingModal({ slot, show, onClose, onBooked }) {
       showToast('Slot ' + slot.slotNumber + ' booked! Check in within 1 hour.', 'success');
       onBooked && onBooked(data.data);
     } else {
-      setAlert({ message: (data && data.message) || 'Booking failed.', type: 'danger' });
+      showToast((data && data.message) || 'Booking failed.', 'danger');
     }
   }
 
@@ -118,7 +115,6 @@ export default function BookingModal({ slot, show, onClose, onBooked }) {
     >
       {slot && (
         <>
-          <Alert message={alert.message} type={alert.type} />
           <div className="bill-receipt">
             <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>SELECTED SLOT</div>
             <div className="font-orbit" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>{slot.slotNumber}</div>

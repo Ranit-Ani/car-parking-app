@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
+import { showToast } from '../../lib/toast';
 import Modal from '../../components/Modal';
 import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
@@ -12,7 +12,6 @@ export default function CheckIn() {
   // revisit instead of briefly looking empty while a fresh copy loads.
   const [all, setAll] = useCachedState('staff:checkin:list', []);
   const [search, setSearch] = useState('');
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
   const [sel, setSel] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -39,13 +38,12 @@ export default function CheckIn() {
     const d = await apiRequest('/staff/checkin/' + sel._id, { method: 'POST' });
     setBusy(false);
     setSel(null);
-    if (d && d.success) load();
-    else setAlert({ message: (d && d.message) || 'Check-in failed.', type: 'danger' });
+    if (d && d.success) { showToast('Checked in — slot is now Occupied.', 'success'); load(); }
+    else showToast((d && d.message) || 'Check-in failed.', 'danger');
   }
 
   return (
     <Layout title="Check-In Console" badge={`${all.length} pending`} badgeClass="booked">
-      <Alert message={alert.message} type={alert.type} />
       <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
         <div className="ag-input-icon"><i className="bi bi-search" /><input className="ag-input" type="text" placeholder="Search by name, slot, vehicle, ID..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
       </div>

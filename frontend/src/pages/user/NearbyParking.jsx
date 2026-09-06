@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import { EmptyState } from '../../components/Bits';
 import LeafletMap, { ICONS } from '../../components/LeafletMap';
@@ -25,16 +24,13 @@ export default function NearbyParking() {
 
   const [center, setCenter] = useState(null); // { lat, lng, label? } — the point results are searched around
   const [locating, setLocating] = useState(false);
-  const [locateError, setLocateError] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCandidates, setSearchCandidates] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState('');
 
   const [results, setResults] = useState(null); // null = not searched yet
   const [loadingResults, setLoadingResults] = useState(false);
-  const [resultsError, setResultsError] = useState('');
 
   const [activeLocation, setActiveLocation] = useState(null); // location card the user opened
   const [locationSlots, setLocationSlots] = useState(null);
@@ -47,7 +43,6 @@ export default function NearbyParking() {
   const fetchNearby = useCallback(async (point, km, type) => {
     if (!point) return;
     setLoadingResults(true);
-    setResultsError('');
     const clampedKm = Math.min(Math.max(km, 0.5), MAX_RADIUS_KM);
     let url = `/locations/nearby?lat=${point.lat}&lng=${point.lng}&radius=${clampedKm}`;
     if (type) url += `&type=${encodeURIComponent(type)}`;
@@ -57,7 +52,7 @@ export default function NearbyParking() {
       setResults(d.data);
     } else {
       setResults([]);
-      setResultsError((d && d.message) || 'Could not load nearby parking.');
+      showToast((d && d.message) || 'Could not load nearby parking.', 'danger');
     }
   }, []);
 
@@ -68,12 +63,11 @@ export default function NearbyParking() {
 
   async function useMyLocation() {
     setLocating(true);
-    setLocateError('');
     try {
       const pos = await getCurrentPosition();
       setCenter({ ...pos, label: 'Your current location' });
     } catch (err) {
-      setLocateError(err.message || 'Could not get your location. Please allow location access.');
+      showToast(err.message || 'Could not get your location. Please allow location access.', 'warning');
     } finally {
       setLocating(false);
     }
@@ -88,17 +82,16 @@ export default function NearbyParking() {
   async function runSearch() {
     if (!searchQuery.trim()) return;
     setSearching(true);
-    setSearchError('');
     setSearchCandidates([]);
     try {
       const candidates = await geocodeSearch(searchQuery.trim());
       if (candidates.length === 0) {
-        setSearchError('No matching places found. Try a different search.');
+        showToast('No matching places found. Try a different search.', 'warning');
       } else {
         setSearchCandidates(candidates);
       }
     } catch (err) {
-      setSearchError(err.message || 'Search failed.');
+      showToast(err.message || 'Search failed.', 'warning');
     } finally {
       setSearching(false);
     }
@@ -232,9 +225,6 @@ export default function NearbyParking() {
           </div>
         )}
 
-        {locateError && mode === 'radius' && <Alert message={locateError} type="warning" />}
-        {searchError && <Alert message={searchError} type="warning" />}
-
         {searchCandidates.length > 0 && (
           <div className="ag-card" style={{ marginTop: '1rem', padding: '0.75rem' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Pick a match</div>
@@ -262,8 +252,6 @@ export default function NearbyParking() {
           <LeafletMap markers={mapMarkers} center={center} height={360} />
         </div>
       )}
-
-      {resultsError && <Alert message={resultsError} type="danger" />}
 
       {loadingResults ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Scanning for nearby parking...</div>

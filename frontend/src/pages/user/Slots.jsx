@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { ActionButton, EmptyState } from '../../components/Bits';
@@ -17,7 +16,6 @@ export default function UserSlots() {
   // Cached so the header counts don't flash back to "--" every time this
   // page is revisited.
   const [counts, setCounts] = useCachedState('user:slots:counts', { Available: '--', Booked: '--', Occupied: '--', total: '--' });
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
 
   const [selSlot, setSelSlot] = useState(null);
   const [savedVehicles, setSavedVehicles] = useState([]);
@@ -77,7 +75,6 @@ export default function UserSlots() {
     setRegistrationPending(false);
     setSaveVehicle(false);
     setVehicleChoice('');
-    setAlert({ message: '', type: 'info' });
     setInvalidField(null);
     setSelSlot(s);
 
@@ -117,15 +114,15 @@ export default function UserSlots() {
     } else {
       if (!vehicleCategory) {
         pulseInvalid('category');
-        return setAlert({ message: 'Select a vehicle category.', type: 'warning' });
+        return showToast('Select a vehicle category.', 'warning');
       }
       if (!registrationPending && !vehicleNumber.trim()) {
         pulseInvalid('number');
-        return setAlert({ message: 'Enter your vehicle registration number, or check "Registration Pending".', type: 'warning' });
+        return showToast('Enter your vehicle registration number, or check "Registration Pending".', 'warning');
       }
       if (!registrationPending && !isValidVehicleNumber(vehicleNumber)) {
         pulseInvalid('number');
-        return setAlert({ message: 'Please enter a valid vehicle registration number.', type: 'warning' });
+        return showToast('Please enter a valid vehicle registration number.', 'warning');
       }
       body.vehicleCategory = vehicleCategory;
       body.vehicleNumber = registrationPending ? null : normalizeVehicleNumber(vehicleNumber);
@@ -141,7 +138,7 @@ export default function UserSlots() {
       showToast('Slot ' + selSlot.slotNumber + ' booked! Check in within 1 hour.', 'success');
       refresh(); loadStats();
     } else {
-      setAlert({ message: (data && data.message) || 'Booking failed.', type: 'danger' });
+      showToast((data && data.message) || 'Booking failed.', 'danger');
     }
   }
 
@@ -231,7 +228,6 @@ export default function UserSlots() {
       >
         {selSlot && (
           <>
-            <Alert message={alert.message} type={alert.type} />
             <div className="bill-receipt">
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>SELECTED SLOT</div>
               <div className="font-orbit" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>{selSlot.slotNumber}</div>

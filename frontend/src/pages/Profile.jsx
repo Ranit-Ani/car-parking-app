@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import Layout from '../components/Layout';
-import Alert from '../components/Alert';
 import Modal from '../components/Modal';
 import OtpInput from '../components/OtpInput';
 import { ActionButton } from '../components/Bits';
@@ -33,12 +32,10 @@ export default function Profile() {
   const [newEmail, setNewEmail] = useState('');
   const [emailOtp, setEmailOtp] = useState('');
   const [emailBusy, setEmailBusy] = useState(false);
-  const [emailAlert, setEmailAlert] = useState({ message: '', type: 'info' });
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [deletePwd, setDeletePwd] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteAlert, setDeleteAlert] = useState({ message: '', type: 'info' });
 
   // ─── Saved Vehicles (Rule 3) ───────────────────────────────────────────────
   const [vehicles, setVehicles] = useCachedState('profile:vehicles', []);
@@ -48,7 +45,6 @@ export default function Profile() {
   const [vPending, setVPending] = useState(false);
   const [vNickname, setVNickname] = useState('');
   const [vBusy, setVBusy] = useState(false);
-  const [vAlert, setVAlert] = useState({ message: '', type: 'info' });
   const [vScanBusy, setVScanBusy] = useState(false);
 
   const isUserRole = user?.role === 'user';
@@ -63,7 +59,6 @@ export default function Profile() {
 
   function openAddVehicle() {
     setVCategory(''); setVNumber(''); setVPending(false); setVNickname('');
-    setVAlert({ message: '', type: 'info' });
     setVehicleModal(true);
   }
 
@@ -83,7 +78,6 @@ export default function Profile() {
     if (!file) return;
 
     setVScanBusy(true);
-    setVAlert({ message: '', type: 'info' });
     try {
       const imageBase64 = await fileToBase64(file);
       const d = await apiRequest('/ai/scan-plate', { method: 'POST', body: { imageBase64, mediaType: file.type || 'image/jpeg' } });
@@ -91,9 +85,9 @@ export default function Profile() {
         setVNumber(d.data.plateNumber);
         setVPending(false);
         if (d.data.vehicleCategoryGuess && !vCategory) setVCategory(d.data.vehicleCategoryGuess);
-        if (d.data.confidence === 'low') setVAlert({ message: 'Plate scanned, but I\'m not fully confident — please double-check it.', type: 'warning' });
+        if (d.data.confidence === 'low') showToast('Plate scanned, but I\'m not fully confident — please double-check it.', 'warning');
       } else {
-        setVAlert({ message: (d && d.message) || "Couldn't read a plate in that photo. Try a clearer shot or type it in.", type: 'warning' });
+        showToast((d && d.message) || "Couldn't read a plate in that photo. Try a clearer shot or type it in.", 'warning');
       }
     } finally {
       setVScanBusy(false);
@@ -101,9 +95,9 @@ export default function Profile() {
   }
 
   async function saveNewVehicle() {
-    if (!vCategory) return setVAlert({ message: 'Select a vehicle category.', type: 'warning' });
-    if (!vPending && !vNumber.trim()) return setVAlert({ message: 'Enter a registration number, or mark as Registration Pending.', type: 'warning' });
-    if (!vPending && !isValidVehicleNumber(vNumber)) return setVAlert({ message: 'Please enter a valid vehicle registration number.', type: 'warning' });
+    if (!vCategory) return showToast('Select a vehicle category.', 'warning');
+    if (!vPending && !vNumber.trim()) return showToast('Enter a registration number, or mark as Registration Pending.', 'warning');
+    if (!vPending && !isValidVehicleNumber(vNumber)) return showToast('Please enter a valid vehicle registration number.', 'warning');
     setVBusy(true);
     const d = await apiRequest('/auth/vehicles', {
       method: 'POST',
@@ -115,7 +109,7 @@ export default function Profile() {
       loadVehicles();
       showToast('Vehicle saved.', 'success');
     } else {
-      setVAlert({ message: (d && d.message) || 'Failed to save vehicle.', type: 'danger' });
+      showToast((d && d.message) || 'Failed to save vehicle.', 'danger');
     }
   }
 
@@ -185,24 +179,23 @@ export default function Profile() {
   function openEmailChange() {
     setEmailStep(1);
     setNewEmail(''); setEmailOtp('');
-    setEmailAlert({ message: '', type: 'info' });
     setEmailModal(true);
   }
 
   async function sendEmailOTP() {
-    if (!newEmail.trim()) return setEmailAlert({ message: 'Enter a new email.', type: 'warning' });
+    if (!newEmail.trim()) return showToast('Enter a new email.', 'warning');
     setEmailBusy(true);
     const d = await apiRequest('/auth/email-change/initiate', { method: 'POST', body: { newEmail: newEmail.trim() } });
     setEmailBusy(false);
     if (d && d.success) {
       setEmailStep(2);
     } else {
-      setEmailAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
   async function verifyEmailOTP() {
-    if (emailOtp.length < 6) return setEmailAlert({ message: 'Enter all 6 digits.', type: 'warning' });
+    if (emailOtp.length < 6) return showToast('Enter all 6 digits.', 'warning');
     setEmailBusy(true);
     const d = await apiRequest('/auth/email-change/verify', { method: 'POST', body: { otp: emailOtp } });
     setEmailBusy(false);
@@ -212,19 +205,19 @@ export default function Profile() {
       setEmailModal(false);
       showToast('Email updated to ' + d.user.email, 'success');
     } else {
-      setEmailAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
   async function doDelete() {
-    if (!deletePwd) return setDeleteAlert({ message: 'Enter your password.', type: 'warning' });
+    if (!deletePwd) return showToast('Enter your password.', 'warning');
     setDeleteBusy(true);
     const d = await apiRequest('/auth/account', { method: 'DELETE', body: { password: deletePwd } });
     setDeleteBusy(false);
     if (d && d.success) {
       logout();
     } else {
-      setDeleteAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
@@ -334,7 +327,7 @@ export default function Profile() {
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', marginBottom: '1rem', lineHeight: 1.6 }}>
               Permanently delete your account and all associated data. This action cannot be undone.
             </p>
-            <button className="btn-ag nova full" onClick={() => { setDeletePwd(''); setDeleteAlert({ message: '', type: 'info' }); setDeleteModal(true); }}>
+            <button className="btn-ag nova full" onClick={() => { setDeletePwd(''); setDeleteModal(true); }}>
               <i className="bi bi-exclamation-triangle" /> Delete Account
             </button>
           </div>
@@ -342,7 +335,6 @@ export default function Profile() {
       </div>
 
       <Modal show={emailModal} onClose={() => setEmailModal(false)} title="Change Email" icon="bi-at" size="sm">
-        <Alert message={emailAlert.message} type={emailAlert.type} />
         {emailStep === 1 && (
           <>
             <div className="ag-input-group">
@@ -385,7 +377,6 @@ export default function Profile() {
           </>
         )}
       >
-        <Alert message={deleteAlert.message} type={deleteAlert.type} />
         <p style={{ fontSize: '.84rem', color: 'var(--t2)', marginBottom: '1rem' }}>This will permanently delete your account. Enter your password to confirm.</p>
         <div className="ag-input-group">
           <label className="ag-label">Password</label>
@@ -415,7 +406,6 @@ export default function Profile() {
             </>
           )}
         >
-          <Alert message={vAlert.message} type={vAlert.type} />
           <div className="ag-input-group">
             <label className="ag-label">Category</label>
             <select className="ag-select" value={vCategory} onChange={(e) => setVCategory(e.target.value)}>

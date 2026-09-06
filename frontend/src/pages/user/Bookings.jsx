@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import NavigateModal from '../../components/NavigateModal';
@@ -32,7 +31,6 @@ const FILTERS = [
 
 export default function UserBookings() {
   const [filter, setFilter] = useState('all');
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
   const [bill, setBill] = useState(null);
   const [navBooking, setNavBooking] = useState(null);
 
@@ -76,7 +74,6 @@ export default function UserBookings() {
 
   return (
     <Layout title="Mission Log">
-      <Alert message={alert.message} type={alert.type} />
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
         {FILTERS.map((f) => (
           <button key={f.key} className={`btn-ag ${filter === f.key ? f.cls : 'ghost'} sm`} onClick={() => setFilter(f.key)}>{f.label}</button>

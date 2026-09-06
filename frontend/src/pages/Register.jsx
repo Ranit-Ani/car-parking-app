@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThreeBackground from '../components/ThreeBackground';
-import Alert from '../components/Alert';
 import OtpInput from '../components/OtpInput';
 import { ActionButton } from '../components/Bits';
 import { apiRequest } from '../lib/api';
@@ -36,7 +35,6 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
 
   const [otp, setOtp] = useState('');
   const [verifyBusy, setVerifyBusy] = useState(false);
@@ -66,9 +64,9 @@ export default function Register() {
 
   async function handleRegisterSubmit(e) {
     e.preventDefault();
-    if (!name || !email || !password) return setAlert({ message: 'All fields are required.', type: 'warning' });
-    if (password !== confirm) return setAlert({ message: 'Passwords do not match.', type: 'danger' });
-    if (password.length < 6) return setAlert({ message: 'Password must be at least 6 characters.', type: 'warning' });
+    if (!name || !email || !password) return showToast('All fields are required.', 'warning');
+    if (password !== confirm) return showToast('Passwords do not match.', 'danger');
+    if (password.length < 6) return showToast('Password must be at least 6 characters.', 'warning');
 
     setBusy(true);
     const d = await apiRequest('/auth/register/initiate', { method: 'POST', body: { name, email: email.toLowerCase(), password } });
@@ -79,12 +77,12 @@ export default function Register() {
       setOtp('');
       startTimer(600);
     } else {
-      setAlert({ message: (d && d.message) || 'Failed to send code. Try again.', type: 'danger' });
+      showToast((d && d.message) || 'Failed to send code. Try again.', 'danger');
     }
   }
 
   async function handleVerify() {
-    if (otp.length < 6) return setAlert({ message: 'Please enter all 6 digits of the code.', type: 'warning' });
+    if (otp.length < 6) return showToast('Please enter all 6 digits of the code.', 'warning');
     setVerifyBusy(true);
     const d = await apiRequest('/auth/register/verify', { method: 'POST', body: { email: email.toLowerCase(), otp } });
     setVerifyBusy(false);
@@ -92,10 +90,10 @@ export default function Register() {
     if (d && d.success) {
       clearInterval(timerRef.current);
       login(d.token, d.user);
-      setAlert({ message: 'Account activated! Launching...', type: 'success' });
+      showToast('Account activated! Launching...', 'success');
       setTimeout(() => navigate('/user/dashboard', { replace: true }), 900);
     } else {
-      setAlert({ message: (d && d.message) || 'Verification failed. Try again.', type: 'danger' });
+      showToast((d && d.message) || 'Verification failed. Try again.', 'danger');
     }
   }
 
@@ -138,8 +136,6 @@ export default function Register() {
               <div className={`step-dot ${step === 1 ? 'active' : 'done'}`} />
               <div className={`step-dot ${step === 2 ? 'active' : ''}`} />
             </div>
-
-            <Alert message={alert.message} type={alert.type} />
 
             {step === 1 && (
               <div className="step active">

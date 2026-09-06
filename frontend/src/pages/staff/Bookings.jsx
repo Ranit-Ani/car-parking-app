@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { StatusBadge, EmptyState } from '../../components/Bits';
 import { useInfiniteList } from '../../lib/useInfiniteList';
@@ -14,7 +13,6 @@ export default function StaffBookings() {
   const [fStatus, setFStatus] = useState('');
   const [fDate, setFDate] = useState('');
   const [search, setSearch] = useState('');
-  const [alert] = useState({ message: '', type: 'info' });
 
   const buildUrl = useCallback((page, limit) => {
     let url = `/staff/bookings/all?page=${page}&limit=${limit}`;
@@ -60,7 +58,6 @@ export default function StaffBookings() {
 
   return (
     <Layout title="Booking Registry">
-      <Alert message={alert.message} type={alert.type} />
       <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '0.75rem', alignItems: 'end' }}>
           <div>

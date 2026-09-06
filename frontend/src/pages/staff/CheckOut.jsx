@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
+import { showToast } from '../../lib/toast';
 import Modal from '../../components/Modal';
 import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
@@ -23,7 +23,6 @@ export default function CheckOut() {
   // revisit instead of briefly looking empty while a fresh copy loads.
   const [all, setAll] = useCachedState('staff:checkout:list', []);
   const [search, setSearch] = useState('');
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
   const [sel, setSel] = useState(null);
   const [busy, setBusy] = useState(false);
   const [bill, setBill] = useState(null);
@@ -51,13 +50,12 @@ export default function CheckOut() {
     const d = await apiRequest('/staff/checkout/' + sel._id, { method: 'POST' });
     setBusy(false);
     setSel(null);
-    if (d && d.success) setBill(d.data);
-    else setAlert({ message: (d && d.message) || 'Check-out failed.', type: 'danger' });
+    if (d && d.success) { showToast('Checked out — bill generated.', 'success'); setBill(d.data); }
+    else showToast((d && d.message) || 'Check-out failed.', 'danger');
   }
 
   return (
     <Layout title="Check-Out Console" badge={`${all.length} active`} badgeClass="occupied">
-      <Alert message={alert.message} type={alert.type} />
       <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
         <div className="ag-input-icon"><i className="bi bi-search" /><input className="ag-input" type="text" placeholder="Search by name, slot, vehicle, ID..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
       </div>

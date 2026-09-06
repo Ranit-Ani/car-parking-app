@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { StatusBadge, ActionButton, EmptyState } from '../../components/Bits';
@@ -38,7 +37,6 @@ export default function AdminSlots() {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [addBusy, setAddBusy] = useState(false);
-  const [addAlert, setAddAlert] = useState({ message: '', type: 'info' });
 
   const [priceOpen, setPriceOpen] = useState(false);
   const [priceId, setPriceId] = useState(null);
@@ -71,7 +69,6 @@ export default function AdminSlots() {
 
   function openAdd() {
     setForm(emptyForm);
-    setAddAlert({ message: '', type: 'info' });
     setAddOpen(true);
   }
 
@@ -94,7 +91,7 @@ export default function AdminSlots() {
       showToast('Slot added!', 'success');
       refresh();
     } else {
-      setAddAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
@@ -195,7 +192,6 @@ export default function AdminSlots() {
           </>
         )}
       >
-        <Alert message={addAlert.message} type={addAlert.type} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div className="ag-input-group" style={{ margin: 0 }}><label className="ag-label">Slot Number *</label><input className="ag-input" placeholder="P001" value={form.slotNumber} onChange={(e) => setForm({ ...form, slotNumber: e.target.value })} /></div>
           <div className="ag-input-group" style={{ margin: 0 }}><label className="ag-label">Hourly Rate (₹) *</label><input className="ag-input" type="number" min="0" placeholder="20" value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: e.target.value })} /></div>

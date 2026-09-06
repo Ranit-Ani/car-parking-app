@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
-import Alert from '../../components/Alert';
 import Modal from '../../components/Modal';
 import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
@@ -37,12 +36,10 @@ export default function AdminLocations() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
 
   function openAdd() {
     setEditingId(null);
     setForm(emptyForm);
-    setAlert({ message: '', type: 'info' });
     setFormOpen(true);
   }
 
@@ -57,7 +54,6 @@ export default function AdminLocations() {
       longitude: loc.longitude != null ? String(loc.longitude) : '',
       isActive: loc.isActive !== false,
     });
-    setAlert({ message: '', type: 'info' });
     setFormOpen(true);
   }
 
@@ -85,8 +81,8 @@ export default function AdminLocations() {
     : { lat: 20.5937, lng: 78.9629 };
 
   async function save() {
-    if (!form.name.trim()) return setAlert({ message: 'Location name is required.', type: 'warning' });
-    if (form.latitude === '' || form.longitude === '') return setAlert({ message: 'Latitude and longitude are required so this location can show up in Nearby Parking search.', type: 'warning' });
+    if (!form.name.trim()) return showToast('Location name is required.', 'warning');
+    if (form.latitude === '' || form.longitude === '') return showToast('Latitude and longitude are required so this location can show up in Nearby Parking search.', 'warning');
 
     setBusy(true);
     const body = {
@@ -107,7 +103,7 @@ export default function AdminLocations() {
       showToast(editingId ? 'Location updated!' : 'Location added!', 'success');
       load();
     } else {
-      setAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
@@ -173,7 +169,6 @@ export default function AdminLocations() {
           </>
         )}
       >
-        <Alert message={alert.message} type={alert.type} />
         <div className="ag-input-group" style={{ margin: 0, marginBottom: '0.9rem' }}>
           <label className="ag-label">Name *</label>
           <input className="ag-input" placeholder="Block A - Main Gate" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />

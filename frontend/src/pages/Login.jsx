@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThreeBackground from '../components/ThreeBackground';
-import Alert from '../components/Alert';
+import { showToast } from '../lib/toast';
 import Modal from '../components/Modal';
 import OtpInput from '../components/OtpInput';
 import { ActionButton } from '../components/Bits';
@@ -17,7 +17,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [alert, setAlert] = useState({ message: '', type: 'info' });
 
   // Forgot-password modal state
   const [fpOpen, setFpOpen] = useState(false);
@@ -27,7 +26,6 @@ export default function Login() {
   const [fpNewPwd, setFpNewPwd] = useState('');
   const [fpConfPwd, setFpConfPwd] = useState('');
   const [fpBusy, setFpBusy] = useState(false);
-  const [fpAlert, setFpAlert] = useState({ message: '', type: 'info' });
 
   useEffect(() => {
     const t = getToken(), u = getUser();
@@ -41,45 +39,43 @@ export default function Login() {
     setBusy(false);
     if (data && data.success) {
       login(data.token, data.user);
-      setAlert({ message: 'Identity confirmed. Launching...', type: 'success' });
+      showToast('Identity confirmed. Launching...', 'success');
       setTimeout(() => navigate(homeForRole(data.user.role), { replace: true }), 800);
     } else {
-      setAlert({ message: (data && data.message) || 'Authentication failed.', type: 'danger' });
+      showToast((data && data.message) || 'Authentication failed.', 'danger');
     }
   }
 
   function openForgot() {
     setFpStep(1);
     setFpEmail(''); setFpOtp(''); setFpNewPwd(''); setFpConfPwd('');
-    setFpAlert({ message: '', type: 'info' });
     setFpOpen(true);
   }
 
   async function fpSend() {
-    if (!fpEmail.trim()) return setFpAlert({ message: 'Enter your email address.', type: 'warning' });
+    if (!fpEmail.trim()) return showToast('Enter your email address.', 'warning');
     setFpBusy(true);
     const d = await apiRequest('/auth/forgot-password', { method: 'POST', body: { email: fpEmail.trim() } });
     setFpBusy(false);
     if (d && d.success) {
       setFpStep(2);
-      setFpAlert({ message: '', type: 'info' });
     } else {
-      setFpAlert({ message: (d && d.message) || 'Failed to send.', type: 'danger' });
+      showToast((d && d.message) || 'Failed to send.', 'danger');
     }
   }
 
   async function fpReset() {
-    if (fpOtp.length < 6) return setFpAlert({ message: 'Enter all 6 digits of the reset code.', type: 'warning' });
-    if (!fpNewPwd || fpNewPwd.length < 6) return setFpAlert({ message: 'Password must be at least 6 characters.', type: 'warning' });
-    if (fpNewPwd !== fpConfPwd) return setFpAlert({ message: 'Passwords do not match.', type: 'danger' });
+    if (fpOtp.length < 6) return showToast('Enter all 6 digits of the reset code.', 'warning');
+    if (!fpNewPwd || fpNewPwd.length < 6) return showToast('Password must be at least 6 characters.', 'warning');
+    if (fpNewPwd !== fpConfPwd) return showToast('Passwords do not match.', 'danger');
     setFpBusy(true);
     const d = await apiRequest('/auth/reset-password', { method: 'POST', body: { email: fpEmail.trim(), otp: fpOtp, newPassword: fpNewPwd } });
     setFpBusy(false);
     if (d && d.success) {
       setFpOpen(false);
-      setAlert({ message: 'Password reset successful! You can now log in.', type: 'success' });
+      showToast('Password reset successful! You can now log in.', 'success');
     } else {
-      setFpAlert({ message: (d && d.message) || 'Failed.', type: 'danger' });
+      showToast((d && d.message) || 'Failed.', 'danger');
     }
   }
 
@@ -98,8 +94,6 @@ export default function Login() {
               <h1>SYSTEM ACCESS</h1>
               <p>Smart Campus Car-Parking</p>
             </div>
-
-            <Alert message={alert.message} type={alert.type} />
 
             <form onSubmit={handleSubmit} autoComplete="off">
               <div className="ag-input-group">
@@ -152,8 +146,6 @@ export default function Login() {
         icon="bi-key"
         size="sm"
       >
-        <Alert message={fpAlert.message} type={fpAlert.type} />
-
         {fpStep === 1 && (
           <>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', marginBottom: '1rem' }}>
