@@ -315,6 +315,7 @@ export default function NearbyParking() {
                     <div className="slot-number">{s.slotNumber}</div>
                     <div className="slot-type">{s.slotType}</div>
                     <div className="slot-rate">₹{s.hourlyRate}/hr</div>
+                    {s.floor && <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>Floor {s.floor}</div>}
                     <div style={{ fontSize: '0.65rem', color: 'var(--neon-green)', marginTop: '0.3rem', letterSpacing: '0.05em' }}>TAP TO BOOK</div>
                   </div>
                 ))}

@@ -118,12 +118,13 @@ export default function BookingModal({ slot, show, onClose, onBooked }) {
           <div className="bill-receipt">
             <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>SELECTED SLOT</div>
             <div className="font-orbit" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>{slot.slotNumber}</div>
-            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>{slot.slotType} · {slot.location}</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>{slot.slotType} · {slot.location}{slot.floor ? ` · Floor ${slot.floor}` : ''}</div>
           </div>
           <table className="bill-table">
             <tbody>
               <tr><td>Type</td><td>{slot.slotType}</td></tr>
               <tr><td>Location</td><td>{slot.location}</td></tr>
+              {slot.floor && <tr><td>Floor</td><td>{slot.floor}</td></tr>}
               <tr><td>Rate</td><td>₹{slot.hourlyRate}/hour</td></tr>
               <tr><td>Booking Time</td><td>{new Date().toLocaleString('en-IN')} (now)</td></tr>
             </tbody>
