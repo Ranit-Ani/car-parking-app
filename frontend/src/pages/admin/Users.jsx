@@ -103,21 +103,28 @@ export default function AdminUsers() {
     })();
   }, []);
 
-  // ─── View selector: which role's table is shown, and whether it's
-  // scoped to a single parking location. Admins aren't location-bound, so
-  // they always load in their own unfiltered table below, independent of
-  // this selector.
+  // ─── View selector: which role's table is shown. The "Location Wise"
+  // scope only applies to Staff — every staff account is tied to exactly
+  // one parking location, whereas a User can book at any location, so
+  // Users only ever show "All Users".
   const [roleView, setRoleView] = useState('user'); // 'user' | 'staff'
-  const [scope, setScope] = useState('all'); // 'all' | 'location'
+  const [scope, setScope] = useState('all'); // 'all' | 'location' (staff only)
   const [locationId, setLocationId] = useState('');
+
+  // Switching to Users forces scope back to "all" — Location Wise isn't a
+  // valid option for them.
+  function changeRoleView(next) {
+    setRoleView(next);
+    if (next === 'user') setScope('all');
+  }
 
   // Default to the first location once locations load, whenever "Location
   // Wise" is selected but nothing's picked yet.
   useEffect(() => {
-    if (scope === 'location' && !locationId && locations.length > 0) {
+    if (roleView === 'staff' && scope === 'location' && !locationId && locations.length > 0) {
       setLocationId(locations[0]._id);
     }
-  }, [scope, locations, locationId]);
+  }, [roleView, scope, locations, locationId]);
 
   function changeScope(next) {
     if (next === 'location' && locations.length === 0) {
@@ -129,7 +136,7 @@ export default function AdminUsers() {
 
   const buildUrl = useCallback((page, limit) => {
     let url = `/admin/users?page=${page}&limit=${limit}&role=${roleView}`;
-    if (scope === 'location' && locationId) url += '&locationId=' + locationId;
+    if (roleView === 'staff' && scope === 'location' && locationId) url += '&locationId=' + locationId;
     return url;
   }, [roleView, scope, locationId]);
 
@@ -225,19 +232,21 @@ export default function AdminUsers() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '0.75rem', alignItems: 'end' }}>
           <div>
             <label className="ag-label">View</label>
-            <select className="ag-select" value={roleView} onChange={(e) => setRoleView(e.target.value)}>
+            <select className="ag-select" value={roleView} onChange={(e) => changeRoleView(e.target.value)}>
               <option value="user">Users</option>
               <option value="staff">Staff</option>
             </select>
           </div>
-          <div>
-            <label className="ag-label">Show</label>
-            <select className="ag-select" value={scope} onChange={(e) => changeScope(e.target.value)}>
-              <option value="all">All {roleLabel}</option>
-              <option value="location">Location Wise</option>
-            </select>
-          </div>
-          {scope === 'location' && (
+          {roleView === 'staff' && (
+            <div>
+              <label className="ag-label">Show</label>
+              <select className="ag-select" value={scope} onChange={(e) => changeScope(e.target.value)}>
+                <option value="all">All Staff</option>
+                <option value="location">Location Wise Staff</option>
+              </select>
+            </div>
+          )}
+          {roleView === 'staff' && scope === 'location' && (
             <div>
               <label className="ag-label">Location</label>
               <select className="ag-select" value={locationId} onChange={(e) => setLocationId(e.target.value)}>
@@ -251,7 +260,7 @@ export default function AdminUsers() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
         <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
           {users.length} of {total} {roleLabel.toLowerCase()} loaded
-          {scope === 'location' && selectedLocationName ? ` at ${selectedLocationName}` : ''}
+          {roleView === 'staff' && scope === 'location' && selectedLocationName ? ` at ${selectedLocationName}` : ''}
         </span>
         <button className="btn-ag ghost sm" onClick={refreshAll}><i className="bi bi-arrow-clockwise" /> Refresh</button>
       </div>
@@ -289,7 +298,7 @@ export default function AdminUsers() {
           curUser={curUser}
           onRoleChange={updateRole}
           onToggle={toggleUser}
-          emptyText={scope === 'location' ? `No users have booked at ${selectedLocationName || 'this location'} yet.` : 'No users found.'}
+          emptyText="No users found."
         />
       )}
 

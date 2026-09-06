@@ -104,10 +104,10 @@ class AdminService {
   // ─── User Management ──────────────────────────────────────────────────────────
   // `role` optionally narrows the list to one role ('admin' | 'staff' | 'user') —
   // powers the Manage Users page's User/Staff/Admin selector. `locationId`
-  // additionally scopes to one parking location — for 'staff' that's a
-  // direct match on their assigned locationId; regular 'user' accounts
-  // aren't tied to a location directly, so they're scoped instead to users
-  // who have made at least one booking at that location.
+  // additionally scopes to one parking location — only meaningful for
+  // 'staff' (every staff account is tied to exactly one location). Regular
+  // 'user' accounts can book at any location, so they're never
+  // location-scoped.
   async getAllUsers(page = 1, limit = 20, role, locationId) {
     const skip = (page - 1) * limit;
     // Only show accounts that actually completed OTP verification.
@@ -116,15 +116,8 @@ class AdminService {
     const filter = { isEmailVerified: true };
     if (role && ['admin', 'staff', 'user'].includes(role)) filter.role = role;
 
-    if (locationId) {
-      if (filter.role === 'staff') {
-        filter.locationId = locationId;
-      } else if (filter.role === 'user') {
-        const bookedUserIds = await Booking.distinct('userId', { locationId });
-        filter._id = { $in: bookedUserIds };
-      }
-      // Location scoping doesn't apply to admins (or when no role is
-      // specified) — admin accounts aren't tied to a parking location.
+    if (locationId && filter.role === 'staff') {
+      filter.locationId = locationId;
     }
 
     const [users, total] = await Promise.all([
