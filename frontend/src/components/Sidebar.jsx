@@ -47,6 +47,7 @@ const NAV = {
           { to: '/admin/locations', icon: 'bi-geo-alt-fill', text: 'Parking Locations' },
           { to: '/admin/users', icon: 'bi-people-fill', text: 'Manage Users' },
           { to: '/admin/revenue', icon: 'bi-graph-up-arrow', text: 'Revenue' },
+          { to: '/admin/location-revenue', icon: 'bi-cash-coin', text: 'Location Revenue' },
           { to: '/admin/bookings', icon: 'bi-list-check', text: 'All Bookings' },
         ],
       },

@@ -25,6 +25,7 @@ import AdminSlots from './pages/admin/Slots';
 import AdminLocations from './pages/admin/Locations';
 import AdminUsers from './pages/admin/Users';
 import AdminRevenue from './pages/admin/Revenue';
+import AdminLocationRevenue from './pages/admin/LocationRevenue';
 import AdminBookings from './pages/admin/Bookings';
 
 export default function App() {
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="/admin/locations" element={<RequireAuth roles={['admin']}><AdminLocations /></RequireAuth>} />
           <Route path="/admin/users" element={<RequireAuth roles={['admin']}><AdminUsers /></RequireAuth>} />
           <Route path="/admin/revenue" element={<RequireAuth roles={['admin']}><AdminRevenue /></RequireAuth>} />
+          <Route path="/admin/location-revenue" element={<RequireAuth roles={['admin']}><AdminLocationRevenue /></RequireAuth>} />
           <Route path="/admin/bookings" element={<RequireAuth roles={['admin']}><AdminBookings /></RequireAuth>} />
 
           <Route path="*" element={<Landing />} />

@@ -94,7 +94,8 @@ export default function AdminUsers() {
 
   // Needed so promoting someone to Staff (or reassigning an existing staff
   // member) can offer a location picker (multi-location support: every
-  // staff account must be linked to exactly one parking location).
+  // staff account must be linked to exactly one parking location), and so
+  // the "Location Wise" filter below has locations to choose from.
   useEffect(() => {
     (async () => {
       const d = await apiRequest('/admin/locations');
@@ -102,26 +103,67 @@ export default function AdminUsers() {
     })();
   }, []);
 
-  const buildUrl = useCallback((page, limit) => `/admin/users?page=${page}&limit=${limit}`, []);
+  // ─── View selector: which role's table is shown, and whether it's
+  // scoped to a single parking location. Admins aren't location-bound, so
+  // they always load in their own unfiltered table below, independent of
+  // this selector.
+  const [roleView, setRoleView] = useState('user'); // 'user' | 'staff'
+  const [scope, setScope] = useState('all'); // 'all' | 'location'
+  const [locationId, setLocationId] = useState('');
 
-  // Users load a page at a time and grow as the admin scrolls, instead of
-  // the (potentially large) user base loading all at once. Loaded users
-  // are split into the Admins/Staff/Users sections below as they arrive.
-  const { items: users, setItems: setUsers, loading, loadingMore, hasMore, loadMore, refresh, total } =
-    useInfiniteList(buildUrl, [], 30);
+  // Default to the first location once locations load, whenever "Location
+  // Wise" is selected but nothing's picked yet.
+  useEffect(() => {
+    if (scope === 'location' && !locationId && locations.length > 0) {
+      setLocationId(locations[0]._id);
+    }
+  }, [scope, locations, locationId]);
+
+  function changeScope(next) {
+    if (next === 'location' && locations.length === 0) {
+      showToast('Add a parking location first (Parking Locations page) to filter location-wise.', 'warning');
+      return;
+    }
+    setScope(next);
+  }
+
+  const buildUrl = useCallback((page, limit) => {
+    let url = `/admin/users?page=${page}&limit=${limit}&role=${roleView}`;
+    if (scope === 'location' && locationId) url += '&locationId=' + locationId;
+    return url;
+  }, [roleView, scope, locationId]);
+
+  // The selected role's users load a page at a time and grow as the admin
+  // scrolls, instead of the (potentially large) user base loading all at
+  // once. Resets and re-fetches whenever the role, scope, or location
+  // filter changes.
+  const { items: users, loading, loadingMore, hasMore, loadMore, refresh, total } =
+    useInfiniteList(buildUrl, [roleView, scope, locationId], 30);
+
+  // Admins are always shown in full, unfiltered — the role/scope selector
+  // above only applies to Users/Staff.
+  const buildAdminUrl = useCallback((page, limit) => `/admin/users?page=${page}&limit=${limit}&role=admin`, []);
+  const { items: adminUsers, loading: adminLoading, loadingMore: adminLoadingMore, hasMore: adminHasMore, loadMore: adminLoadMore, refresh: refreshAdmins } =
+    useInfiniteList(buildAdminUrl, [], 30);
+
+  function refreshAll() {
+    refresh();
+    refreshAdmins();
+  }
 
   // Live sync: another admin changing a role or activation status (or a
   // fresh signup landing in the list) should reflect here instantly instead
   // of waiting for a manual refresh.
   useEffect(() => {
     const socket = getSocket();
-    socket.on('userUpdated', refresh);
-    socket.on('staffUpdated', refresh);
+    socket.on('userUpdated', refreshAll);
+    socket.on('staffUpdated', refreshAll);
     return () => {
-      socket.off('userUpdated', refresh);
-      socket.off('staffUpdated', refresh);
+      socket.off('userUpdated', refreshAll);
+      socket.off('staffUpdated', refreshAll);
     };
-  }, [refresh]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refresh, refreshAdmins]);
 
   // Location picker modal state — shared by "promote to Staff" and
   // "reassign an existing staff member's location".
@@ -129,16 +171,14 @@ export default function AdminUsers() {
   const [pickedLocation, setPickedLocation] = useState('');
   const [busy, setBusy] = useState(false);
 
-  async function applyRoleChange(user, role, locationId) {
-    setUsers((prev) => prev.map((u) => (u._id === user._id ? { ...u, role } : u)));
-    const d = await apiRequest('/admin/users/' + user._id + '/role', { method: 'PUT', body: { role, locationId } });
+  async function applyRoleChange(user, role, targetLocationId) {
+    const d = await apiRequest('/admin/users/' + user._id + '/role', { method: 'PUT', body: { role, locationId: targetLocationId } });
     if (d && d.success) {
       showToast('Role updated: ' + role, 'success');
-      refresh();
     } else {
       showToast((d && d.message) || 'Failed.', 'danger');
-      refresh();
     }
+    refreshAll();
   }
 
   function updateRole(user, role) {
@@ -171,62 +211,89 @@ export default function AdminUsers() {
 
   async function toggleUser(id) {
     const d = await apiRequest('/admin/users/' + id + '/toggle', { method: 'PUT' });
-    if (d && d.success) {
-      setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, isActive: d.data.isActive } : u)));
-      showToast(d.message, 'warning');
-    } else showToast((d && d.message) || 'Failed.', 'danger');
+    if (d && d.success) showToast(d.message, 'warning');
+    else showToast((d && d.message) || 'Failed.', 'danger');
+    refreshAll();
   }
 
-  const adminUsers = users.filter((u) => u.role === 'admin');
-  const staffUsers = users.filter((u) => u.role === 'staff');
-  const regularUsers = users.filter((u) => u.role === 'user');
+  const roleLabel = roleView === 'staff' ? 'Staff' : 'Users';
+  const selectedLocationName = locations.find((l) => l._id === locationId)?.name;
 
   return (
     <Layout title="User Management" badge={false}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{users.length} of {total} users loaded</span>
-        <button className="btn-ag ghost sm" onClick={refresh}><i className="bi bi-arrow-clockwise" /> Refresh</button>
+      <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '0.75rem', alignItems: 'end' }}>
+          <div>
+            <label className="ag-label">View</label>
+            <select className="ag-select" value={roleView} onChange={(e) => setRoleView(e.target.value)}>
+              <option value="user">Users</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          <div>
+            <label className="ag-label">Show</label>
+            <select className="ag-select" value={scope} onChange={(e) => changeScope(e.target.value)}>
+              <option value="all">All {roleLabel}</option>
+              <option value="location">Location Wise</option>
+            </select>
+          </div>
+          {scope === 'location' && (
+            <div>
+              <label className="ag-label">Location</label>
+              <select className="ag-select" value={locationId} onChange={(e) => setLocationId(e.target.value)}>
+                {locations.map((l) => <option key={l._id} value={l._id}>{l.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+          {users.length} of {total} {roleLabel.toLowerCase()} loaded
+          {scope === 'location' && selectedLocationName ? ` at ${selectedLocationName}` : ''}
+        </span>
+        <button className="btn-ag ghost sm" onClick={refreshAll}><i className="bi bi-arrow-clockwise" /> Refresh</button>
+      </div>
+
+      <RoleTable
+        title="Admins"
+        icon="bi-shield-lock"
+        rows={adminUsers}
+        curUser={curUser}
+        onRoleChange={updateRole}
+        onToggle={toggleUser}
+        emptyText={adminLoading ? 'Loading admins...' : 'No admins found.'}
+      />
+      <InfiniteSentinel onVisible={adminLoadMore} hasMore={adminHasMore} loading={adminLoadingMore} />
+
       {users.length === 0 && loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading users...</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading {roleLabel.toLowerCase()}...</div>
+      ) : roleView === 'staff' ? (
+        <RoleTable
+          title="Staff"
+          icon="bi-person-badge"
+          rows={users}
+          curUser={curUser}
+          showLocation
+          onRoleChange={updateRole}
+          onReassign={reassignStaff}
+          onToggle={toggleUser}
+          emptyText={scope === 'location' ? `No staff assigned to ${selectedLocationName || 'this location'}.` : 'No staff members found.'}
+        />
       ) : (
-        <>
-          <RoleTable
-            title="Admins"
-            icon="bi-shield-lock"
-            rows={adminUsers}
-            curUser={curUser}
-            onRoleChange={updateRole}
-            onToggle={toggleUser}
-            emptyText="No admins found."
-          />
-
-          <RoleTable
-            title="Staff"
-            icon="bi-person-badge"
-            rows={staffUsers}
-            curUser={curUser}
-            showLocation
-            onRoleChange={updateRole}
-            onReassign={reassignStaff}
-            onToggle={toggleUser}
-            emptyText="No staff members found."
-          />
-
-          <RoleTable
-            title="Users"
-            icon="bi-people"
-            rows={regularUsers}
-            curUser={curUser}
-            onRoleChange={updateRole}
-            onToggle={toggleUser}
-            emptyText="No users found."
-          />
-
-          <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
-        </>
+        <RoleTable
+          title="Users"
+          icon="bi-people"
+          rows={users}
+          curUser={curUser}
+          onRoleChange={updateRole}
+          onToggle={toggleUser}
+          emptyText={scope === 'location' ? `No users have booked at ${selectedLocationName || 'this location'} yet.` : 'No users found.'}
+        />
       )}
+
+      <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
 
       <Modal
         show={!!picker}

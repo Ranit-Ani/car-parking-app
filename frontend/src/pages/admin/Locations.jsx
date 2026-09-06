@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import { ActionButton, EmptyState } from '../../components/Bits';
@@ -133,75 +134,8 @@ function StaffPanel({ location, onClose }) {
   );
 }
 
-// ─── Location detail modal body: revenue, bookings & occupancy for one
-// ─── specific parking location.
-function DetailPanel({ location }) {
-  const [detail, setDetail] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      const d = await apiRequest(`/admin/locations/${location._id}/detail`);
-      if (d && d.success) setDetail(d.data);
-    })();
-  }, [location._id]);
-
-  if (!detail) return <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading location stats...</div>;
-
-  return (
-    <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: '0.9rem', marginBottom: '1.25rem' }}>
-        <div className="stat-card green"><div className="stat-label">Revenue</div><div className="stat-value text-green">₹{(detail.revenue.totalRevenue || 0).toFixed(2)}</div></div>
-        <div className="stat-card cyan"><div className="stat-label">Active Bookings</div><div className="stat-value text-cyan">{detail.activeBookings}</div></div>
-        <div className="stat-card orange"><div className="stat-label">Occupancy Rate</div><div className="stat-value text-orange">{detail.occupancyRate}%</div></div>
-        <div className="stat-card purple"><div className="stat-label">Completed Bookings</div><div className="stat-value text-cyan">{detail.completedBookings}</div></div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-        <div className="ag-card" style={{ padding: '0.9rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>TOTAL SLOTS</div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{detail.slots.total || 0}</div>
-        </div>
-        <div className="ag-card" style={{ padding: '0.9rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>AVAILABLE</div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--neon-green)' }}>{detail.slots.Available || 0}</div>
-        </div>
-        <div className="ag-card" style={{ padding: '0.9rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>OCCUPIED</div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--neon-orange)' }}>{detail.slots.Occupied || 0}</div>
-        </div>
-        <div className="ag-card" style={{ padding: '0.9rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>STAFF ASSIGNED</div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{detail.staffCount}</div>
-        </div>
-      </div>
-
-      <div style={{ fontFamily: 'Orbitron,monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
-        AVG BOOKING VALUE: <span style={{ color: 'var(--neon-orange)' }}>₹{(detail.revenue.avgAmount || 0).toFixed(2)}</span>
-      </div>
-
-      {detail.daily.length === 0 ? (
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No completed bookings at this location in the last 30 days.</div>
-      ) : (
-        <div className="table-responsive" style={{ maxHeight: 220, overflowY: 'auto' }}>
-          <table className="ag-table">
-            <thead><tr><th>Date</th><th>Revenue</th><th>Bookings</th></tr></thead>
-            <tbody>
-              {detail.daily.slice().reverse().map((row) => (
-                <tr key={row._id}>
-                  <td>{row._id}</td>
-                  <td className="text-green">₹{row.revenue.toFixed(2)}</td>
-                  <td>{row.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
-  );
-}
-
 export default function AdminLocations() {
+  const navigate = useNavigate();
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -233,7 +167,6 @@ export default function AdminLocations() {
 
   // Which location's Staff / Detail modal is currently open, if any.
   const [staffPanelFor, setStaffPanelFor] = useState(null);
-  const [detailPanelFor, setDetailPanelFor] = useState(null);
 
   function openAdd() {
     setEditingId(null);
@@ -348,7 +281,7 @@ export default function AdminLocations() {
                   </td>
                   <td><span className={`ag-badge ${loc.isActive ? 'available' : 'cancelled'}`}>{loc.isActive ? 'Active' : 'Inactive'}</span></td>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <button className="btn-ag cyan sm" onClick={() => setDetailPanelFor(loc)} title="Revenue, bookings & stats"><i className="bi bi-graph-up" /></button>{' '}
+                    <button className="btn-ag cyan sm" onClick={() => navigate(`/admin/location-revenue?locationId=${loc._id}`)} title="View revenue for this location"><i className="bi bi-graph-up" /></button>{' '}
                     <button className="btn-ag ghost sm" onClick={() => openEdit(loc)}><i className="bi bi-pencil" /></button>{' '}
                     <button className="btn-ag red sm" onClick={() => remove(loc)}><i className="bi bi-trash" /></button>
                   </td>
@@ -439,16 +372,6 @@ export default function AdminLocations() {
         footer={<button className="btn-ag ghost" onClick={() => setStaffPanelFor(null)}>Close</button>}
       >
         {staffPanelFor && <StaffPanel location={staffPanelFor} onClose={() => setStaffPanelFor(null)} />}
-      </Modal>
-
-      <Modal
-        show={!!detailPanelFor}
-        onClose={() => setDetailPanelFor(null)}
-        title={detailPanelFor ? `${detailPanelFor.name} — Revenue & Stats` : 'Location Detail'}
-        icon="bi-graph-up"
-        footer={<button className="btn-ag ghost" onClick={() => setDetailPanelFor(null)}>Close</button>}
-      >
-        {detailPanelFor && <DetailPanel location={detailPanelFor} />}
       </Modal>
     </Layout>
   );
