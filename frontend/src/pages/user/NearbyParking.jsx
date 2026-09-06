@@ -7,7 +7,7 @@ import BookingModal from '../../components/BookingModal';
 import NavigateModal from '../../components/NavigateModal';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
-import { getCurrentPosition, geocodeSearch, formatDistance, MAX_RADIUS_KM } from '../../lib/geo';
+import { getCurrentPosition, geocodeSearch, MAX_RADIUS_KM } from '../../lib/geo';
 import { getSocket } from '../../lib/socket';
 
 const TYPE_OPTIONS = [
@@ -303,76 +303,45 @@ export default function NearbyParking() {
         <EmptyState icon="bi-compass">Choose a search mode above to find parking near you.</EmptyState>
       ) : results.length === 0 ? (
         <EmptyState icon="bi-search">No parking locations found within {radiusKm} km.</EmptyState>
+      ) : !activeLocation ? (
+        <EmptyState icon="bi-cursor-fill">
+          {results.length} parking location{results.length === 1 ? '' : 's'} found — tap a marker on the map to view its available slots.
+        </EmptyState>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1rem' }}>
-          {results.map((loc) => (
-            <div key={loc._id} className="ag-card" style={{ padding: '1rem', cursor: 'pointer', border: activeLocation && activeLocation._id === loc._id ? '1px solid var(--neon-cyan)' : undefined }} onClick={() => openLocation(loc)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--t1)', fontSize: '0.95rem' }}>{loc.name}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{loc.address}</div>
-                </div>
-                <span className="ag-badge active" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{formatDistance(loc.distanceKm)}</span>
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', fontSize: '0.78rem' }}>
-                <span style={{ color: loc.availableSlots > 0 ? 'var(--neon-green)' : 'var(--neon-red)' }}>
-                  <i className="bi bi-p-square" /> {loc.availableSlots}/{loc.totalSlots} available
-                </span>
-                {loc.minRate != null && (
-                  <span style={{ color: 'var(--text-muted)' }}>
-                    <i className="bi bi-currency-rupee" /> {loc.minRate === loc.maxRate ? `₹${loc.minRate}/hr` : `₹${loc.minRate}–₹${loc.maxRate}/hr`}
-                  </span>
-                )}
-              </div>
-              {loc.amenities && loc.amenities.length > 0 && (
-                <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  {loc.amenities.map((a) => (
-                    <span key={a} style={{ fontSize: '0.65rem', color: 'var(--text-dim)', border: '1px solid var(--t4)', borderRadius: 6, padding: '0.1rem 0.4rem' }}>{a}</span>
-                  ))}
-                </div>
-              )}
+        <div className="ag-card" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+            <div>
+              <div style={{ fontWeight: 700, color: 'var(--t1)', fontSize: '1rem' }}>{activeLocation.name}</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{activeLocation.address}</div>
             </div>
-          ))}
+            <button className="btn-ag ghost sm" onClick={() => setActiveLocation(null)}><i className="bi bi-x-lg" /> Clear</button>
+          </div>
+          {!loadingSlots && locationSlots && locationSlots.length > 0 && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: 'var(--neon-green)', marginRight: 4 }} />Available — Tap to book now</span>
+            </div>
+          )}
+          {loadingSlots ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading slots...</div>
+          ) : !locationSlots || locationSlots.length === 0 ? (
+            <EmptyState icon="bi-slash-circle">
+              {slotType ? 'No available slots of this type at this location right now.' : 'No available slots at this location right now.'}
+            </EmptyState>
+          ) : (
+            <div className="slot-grid">
+              {locationSlots.map((s) => (
+                <div key={s._id} className="slot-tile available" onClick={() => setBookingSlot(s)}>
+                  <div className="slot-number">{s.slotNumber}</div>
+                  <div className="slot-type">{s.slotType}</div>
+                  <div className="slot-rate">₹{s.hourlyRate}/hr</div>
+                  {s.floor && <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>Floor {s.floor}</div>}
+                  <div style={{ fontSize: '0.65rem', color: 'var(--neon-green)', marginTop: '0.3rem', letterSpacing: '0.05em' }}>TAP TO BOOK</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
-
-      {/* Slots available at the selected location */}
-      <Modal
-        show={!!activeLocation}
-        onClose={() => setActiveLocation(null)}
-        title={activeLocation ? activeLocation.name : ''}
-        icon="bi-grid-3x3-gap-fill"
-      >
-        {activeLocation && (
-          <>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{activeLocation.address}</div>
-            {!loadingSlots && locationSlots && locationSlots.length > 0 && (
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                <span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: 'var(--neon-green)', marginRight: 4 }} />Available — Tap to book now</span>
-              </div>
-            )}
-            {loadingSlots ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading slots...</div>
-            ) : !locationSlots || locationSlots.length === 0 ? (
-              <EmptyState icon="bi-slash-circle">
-                {slotType ? 'No available slots of this type at this location right now.' : 'No available slots at this location right now.'}
-              </EmptyState>
-            ) : (
-              <div className="slot-grid">
-                {locationSlots.map((s) => (
-                  <div key={s._id} className="slot-tile available" onClick={() => setBookingSlot(s)}>
-                    <div className="slot-number">{s.slotNumber}</div>
-                    <div className="slot-type">{s.slotType}</div>
-                    <div className="slot-rate">₹{s.hourlyRate}/hr</div>
-                    {s.floor && <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>Floor {s.floor}</div>}
-                    <div style={{ fontSize: '0.65rem', color: 'var(--neon-green)', marginTop: '0.3rem', letterSpacing: '0.05em' }}>TAP TO BOOK</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </Modal>
 
       <BookingModal slot={bookingSlot} show={!!bookingSlot} onClose={() => setBookingSlot(null)} onBooked={handleBooked} />
 
