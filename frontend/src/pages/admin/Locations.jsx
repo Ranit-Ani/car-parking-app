@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
+import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { ActionButton, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
@@ -9,6 +10,7 @@ import { useAdminLocations } from '../../lib/useAdminLocations';
 import LeafletMap, { ICONS } from '../../components/LeafletMap';
 
 const emptyForm = { name: '', address: '', description: '', amenities: '', latitude: '', longitude: '', isActive: true };
+const PAGE_SIZE = 30;
 
 export default function AdminLocations() {
   const navigate = useNavigate();
@@ -16,6 +18,45 @@ export default function AdminLocations() {
   // revisit instead of a loading state, and stays current if another admin
   // session adds/edits/removes a location or reassigns staff.
   const { locations, loading, refresh: load } = useAdminLocations();
+
+  // Live, type-as-you-go search — every keystroke re-filters the already
+  // in-memory list (no server round trip needed) by location name only.
+  // Typing more than one word narrows further: each word must appear
+  // somewhere in the name (order doesn't matter), so e.g. "block a" still
+  // matches a location named "Block A - Main Gate".
+  const [search, setSearch] = useState('');
+  const filteredLocations = useMemo(() => {
+    const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return locations;
+    return locations.filter((loc) => {
+      const name = (loc.name || '').toLowerCase();
+      return words.every((w) => name.includes(w));
+    });
+  }, [locations, search]);
+
+  // This list is shared with dropdown pickers on other admin pages (Slot
+  // Management, User Management, Location Wise Revenue), which need the
+  // *complete* set of locations to populate their selects — so it's fetched
+  // in full, in one go, same as before.
+  //
+  // What was slow here specifically was rendering every single row into the
+  // table at once. So, mirroring the Slot Management page's "load 30 at a
+  // time" pattern, we keep the full list in memory but only render a window
+  // of it (30 rows) up front, and grow that window as the admin scrolls —
+  // via the same <InfiniteSentinel /> used there. No extra network calls;
+  // it just avoids paying the render cost for rows that aren't visible yet.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Jump back to the first 30 whenever the search narrows/changes the
+  // result set, so a new search always starts from the top of its matches
+  // rather than wherever the scroll window happened to be left off.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search]);
+  const visibleLocations = filteredLocations.slice(0, visibleCount);
+  const hasMoreToShow = visibleCount < filteredLocations.length;
+  const loadMore = useCallback(() => {
+    setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length));
+  }, [filteredLocations.length]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -105,9 +146,32 @@ export default function AdminLocations() {
         <i className="bi bi-info-circle" /> These geo-located sites power users&apos; Nearby Parking search (by distance or by searched address/landmark) and in-app navigation. Link slots to a location from the Slot Management page, and assign staff to a location right here.
       </div>
 
+      <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '0.75rem', alignItems: 'end' }}>
+          <div>
+            <label className="ag-label">Search</label>
+            <input
+              className="ag-input"
+              type="text"
+              placeholder="Search by location name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {search && (
+            <button className="btn-ag ghost" onClick={() => setSearch('')}><i className="bi bi-x-circle" /> Clear</button>
+          )}
+        </div>
+      </div>
+
       <div className="table-card">
         <div className="tc-header">
-          <h6>Registered Locations <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({locations.length})</span></h6>
+          <h6>
+            Registered Locations{' '}
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+              ({visibleLocations.length}/{filteredLocations.length}{search ? ` matched of ${locations.length}` : ' loaded'})
+            </span>
+          </h6>
           <button className="btn-ag ghost sm" onClick={load}><i className="bi bi-arrow-clockwise" /> Refresh</button>
         </div>
         <div className="table-responsive">
@@ -118,7 +182,9 @@ export default function AdminLocations() {
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading locations...</td></tr>
               ) : locations.length === 0 ? (
                 <tr><td colSpan={7}><EmptyState icon="bi-geo-alt">No parking locations yet. Add one to enable Nearby Parking.</EmptyState></td></tr>
-              ) : locations.map((loc) => (
+              ) : filteredLocations.length === 0 ? (
+                <tr><td colSpan={7}><EmptyState icon="bi-search">No locations match &quot;{search}&quot;.</EmptyState></td></tr>
+              ) : visibleLocations.map((loc) => (
                 <tr key={loc._id}>
                   <td><strong style={{ color: 'var(--neon-cyan)' }}>{loc.name}</strong></td>
                   <td style={{ color: 'var(--text-muted)' }}>{loc.address || '—'}</td>
@@ -148,6 +214,9 @@ export default function AdminLocations() {
             </tbody>
           </table>
         </div>
+        {visibleLocations.length > 0 && (
+          <InfiniteSentinel onVisible={loadMore} hasMore={hasMoreToShow} loading={false} />
+        )}
       </div>
 
       <Modal
