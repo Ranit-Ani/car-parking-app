@@ -25,7 +25,7 @@ function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onR
             <col style={{ width: '110px' }} />
             <col style={{ width: '100px' }} />
             <col style={{ width: '110px' }} />
-            <col style={{ width: '150px' }} />
+            <col style={{ width: '120px' }} />
           </colgroup>
           <thead>
             <tr>
