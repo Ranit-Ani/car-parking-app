@@ -103,7 +103,8 @@ export default function AdminUsers() {
   // Support deep-linking here from elsewhere (e.g. the "Staff" count button
   // on the Parking Locations page) with ?roleView=staff&scope=location&locationId=...
   const [searchParams] = useSearchParams();
-  const initialRoleView = searchParams.get('roleView') === 'staff' ? 'staff' : 'user';
+  const initialRoleViewParam = searchParams.get('roleView');
+  const initialRoleView = initialRoleViewParam === 'staff' ? 'staff' : initialRoleViewParam === 'admin' ? 'admin' : 'user';
   const initialLocationId = searchParams.get('locationId') || '';
   const initialScope = searchParams.get('scope') === 'location' && initialRoleView === 'staff' ? 'location' : 'all';
 
@@ -120,16 +121,16 @@ export default function AdminUsers() {
   // ─── View selector: which role's table is shown. The "Location Wise"
   // scope only applies to Staff — every staff account is tied to exactly
   // one parking location, whereas a User can book at any location, so
-  // Users only ever show "All Users".
-  const [roleView, setRoleView] = useState(initialRoleView); // 'user' | 'staff'
+  // Users and Admins only ever show "All".
+  const [roleView, setRoleView] = useState(initialRoleView); // 'user' | 'staff' | 'admin'
   const [scope, setScope] = useState(initialScope); // 'all' | 'location' (staff only)
   const [locationId, setLocationId] = useState(initialLocationId);
 
-  // Switching to Users forces scope back to "all" — Location Wise isn't a
-  // valid option for them.
+  // Switching away from Staff forces scope back to "all" — Location Wise
+  // isn't a valid option for Users or Admins.
   function changeRoleView(next) {
     setRoleView(next);
-    if (next === 'user') setScope('all');
+    if (next !== 'staff') setScope('all');
   }
 
   // Default to the first location once locations load, whenever "Location
@@ -161,15 +162,8 @@ export default function AdminUsers() {
   const { items: users, loading, loadingMore, hasMore, loadMore, refresh, total } =
     useInfiniteList(buildUrl, [roleView, scope, locationId], 30);
 
-  // Admins are always shown in full, unfiltered — the role/scope selector
-  // above only applies to Users/Staff.
-  const buildAdminUrl = useCallback((page, limit) => `/admin/users?page=${page}&limit=${limit}&role=admin`, []);
-  const { items: adminUsers, loading: adminLoading, loadingMore: adminLoadingMore, hasMore: adminHasMore, loadMore: adminLoadMore, refresh: refreshAdmins } =
-    useInfiniteList(buildAdminUrl, [], 30);
-
   function refreshAll() {
     refresh();
-    refreshAdmins();
   }
 
   // Live sync: another admin changing a role or activation status (or a
@@ -184,7 +178,7 @@ export default function AdminUsers() {
       socket.off('staffUpdated', refreshAll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refresh, refreshAdmins]);
+  }, [refresh]);
 
   // Location picker modal state — shared by "promote to Staff" and
   // "reassign an existing staff member's location".
@@ -250,7 +244,7 @@ export default function AdminUsers() {
     refreshAll();
   }
 
-  const roleLabel = roleView === 'staff' ? 'Staff' : 'Users';
+  const roleLabel = roleView === 'staff' ? 'Staff' : roleView === 'admin' ? 'Admins' : 'Users';
   const selectedLocationName = locations.find((l) => l._id === locationId)?.name;
 
   // "All Staff" view: group the loaded staff rows by their assigned
@@ -282,6 +276,7 @@ export default function AdminUsers() {
             <select className="ag-select" value={roleView} onChange={(e) => changeRoleView(e.target.value)}>
               <option value="user">Users</option>
               <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
           {roleView === 'staff' && (
@@ -311,17 +306,6 @@ export default function AdminUsers() {
         </span>
         <button className="btn-ag ghost sm" onClick={refreshAll}><i className="bi bi-arrow-clockwise" /> Refresh</button>
       </div>
-
-      <RoleTable
-        title="Admins"
-        icon="bi-shield-lock"
-        rows={adminUsers}
-        curUser={curUser}
-        onRoleChange={updateRole}
-        onToggle={toggleUser}
-        emptyText={adminLoading ? 'Loading admins...' : 'No admins found.'}
-      />
-      <InfiniteSentinel onVisible={adminLoadMore} hasMore={adminHasMore} loading={adminLoadingMore} />
 
       {users.length === 0 && loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading {roleLabel.toLowerCase()}...</div>
@@ -370,6 +354,16 @@ export default function AdminUsers() {
           onToggle={toggleUser}
           onDelete={deleteStaff}
           emptyText={`No staff assigned to ${selectedLocationName || 'this location'}.`}
+        />
+      ) : roleView === 'admin' ? (
+        <RoleTable
+          title="Admins"
+          icon="bi-shield-lock"
+          rows={users}
+          curUser={curUser}
+          onRoleChange={updateRole}
+          onToggle={toggleUser}
+          emptyText="No admins found."
         />
       ) : (
         <RoleTable
