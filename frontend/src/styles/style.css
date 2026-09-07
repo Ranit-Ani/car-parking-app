@@ -206,6 +206,11 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .ag-table tbody tr:hover{background:rgba(0,240,255,.025)}
 .ag-table tbody tr:last-child{border-bottom:none}
 .ag-table tbody td{padding:.82rem .9rem;font-size:.84rem;color:var(--t1);vertical-align:middle}
+/* Extra breathing room at the scrollable edges (table-responsive lets the
+   table scroll horizontally on narrow/mobile screens) so the first and
+   last column never sit flush against the card's border. */
+.ag-table thead th:first-child,.ag-table tbody td:first-child{padding-left:1.25rem}
+.ag-table thead th:last-child,.ag-table tbody td:last-child{padding-right:1.25rem}
 
 /* ══════════════════════════════════════════════════════════════
    BUTTONS
