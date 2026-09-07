@@ -6,9 +6,9 @@
       "type": "knowledge",
       "roles": ["user", "staff", "admin"],
       "responses": [
-        "Hi! I'm the AG Parking assistant. Ask me about slot availability, bookings, cancellations, or your account.",
+        "Hi! I'm the AG Parking assistant. Ask me about slot availability, parking locations, bookings, cancellations, or your account.",
         "Hello! How can I help with parking today?",
-        "Hey there! I can help with availability, bookings, vehicles, or general parking questions."
+        "Hey there! I can help with availability, locations, bookings, vehicles, or general parking questions."
       ]
     },
     {
@@ -41,6 +41,12 @@
       "tag": "occupancy_insights",
       "type": "tool",
       "tool": "get_occupancy_insights",
+      "roles": ["user", "staff", "admin"]
+    },
+    {
+      "tag": "location_list",
+      "type": "tool",
+      "tool": "get_locations",
       "roles": ["user", "staff", "admin"]
     },
     {
@@ -152,7 +158,23 @@
       "type": "knowledge",
       "roles": ["admin"],
       "responses": [
-        "From the Admin dashboard you can change a user's role between user/staff/admin (this moves them between the Users and Staff sections automatically) and activate or deactivate accounts."
+        "From the Admin dashboard you can change a user's role between user/staff/admin (this moves them between the Users and Staff sections automatically) and activate or deactivate accounts. When you promote someone to staff, you also assign them to one parking location — they'll only manage check-in/check-out and slots for that location."
+      ]
+    },
+    {
+      "tag": "nearby_parking_help",
+      "type": "knowledge",
+      "roles": ["user", "staff", "admin"],
+      "responses": [
+        "Under Nearby Parking you can search by your current GPS location or by typing a place/address, and see every active parking location within up to 5 km, nearest first — each card shows live available slots and rates. Tap a location to see its slots and book, or get in-app directions to it."
+      ]
+    },
+    {
+      "tag": "admin_location_management",
+      "type": "knowledge",
+      "roles": ["admin"],
+      "responses": [
+        "From Admin → Locations you can add, edit, or deactivate parking locations — setting the name, address, map coordinates, and amenities. Each location can have its own slots and its own assigned staff, and Admin → Location Revenue breaks down earnings site-by-site."
       ]
     },
     {
@@ -160,8 +182,8 @@
       "type": "knowledge",
       "roles": ["user", "staff", "admin"],
       "responses": [
-        "I'm not sure about that one — I can help with slot availability, bookings, cancellations, check-in/out, vehicles, or account questions. Could you rephrase?",
-        "That's outside what I can help with here. Try asking about availability, bookings, vehicles, or your account."
+        "I'm not sure about that one — I can help with slot availability, parking locations, bookings, cancellations, check-in/out, vehicles, or account questions. Could you rephrase?",
+        "That's outside what I can help with here. Try asking about availability, locations, bookings, vehicles, or your account."
       ]
     }
   ]

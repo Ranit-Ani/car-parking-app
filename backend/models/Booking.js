@@ -252,10 +252,18 @@ BookingSchema.statics.getDailyRevenueForLocation = async function (locationId, d
 // ─── Static: Occupancy insights (peak hours / days / busiest slots) ──────────
 // Feeds the AI assistant's get_occupancy_insights tool, so the model owns the
 // aggregation once instead of duplicating it elsewhere.
-BookingSchema.statics.getOccupancyInsights = async function (days = 90) {
+// Optional `locationId` scopes every aggregation to a single parking
+// location (multi-location support) — used for staff, whose insights should
+// only reflect their own location, and for admins asking about a specific
+// site by name. Omitted, this returns system-wide insights exactly as before.
+BookingSchema.statics.getOccupancyInsights = async function (days = 90, locationId = null) {
   const start = new Date();
   start.setDate(start.getDate() - days);
   const match = { bookingTime: { $gte: start } };
+  if (locationId) match.locationId = new mongoose.Types.ObjectId(locationId);
+
+  const durationMatch = { status: 'Completed', checkInTime: { $ne: null }, checkOutTime: { $ne: null } };
+  if (locationId) durationMatch.locationId = new mongoose.Types.ObjectId(locationId);
 
   const [byHour, byDay, avgDuration, topSlots] = await Promise.all([
     this.aggregate([
@@ -269,7 +277,7 @@ BookingSchema.statics.getOccupancyInsights = async function (days = 90) {
       { $sort: { count: -1 } },
     ]),
     this.aggregate([
-      { $match: { status: 'Completed', checkInTime: { $ne: null }, checkOutTime: { $ne: null } } },
+      { $match: durationMatch },
       { $project: { minutes: { $divide: [{ $subtract: ['$checkOutTime', '$checkInTime'] }, 60000] } } },
       { $group: { _id: null, avgMinutes: { $avg: '$minutes' } } },
     ]),
@@ -288,6 +296,7 @@ BookingSchema.statics.getOccupancyInsights = async function (days = 90) {
 
   return {
     windowDays: days,
+    scopedToLocationId: locationId ? String(locationId) : null,
     peakHours: byHour.slice(0, 3).map((h) => ({ hour: h._id, count: h.count })),
     quietHours: [...byHour].sort((a, b) => a.count - b.count).slice(0, 3).map((h) => ({ hour: h._id, count: h.count })),
     busiestDays: byDay.map((d) => ({ day: DAY_NAMES[d._id], count: d.count })),

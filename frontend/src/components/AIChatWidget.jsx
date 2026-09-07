@@ -3,9 +3,12 @@ import { apiRequest } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 const SUGGESTIONS_BY_ROLE = {
-  user: ['Which slots are free right now?', 'When is parking usually busiest?', 'Show my recent bookings'],
+  user: ['Which slots are free right now?', 'What parking locations do you have?', 'Show my recent bookings'],
+  // Staff are scoped to their assigned location automatically, so their
+  // suggestions stay location-agnostic in wording — the assistant answers
+  // for their site either way.
   staff: ['Which slots are free right now?', 'When is parking usually busiest?'],
-  admin: ['How much revenue this week?', 'When is parking usually busiest?', 'How many staff accounts do we have?'],
+  admin: ['Revenue by location this month', 'Which location has the most free slots?', 'How many staff accounts do we have?'],
 };
 
 export default function AIChatWidget() {
@@ -83,7 +86,12 @@ export default function AIChatWidget() {
           <div className="ai-panel-body" ref={scrollRef}>
             {messages.length === 0 && (
               <div className="ai-empty">
-                <p>Ask me about slot availability, your bookings, busy hours, {user.role === 'admin' ? 'revenue, ' : ''}and more.</p>
+                <p>
+                  Ask me about slot availability, parking locations, your bookings, busy hours, {user.role === 'admin' ? 'revenue, ' : ''}and more.
+                  {user.role === 'staff' && user.locationName && (
+                    <> I'll answer for <strong>{user.locationName}</strong>, your assigned location.</>
+                  )}
+                </p>
                 <div className="ai-suggestions">
                   {suggestions.map((s) => (
                     <button key={s} type="button" className="ai-suggestion-chip" onClick={() => send(s)}>{s}</button>

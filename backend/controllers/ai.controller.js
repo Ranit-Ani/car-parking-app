@@ -8,7 +8,10 @@ exports.chat = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Message is required.' });
     }
     const result = await LocalAIService.chat({
-      user: { id: req.user._id, name: req.user.name, role: req.user.role },
+      // locationId (multi-location support) is only meaningful for staff —
+      // it's how LocalAIService locks their answers to their own assigned
+      // site, the same field every other staff-facing route already trusts.
+      user: { id: req.user._id, name: req.user.name, role: req.user.role, locationId: req.user.locationId || null },
       message: message.trim(),
     });
     res.json({ success: true, data: result });

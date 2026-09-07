@@ -83,6 +83,8 @@ DATA = {
             "what's the rate for ev slots", "is parking full today",
             "any parking free right now", "how many spots left",
             "can you check current availability", "is there space for my car",
+            "is there parking available at the downtown lot", "any free slots at block c",
+            "check availability at the east wing location",
         ],
     ),
     "occupancy_insights": (
@@ -100,12 +102,63 @@ DATA = {
             "busiest time of day for parking", "when do most people park here",
             "average time people stay parked", "most popular parking slots",
             "trends in parking usage", "when does parking get crowded",
+            "peak hours at block c", "busiest times at the downtown lot",
+            "occupancy trends for the east wing location",
         ],
         [
             "when is it quietest here", "what hours have the most demand",
             "give me the busy times", "typical session duration?",
             "what days get the most traffic", "when's parking emptiest",
             "which slots get used most often", "how long do people usually park",
+        ],
+    ),
+    "location_list": (
+        [
+            "what parking locations do you have", "list all parking locations",
+            "which locations are available", "show me all parking sites",
+            "how many locations do we operate", "what campuses have parking",
+            "where are your parking locations", "give me a list of locations",
+            "show all parking spots by location", "what sites can i park at",
+            "which parking lots are there", "list every location",
+            "how many parking locations are there", "show me the locations",
+            "what locations exist in the system", "give me the location list",
+            "which locations have available slots", "show parking locations near me",
+            "what are all the parking sites", "list the campuses with parking",
+            "how many sites do we have", "show me every parking location",
+            "which location has the most free slots", "compare locations available slots",
+        ],
+        [
+            "can you list the parking locations", "what locations are set up",
+            "show all the sites we operate", "how many parking locations exist",
+            "give me every location available", "which locations can i choose from",
+        ],
+    ),
+    "nearby_parking_help": (
+        [
+            "how does nearby parking work", "how do i search for parking near me",
+            "how do i find parking close to my location", "explain the nearby parking feature",
+            "how do i search by address for parking", "how far can nearby parking search",
+            "what's the max radius for nearby search", "how do i get directions to a parking location",
+            "how do i navigate to a parking spot", "how does the parking map work",
+            "can i search parking by typing an address", "how do i use gps to find parking",
+        ],
+        [
+            "how do i use the nearby parking search", "what's the search radius limit for locations",
+            "how do i get directions to a location", "explain how location search works",
+        ],
+    ),
+    "admin_location_management": (
+        [
+            "how do i add a new parking location", "how do i edit a parking location",
+            "how do i deactivate a location", "admin guide to managing locations",
+            "how do i set coordinates for a location", "how do i assign staff to a location",
+            "how do i add amenities to a location", "add a new site as admin",
+            "how do i manage parking locations", "edit location details",
+            "how do i see revenue per location", "location revenue breakdown for admin",
+        ],
+        [
+            "steps to add a location as admin", "how do i update a location's address",
+            "how do i assign a staff member to a site", "how do i check revenue by location",
         ],
     ),
     "my_bookings": (
@@ -180,6 +233,8 @@ DATA = {
             "what's our total earnings", "give me the money numbers",
             "show income report", "total revenue generated",
             "how much did parking bring in", "monthly revenue breakdown",
+            "revenue for block c this month", "how much did the downtown lot earn",
+            "revenue breakdown by location",
         ],
         [
             "how much did we earn today", "show total collections",
