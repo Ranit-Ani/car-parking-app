@@ -18,14 +18,14 @@ function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onR
         <div className="tc-header"><h6><i className={`bi ${icon}`} style={{ marginRight: '0.4rem' }} />{title} ({rows.length})</h6></div>
       )}
       <div className="table-responsive">
-        <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: 760 }}>
+        <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: 840 }}>
           <colgroup>
             <col style={{ width: '190px' }} />
             <col style={{ width: '210px' }} />
             <col style={{ width: '110px' }} />
             <col style={{ width: '100px' }} />
             <col style={{ width: '110px' }} />
-            <col style={{ width: '70px' }} />
+            <col style={{ width: '150px' }} />
           </colgroup>
           <thead>
             <tr>
@@ -64,7 +64,7 @@ function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onR
                 </td>
                 <td>{u.isActive ? <span className="ag-badge available">Active</span> : <span className="ag-badge cancelled">Inactive</span>}</td>
                 <td style={{ color: 'var(--text-muted)' }}>{formatDate(u.createdAt)}</td>
-                <td>
+                <td style={{ whiteSpace: 'nowrap' }}>
                   {u._id !== curUser.id ? (
                     isStaffTable ? (
                       <RowActionsMenu
