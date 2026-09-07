@@ -199,6 +199,13 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .table-card{background:var(--card);border:1px solid rgba(0,240,255,.06);border-radius:var(--r-card);overflow:hidden;box-shadow:var(--shadow-card);animation:riseIn .5s ease forwards}
 .table-card .tc-header{padding:.9rem 1.4rem;border-bottom:1px solid var(--t4);display:flex;justify-content:space-between;align-items:center}
 .table-card .tc-header h6{font-family:'Exo 2',sans-serif;font-size:.75rem;letter-spacing:.1em;color:var(--t1);margin:0}
+/* Bootstrap's .table-responsive has no padding of its own, so the table
+   (and, when it scrolls horizontally on narrow screens, whichever column
+   is currently at the scroll edge) sits flush against the card border.
+   Give the scroll container its own inset so there's always real breathing
+   room on both sides, matching the header's padding above it. */
+.table-card .table-responsive{padding:0 1.4rem .2rem}
+.table-card .table-responsive table{width:100%}
 .ag-table{width:100%;border-collapse:collapse}
 .ag-table thead tr{background:rgba(0,117,255,.04);border-bottom:1px solid rgba(0,240,255,.08)}
 .ag-table thead th{padding:.7rem .9rem;font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);font-weight:600;white-space:nowrap}
