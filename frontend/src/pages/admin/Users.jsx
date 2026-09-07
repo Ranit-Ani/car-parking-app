@@ -21,7 +21,13 @@ function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onR
         <table className="ag-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: 840 }}>
           <colgroup>
             <col style={{ width: '190px' }} />
-            <col style={{ width: '210px' }} />
+            {/* Email column is intentionally left flexible (no fixed width) so it
+                absorbs any leftover table width. The other columns hold
+                fixed-size controls (select, badge, button) that shouldn't
+                stretch — without this, the extra width used to get distributed
+                across every column, leaving an oversized, lopsided blank gap
+                after short content like the Actions column. */}
+            <col />
             <col style={{ width: '110px' }} />
             <col style={{ width: '100px' }} />
             <col style={{ width: '110px' }} />
