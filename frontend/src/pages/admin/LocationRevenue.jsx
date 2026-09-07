@@ -103,7 +103,6 @@ export default function LocationRevenue() {
       setDetail(det);
       setLoading(false);
       setLocationId(id);
-      drawChart(canvasRef.current, chartRef, det.daily);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,20 +127,18 @@ export default function LocationRevenue() {
     if (d && d.success) {
       setDetail(d.data);
       setCached(key, d.data);
-      drawChart(canvasRef.current, chartRef, d.data.daily);
     }
   }, [locationId]);
 
   // Whenever the selected location changes, immediately show whatever is
-  // cached for it (instant chart repaint, no blank canvas) and then
-  // revalidate against the server.
+  // cached for it (instant repaint, no blank canvas) and then revalidate
+  // against the server.
   useEffect(() => {
     if (!locationId) { setDetail(null); return; }
     const cached = getCached(detailCacheKey(locationId));
     if (cached) {
       setDetail(cached);
       setLoading(false);
-      drawChart(canvasRef.current, chartRef, cached.daily);
     } else {
       setDetail(null);
       setLoading(true);
@@ -149,6 +146,24 @@ export default function LocationRevenue() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId]);
+
+  // Draw/redraw the chart only once React has actually committed the
+  // <canvas> for the current `detail` — NOT immediately after setDetail()
+  // is called. The <canvas> here is conditionally rendered (it only
+  // exists once `detail.daily.length > 0`), so calling drawChart() right
+  // after setDetail() (as this used to do, inside load() / the effects
+  // above) ran against the *previous* render's canvasRef — still null the
+  // very first time a location's data arrives, since the canvas hadn't
+  // mounted yet. That silently dropped the first draw, and the chart only
+  // appeared once something else called load() again — in practice the
+  // 60s safety-net poll below, which is exactly the "~1 minute" delay.
+  // Keying a useEffect on `detail` instead guarantees this runs after the
+  // canvas (if any) is actually in the DOM.
+  useEffect(() => {
+    if (detail && detail.daily.length > 0) {
+      drawChart(canvasRef.current, chartRef, detail.daily);
+    }
+  }, [detail]);
 
   useEffect(() => {
     // Live sync: a completed check-out (or any booking update) at this
