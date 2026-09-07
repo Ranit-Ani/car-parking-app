@@ -3,7 +3,7 @@ import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import NavigateModal from '../../components/NavigateModal';
-import { StatusBadge, EmptyState } from '../../components/Bits';
+import { StatusBadge, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest, downloadFile } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { formatDate, formatDateTime } from '../../lib/utils';
@@ -82,7 +82,7 @@ export default function UserBookings() {
       <div className="table-card">
         <div className="table-responsive">
           <table className="ag-table">
-            <thead><tr><th>Slot</th><th>Vehicle</th><th>Location</th><th>Booked</th><th>Check-In</th><th>Check-Out</th><th>Hours</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Slot</th><th>Vehicle</th><th>Location</th><th>Booked</th><th>Check-In</th><th>Check-Out</th><th>Hours</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {rows.length === 0 && loading ? (
                 <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading bookings...</td></tr>
@@ -104,15 +104,17 @@ export default function UserBookings() {
                   <td>{b.totalHours ? b.totalHours + 'h' : '—'}</td>
                   <td>{b.totalAmount ? <span style={{ color: 'var(--neon-green)', fontWeight: 700 }}>₹{b.totalAmount}</span> : '—'}</td>
                   <td><StatusBadge status={b.status} /></td>
-                  <td>
-                    {b.status === 'Booked' && <button className="btn-ag red sm" onClick={() => cancel(b._id)}>Cancel</button>}
-                    {(b.status === 'Booked' || b.status === 'Active') && destinationFor(b) && (
-                      <button className="btn-ag plasma sm" style={{ marginLeft: '0.35rem' }} onClick={() => setNavBooking(b)} title="Navigate to Parking">
-                        <i className="bi bi-signpost-2" /> Navigate
-                      </button>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {(b.status === 'Booked' || (b.status === 'Active' && destinationFor(b))) && (
+                      <RowActionsMenu
+                        items={[
+                          b.status === 'Booked' && { label: 'Cancel Booking', icon: 'bi-x-circle', tone: 'danger', onClick: () => cancel(b._id) },
+                          (b.status === 'Booked' || b.status === 'Active') && destinationFor(b) && { label: 'Navigate', icon: 'bi-signpost-2', onClick: () => setNavBooking(b) },
+                        ]}
+                      />
                     )}
                     {b.status === 'Completed' && (
-                      <button className="btn-ag ghost sm" onClick={() => setBill(b)}><i className="bi bi-receipt" /></button>
+                      <button className="btn-ag ghost sm" onClick={() => setBill(b)} title="View Receipt"><i className="bi bi-receipt" /></button>
                     )}
                   </td>
                 </tr>

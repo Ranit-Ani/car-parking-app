@@ -165,6 +165,19 @@ class AdminController {
     }
   }
 
+  // GET /api/admin/locations/overview
+  // Combined location list + default (first) location's detail, in one
+  // round trip — powers Location Wise Revenue's initial paint.
+  async getLocationsOverview(req, res, next) {
+    try {
+      const { startDate, endDate } = req.query;
+      const overview = await AdminService.getLocationsOverview(startDate, endDate);
+      res.json({ success: true, data: overview });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // ─── Per-location Staff Management (multi-location support) ─────────────────────
   // GET /api/admin/locations/:id/staff
   async getLocationStaff(req, res, next) {

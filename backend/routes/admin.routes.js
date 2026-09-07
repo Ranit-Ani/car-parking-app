@@ -24,6 +24,7 @@ router.put('/slots/:id/pricing', adminController.updatePricing);
 
 // Parking Location Management (multi-location support for Nearby Parking)
 router.get('/locations', adminController.getLocations);
+router.get('/locations/overview', adminController.getLocationsOverview);
 router.post('/locations', locationValidator, adminController.createLocation);
 router.put('/locations/:id', adminController.updateLocation);
 router.delete('/locations/:id', adminController.deleteLocation);

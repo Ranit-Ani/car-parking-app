@@ -71,6 +71,8 @@ export default function LocationRevenue() {
   // state, while a fresh copy is always fetched quietly in the background.
   const [detail, setDetail] = useState(() => (locationId ? getCached(detailCacheKey(locationId)) : null) || null);
   const [loading, setLoading] = useState(() => !!locationId && !getCached(detailCacheKey(locationId)));
+  const locationIdRef = useRef(locationId);
+  useEffect(() => { locationIdRef.current = locationId; }, [locationId]);
 
   // Default to whichever location was passed in via ?locationId= (e.g. the
   // "Revenue" link from Parking Locations), falling back to the first
@@ -79,6 +81,33 @@ export default function LocationRevenue() {
   useEffect(() => {
     if (!locationId && locations.length > 0) setLocationId(locations[0]._id);
   }, [locations, locationId]);
+
+  // Without a ?locationId= in the URL, picking a default location used to
+  // require waiting for the full locations list to arrive, THEN firing a
+  // second request for that location's detail — two sequential round
+  // trips, which is what made this page visibly slower to first paint
+  // than the single-request Overall Revenue page. This fetches the
+  // default location's full detail (plus the list, for the picker) in one
+  // combined request instead, so the page can paint after one round trip
+  // just like Overall Revenue does.
+  useEffect(() => {
+    if (searchParams.get('locationId')) return undefined; // already know which one to show
+    let cancelled = false;
+    (async () => {
+      const d = await apiRequest('/admin/locations/overview');
+      if (cancelled || !d || !d.success || !d.data.detail) return;
+      if (locationIdRef.current) return; // a selection already landed (dropdown / cache) — don't clobber it
+      const det = d.data.detail;
+      const id = det.location._id;
+      setCached(detailCacheKey(id), det);
+      setDetail(det);
+      setLoading(false);
+      setLocationId(id);
+      drawChart(canvasRef.current, chartRef, det.daily);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keep the URL in sync so the selected location survives a refresh/share.
   useEffect(() => {

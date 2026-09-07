@@ -101,6 +101,21 @@ class AdminService {
     };
   }
 
+  // ─── Location Wise Revenue — combined initial load ─────────────────────────
+  // The Location Wise Revenue page needs two things before it can paint:
+  // the location list (to populate the picker) and the detail for whichever
+  // location ends up selected by default (the first one). Fetching those as
+  // two separate round trips from the client (list, THEN detail once the
+  // list resolves) is what made this page visibly slower to first paint
+  // than the single-request Overall Revenue page. This bundles both into
+  // one request/response so the client only waits on one round trip.
+  async getLocationsOverview(startDate, endDate) {
+    const locations = await this.listLocations();
+    if (!locations.length) return { locations, detail: null };
+    const detail = await this.getLocationDetail(locations[0]._id, startDate, endDate);
+    return { locations, detail };
+  }
+
   // ─── User Management ──────────────────────────────────────────────────────────
   // `role` optionally narrows the list to one role ('admin' | 'staff' | 'user') —
   // powers the Manage Users page's User/Staff/Admin selector. `locationId`
