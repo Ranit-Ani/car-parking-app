@@ -121,6 +121,7 @@ export default function AdminDashboard() {
             <Link to="/admin/users" className="btn-ag ghost full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-person-gear" /> Manage User Roles</Link>
             <Link to="/admin/revenue" className="btn-ag green full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-graph-up" /> Revenue Analytics</Link>
             <Link to="/admin/bookings" className="btn-ag ghost full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-list-columns" /> All Bookings Log</Link>
+            <Link to="/admin/locations" className="btn-ag green full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-geo-alt-fill" /> Add New Location</Link>
           </div>
         </div>
       </div>
