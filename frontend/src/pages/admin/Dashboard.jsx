@@ -92,11 +92,23 @@ export default function AdminDashboard() {
       <div className="dash-two-col" style={{ marginBottom: '1.25rem' }}>
         <div className="ag-card" style={{ padding: '1.5rem' }}>
           <div style={{ fontFamily: 'Orbitron,monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>SLOT STATUS MATRIX</div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-            <div style={{ textAlign: 'center' }}><div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--neon-green)' }}>{d.slots.Available}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Available</div></div>
-            <div style={{ textAlign: 'center' }}><div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffc107' }}>{d.slots.Booked}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Booked</div></div>
-            <div style={{ textAlign: 'center' }}><div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--neon-orange)' }}>{d.slots.Occupied}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Occupied</div></div>
-            <div style={{ textAlign: 'center' }}><div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>{d.slots.total}</div><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Total</div></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ background: 'rgba(0,255,157,0.05)', border: '1px solid rgba(0,255,157,0.15)', borderRadius: 12, padding: '1rem', textAlign: 'center' }}>
+              <div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--neon-green)' }}>{d.slots.Available}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Available</div>
+            </div>
+            <div style={{ background: 'rgba(255,193,7,0.05)', border: '1px solid rgba(255,193,7,0.15)', borderRadius: 12, padding: '1rem', textAlign: 'center' }}>
+              <div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffc107' }}>{d.slots.Booked}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Booked</div>
+            </div>
+            <div style={{ background: 'rgba(255,140,0,0.05)', border: '1px solid rgba(255,140,0,0.15)', borderRadius: 12, padding: '1rem', textAlign: 'center' }}>
+              <div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--neon-orange)' }}>{d.slots.Occupied}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Occupied</div>
+            </div>
+            <div style={{ background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.15)', borderRadius: 12, padding: '1rem', textAlign: 'center' }}>
+              <div className="font-orbit" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>{d.slots.total}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Total</div>
+            </div>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Occupancy</div>
           <div className="ag-progress"><div className="ag-progress-bar" style={{ width: d.occupancyRate + '%', background: 'linear-gradient(90deg,var(--neon-cyan),var(--neon-blue))' }} /></div>
