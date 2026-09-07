@@ -1,40 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import { ActionButton, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
-import { getSocket } from '../../lib/socket';
+import { useAdminLocations } from '../../lib/useAdminLocations';
 import LeafletMap, { ICONS } from '../../components/LeafletMap';
 
 const emptyForm = { name: '', address: '', description: '', amenities: '', latitude: '', longitude: '', isActive: true };
 
 export default function AdminLocations() {
   const navigate = useNavigate();
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const d = await apiRequest('/admin/locations');
-    setLoading(false);
-    if (d && d.success) setLocations(d.data);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    const socket = getSocket();
-    socket.on('locationUpdated', load);
-    socket.on('locationDeleted', load);
-    socket.on('staffUpdated', load);
-    return () => {
-      socket.off('locationUpdated', load);
-      socket.off('locationDeleted', load);
-      socket.off('staffUpdated', load);
-    };
-  }, [load]);
+  // Cached + live (socket) synced — shows the last-known list instantly on
+  // revisit instead of a loading state, and stays current if another admin
+  // session adds/edits/removes a location or reassigns staff.
+  const { locations, loading, refresh: load } = useAdminLocations();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);

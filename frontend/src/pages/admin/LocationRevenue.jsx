@@ -4,7 +4,9 @@ import Chart from 'chart.js/auto';
 import Layout from '../../components/Layout';
 import { EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
+import { getCached, setCached } from '../../lib/pageCache';
 import { getSocket } from '../../lib/socket';
+import { useAdminLocations } from '../../lib/useAdminLocations';
 
 function drawChart(canvas, chartRef, daily) {
   if (!canvas) return;
@@ -43,6 +45,8 @@ function drawChart(canvas, chartRef, daily) {
   });
 }
 
+const detailCacheKey = (id) => `admin:location-revenue:${id}`;
+
 // ─── Location Wise Revenue ────────────────────────────────────────────────
 // Same revenue calculation logic as the overall Revenue page and the old
 // per-location "Revenue" button on Parking Locations (both are powered by
@@ -55,26 +59,26 @@ export default function LocationRevenue() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [locations, setLocations] = useState([]);
-  const [locationsLoading, setLocationsLoading] = useState(true);
+  // Cached + live (socket) synced, shared with the other admin pages that
+  // use this same list — shows instantly on revisit and stays current if
+  // a location is added/renamed/removed elsewhere.
+  const { locations, loading: locationsLoading } = useAdminLocations();
   const [locationId, setLocationId] = useState(searchParams.get('locationId') || '');
-  const [detail, setDetail] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  // Load the location list, and default to whichever location was passed
-  // in via ?locationId= (e.g. the "Revenue" link from Parking Locations),
-  // falling back to the first location.
+  // Seeded per-location from the shared page cache so switching back to a
+  // location you already viewed (or navigating away to another page and
+  // back) shows its figures and chart immediately instead of a loading
+  // state, while a fresh copy is always fetched quietly in the background.
+  const [detail, setDetail] = useState(() => (locationId ? getCached(detailCacheKey(locationId)) : null) || null);
+  const [loading, setLoading] = useState(() => !!locationId && !getCached(detailCacheKey(locationId)));
+
+  // Default to whichever location was passed in via ?locationId= (e.g. the
+  // "Revenue" link from Parking Locations), falling back to the first
+  // location, once the (possibly cached, possibly freshly-fetched) list
+  // is available.
   useEffect(() => {
-    (async () => {
-      setLocationsLoading(true);
-      const d = await apiRequest('/admin/locations');
-      setLocationsLoading(false);
-      if (d && d.success) {
-        setLocations(d.data);
-        setLocationId((cur) => cur || (d.data[0] && d.data[0]._id) || '');
-      }
-    })();
-  }, []);
+    if (!locationId && locations.length > 0) setLocationId(locations[0]._id);
+  }, [locations, locationId]);
 
   // Keep the URL in sync so the selected location survives a refresh/share.
   useEffect(() => {
@@ -84,18 +88,38 @@ export default function LocationRevenue() {
 
   const load = useCallback(async () => {
     if (!locationId) return;
-    setLoading(true);
+    const key = detailCacheKey(locationId);
+    const cached = getCached(key);
+    // Only show the full loading state when this exact location has never
+    // been loaded before in this tab — otherwise this is just a silent
+    // background revalidation of data already on screen.
+    if (!cached) setLoading(true);
     const d = await apiRequest(`/admin/locations/${locationId}/detail`);
     setLoading(false);
     if (d && d.success) {
       setDetail(d.data);
+      setCached(key, d.data);
       drawChart(canvasRef.current, chartRef, d.data.daily);
     }
   }, [locationId]);
 
+  // Whenever the selected location changes, immediately show whatever is
+  // cached for it (instant chart repaint, no blank canvas) and then
+  // revalidate against the server.
   useEffect(() => {
+    if (!locationId) { setDetail(null); return; }
+    const cached = getCached(detailCacheKey(locationId));
+    if (cached) {
+      setDetail(cached);
+      setLoading(false);
+      drawChart(canvasRef.current, chartRef, cached.daily);
+    } else {
+      setDetail(null);
+      setLoading(true);
+    }
     load();
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId]);
 
   useEffect(() => {
     // Live sync: a completed check-out (or any booking update) at this
@@ -120,7 +144,7 @@ export default function LocationRevenue() {
       <div className="ag-card" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
         <div className="ag-input-group" style={{ margin: 0, maxWidth: 360 }}>
           <label className="ag-label">Parking Location</label>
-          {locationsLoading ? (
+          {locationsLoading && locations.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Loading locations...</div>
           ) : locations.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No parking locations yet. Add one from the Parking Locations page.</div>

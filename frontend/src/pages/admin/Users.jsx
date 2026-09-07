@@ -10,6 +10,7 @@ import { formatDate } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
+import { useAdminLocations } from '../../lib/useAdminLocations';
 
 function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onReassign, onToggle, onDelete, emptyText, hideHeader }) {
   return (
@@ -98,7 +99,6 @@ function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onR
 
 export default function AdminUsers() {
   const { user: curUser } = useAuth();
-  const [locations, setLocations] = useState([]);
 
   // Support deep-linking here from elsewhere (e.g. the "Staff" count button
   // on the Parking Locations page) with ?roleView=staff&scope=location&locationId=...
@@ -111,12 +111,11 @@ export default function AdminUsers() {
   // member) can offer a location picker (multi-location support: every
   // staff account must be linked to exactly one parking location), and so
   // the "Location Wise" filter below has locations to choose from.
-  useEffect(() => {
-    (async () => {
-      const d = await apiRequest('/admin/locations');
-      if (d && d.success) setLocations(d.data.filter((l) => l.isActive !== false));
-    })();
-  }, []);
+  // Cached + live (socket) synced, shared with the other admin pages that
+  // use this same list — shows instantly on revisit and stays current if
+  // a location is added/renamed/removed elsewhere.
+  const { locations: allLocations } = useAdminLocations();
+  const locations = useMemo(() => allLocations.filter((l) => l.isActive !== false), [allLocations]);
 
   // ─── View selector: which role's table is shown. The "Location Wise"
   // scope only applies to Staff — every staff account is tied to exactly

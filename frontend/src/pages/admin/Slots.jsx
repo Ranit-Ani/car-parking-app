@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
+import { useAdminLocations } from '../../lib/useAdminLocations';
 
 const emptyForm = { slotNumber: '', hourlyRate: '', slotType: 'standard', location: '', floor: '', locationId: '' };
 
@@ -47,13 +48,10 @@ export default function AdminSlots() {
   // picker in the Add Slot form so new slots can be geo-linked for
   // Nearby Parking / in-app navigation. Existing free-text `location`
   // entry still works exactly as before if left on "custom text".
-  const [locations, setLocations] = useState([]);
-  useEffect(() => {
-    (async () => {
-      const d = await apiRequest('/admin/locations');
-      if (d && d.success) setLocations(d.data);
-    })();
-  }, []);
+  // Cached + live (socket) synced, shared with the other admin pages that
+  // use this same list — shows instantly on revisit and stays current if
+  // a location is added/renamed/removed elsewhere.
+  const { locations } = useAdminLocations();
 
   useEffect(() => {
     const socket = getSocket();
