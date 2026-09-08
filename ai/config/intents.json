@@ -4,7 +4,11 @@
     {
       "tag": "greeting",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
         "Hi! I'm the AG Parking assistant. Ask me about slot availability, parking locations, bookings, cancellations, or your account.",
         "Hello! How can I help with parking today?",
@@ -14,17 +18,25 @@
     {
       "tag": "thanks",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
         "You're welcome! Anything else I can help with?",
         "Happy to help!",
-        "Anytime — let me know if you need anything else."
+        "Anytime \u2014 let me know if you need anything else."
       ]
     },
     {
       "tag": "goodbye",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
         "Goodbye! Drive safe.",
         "See you next time!",
@@ -35,72 +47,100 @@
       "tag": "check_availability",
       "type": "tool",
       "tool": "get_slot_availability",
-      "roles": ["user", "staff", "admin"]
+      "roles": []
     },
     {
       "tag": "occupancy_insights",
       "type": "tool",
       "tool": "get_occupancy_insights",
-      "roles": ["user", "staff", "admin"]
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ]
     },
     {
       "tag": "location_list",
       "type": "tool",
       "tool": "get_locations",
-      "roles": ["user", "staff", "admin"]
+      "roles": []
     },
     {
       "tag": "my_bookings",
       "type": "tool",
       "tool": "get_my_bookings",
-      "roles": ["user"]
+      "roles": [
+        "user"
+      ]
     },
     {
       "tag": "my_vehicles",
       "type": "tool",
       "tool": "get_my_vehicles",
-      "roles": ["user"]
+      "roles": [
+        "user"
+      ]
     },
     {
       "tag": "revenue_report",
       "type": "tool",
       "tool": "get_revenue_report",
-      "roles": ["admin"]
+      "roles": [
+        "admin"
+      ]
     },
     {
       "tag": "user_registry",
       "type": "tool",
       "tool": "get_user_registry_summary",
-      "roles": ["admin"]
+      "roles": [
+        "admin"
+      ]
     },
     {
       "tag": "booking_policy",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "Booking is always for right now — there's no advance/scheduled booking. Pick an available slot, then choose a saved vehicle or enter a new one, and book it immediately. It stays in \"Booked\" status for 1 hour — if you don't check in within that hour it auto-expires and the slot is released. You can only have one \"Booked\" reservation waiting for check-in at a time."
+        "Booking is always for right now \u2014 there's no advance/scheduled booking. Pick an available slot, then choose a saved vehicle or enter a new one, and book it immediately. It stays in \"Booked\" status for 1 hour \u2014 if you don't check in within that hour it auto-expires and the slot is released. You can only have one \"Booked\" reservation waiting for check-in at a time."
       ]
     },
     {
       "tag": "cancellation_policy",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "You can cancel a booking any time while it's still \"Booked\" (before check-in) from My Bookings → Cancel. Once it's \"Active\" (checked in), it can't be cancelled — you'll need to check out normally. There's no cancellation fee since payment only happens at checkout."
+        "You can cancel a booking any time while it's still \"Booked\" (before check-in) from My Bookings \u2192 Cancel. Once it's \"Active\" (checked in), it can't be cancelled \u2014 you'll need to check out normally. There's no cancellation fee since payment only happens at checkout."
       ]
     },
     {
       "tag": "checkin_policy",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "Check-in is done by staff at the check-in console using your booking ID or vehicle details — you don't check in yourself in the app. It moves your booking from \"Booked\" to \"Active\" and the slot from \"Booked\" to \"Occupied\". If your 1-hour window passes first, the booking auto-expires."
+        "Check-in is done by staff at the check-in console using your booking ID or vehicle details \u2014 you don't check in yourself in the app. It moves your booking from \"Booked\" to \"Active\" and the slot from \"Booked\" to \"Occupied\". If your 1-hour window passes first, the booking auto-expires."
       ]
     },
     {
       "tag": "checkout_billing_policy",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
         "Check-out is done by staff when you're leaving. Billing is a minimum of 1 hour, rounded UP to the next hour, at the slot's hourly rate (rates vary by slot type). Check-out marks the booking \"Completed\", generates a receipt, and frees the slot back to Available."
       ]
@@ -108,31 +148,46 @@
     {
       "tag": "vehicle_management",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "You can save multiple vehicles under Profile → My Vehicles and pick one instantly when booking. Supported categories are 2 Wheeler, 3 Wheeler, and 4 Wheeler. If a vehicle has no plate yet, check \"Registration Pending\". You can also scan a plate photo (camera icon next to the registration field) to auto-fill the number. Saved vehicles can be edited or removed any time."
+        "You can save multiple vehicles under Profile \u2192 My Vehicles and pick one instantly when booking. Supported categories are 2 Wheeler, 3 Wheeler, and 4 Wheeler. If a vehicle has no plate yet, check \"Registration Pending\". You can also scan a plate photo (camera icon next to the registration field) to auto-fill the number. Saved vehicles can be edited or removed any time."
       ]
     },
     {
       "tag": "account_management",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "You can update your name/photo from Profile, change your password from Profile → Security, and change your email from Profile (this requires OTP verification of the new address). Accounts can be permanently deleted from Profile → Danger Zone by re-entering your password — this is irreversible."
+        "You can update your name/photo from Profile, change your password from Profile \u2192 Security, and change your email from Profile (this requires OTP verification of the new address). Accounts can be permanently deleted from Profile \u2192 Danger Zone by re-entering your password \u2014 this is irreversible."
       ]
     },
     {
       "tag": "scan_plate_help",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "When adding or booking a vehicle, tap the camera icon next to the registration field and take a clear, well-lit photo of the plate. The number is extracted automatically — you can still edit it if anything looks off."
+        "When adding or booking a vehicle, tap the camera icon next to the registration field and take a clear, well-lit photo of the plate. The number is extracted automatically \u2014 you can still edit it if anything looks off."
       ]
     },
     {
       "tag": "staff_checkin_process",
       "type": "knowledge",
-      "roles": ["staff", "admin"],
+      "roles": [
+        "staff",
+        "admin"
+      ],
       "responses": [
         "At the check-in console, look up the user's pending \"Booked\" booking by booking ID or vehicle details, verify the vehicle matches, then confirm check-in. This moves the booking to \"Active\" and the slot to \"Occupied\"."
       ]
@@ -140,7 +195,10 @@
     {
       "tag": "staff_checkout_process",
       "type": "knowledge",
-      "roles": ["staff", "admin"],
+      "roles": [
+        "staff",
+        "admin"
+      ],
       "responses": [
         "At the check-out console, find the user's \"Active\" booking and confirm check-out. The system calculates the bill (minimum 1 hour, rounded up to the next hour at the slot's rate), marks the booking \"Completed\", generates a receipt, and frees the slot."
       ]
@@ -148,41 +206,55 @@
     {
       "tag": "admin_slot_management",
       "type": "knowledge",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "responses": [
-        "From the Admin dashboard you can add, edit, or deactivate parking slots — setting the slot type (standard/faculty/disabled/ev), location, and hourly rate. Deactivated slots stop appearing as bookable but keep their history."
+        "From the Admin dashboard you can add, edit, or deactivate parking slots \u2014 setting the slot type (standard/faculty/disabled/ev), location, and hourly rate. Deactivated slots stop appearing as bookable but keep their history."
       ]
     },
     {
       "tag": "admin_user_management",
       "type": "knowledge",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "responses": [
-        "From the Admin dashboard you can change a user's role between user/staff/admin (this moves them between the Users and Staff sections automatically) and activate or deactivate accounts. When you promote someone to staff, you also assign them to one parking location — they'll only manage check-in/check-out and slots for that location."
+        "From the Admin dashboard you can change a user's role between user/staff/admin (this moves them between the Users and Staff sections automatically) and activate or deactivate accounts. When you promote someone to staff, you also assign them to one parking location \u2014 they'll only manage check-in/check-out and slots for that location."
       ]
     },
     {
       "tag": "nearby_parking_help",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "Under Nearby Parking you can search by your current GPS location or by typing a place/address, and see every active parking location within up to 5 km, nearest first — each card shows live available slots and rates. Tap a location to see its slots and book, or get in-app directions to it."
+        "Under Nearby Parking you can search by your current GPS location or by typing a place/address, and see every active parking location within up to 5 km, nearest first \u2014 each card shows live available slots and rates. Tap a location to see its slots and book, or get in-app directions to it."
       ]
     },
     {
       "tag": "admin_location_management",
       "type": "knowledge",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "responses": [
-        "From Admin → Locations you can add, edit, or deactivate parking locations — setting the name, address, map coordinates, and amenities. Each location can have its own slots and its own assigned staff, and Admin → Location Revenue breaks down earnings site-by-site."
+        "From Admin \u2192 Locations you can add, edit, or deactivate parking locations \u2014 setting the name, address, map coordinates, and amenities. Each location can have its own slots and its own assigned staff, and Admin \u2192 Location Revenue breaks down earnings site-by-site."
       ]
     },
     {
       "tag": "unknown",
       "type": "knowledge",
-      "roles": ["user", "staff", "admin"],
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
       "responses": [
-        "I'm not sure about that one — I can help with slot availability, parking locations, bookings, cancellations, check-in/out, vehicles, or account questions. Could you rephrase?",
+        "I'm not sure about that one \u2014 I can help with slot availability, parking locations, bookings, cancellations, check-in/out, vehicles, or account questions. Could you rephrase?",
         "That's outside what I can help with here. Try asking about availability, locations, bookings, vehicles, or your account."
       ]
     }

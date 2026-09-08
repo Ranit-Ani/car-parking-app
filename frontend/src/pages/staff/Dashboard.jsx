@@ -20,7 +20,9 @@ export default function StaffDashboard() {
   const load = useCallback(async () => {
     // /staff/stats (not the system-wide /slots/stats) so this only ever
     // reflects the staff member's own assigned parking location.
-    const [s, bk] = await Promise.all([apiRequest('/staff/stats'), apiRequest('/staff/bookings?limit=100')]);
+    // Dashboard only ever shows the latest 5 bookings — the full list lives
+    // on the Bookings page.
+    const [s, bk] = await Promise.all([apiRequest('/staff/stats'), apiRequest('/staff/bookings?limit=5')]);
     if (s && s.success) setStats(s.data);
     if (bk && bk.success) setRows(bk.data);
   }, [setStats, setRows]);

@@ -139,7 +139,9 @@ function formatOccupancyInsights(data) {
 
 function formatMyBookings(data) {
   if (!data || !data.length) return "You don't have any bookings yet.";
-  const lines = data.slice(0, 8).map((b) => {
+  // Only ever show the user's latest 5 bookings here — get_my_bookings
+  // already caps the query at 5, this slice is just a safety net.
+  const lines = data.slice(0, 5).map((b) => {
     const locName = b.locationId && b.locationId.name;
     const slotLabel = b.slotId ? (b.slotId.slotNumber || '') : 'slot deleted';
     const place = locName || (b.slotId ? b.slotId.location : '') || '';
@@ -192,6 +194,10 @@ function formatLocations(data) {
   return lines.join('\n');
 }
 
+// get_slot_availability / get_locations formatters are kept below only
+// because aiTools.js still exposes those two tools generically — chat()
+// above returns early for check_availability / location_list before ever
+// reaching this table, so neither formatter actually runs from chat.
 const TOOL_FORMATTERS = {
   get_slot_availability: formatCheckAvailability,
   get_occupancy_insights: formatOccupancyInsights,
@@ -203,10 +209,30 @@ const TOOL_FORMATTERS = {
 };
 
 // ─── Public: chat ────────────────────────────────────────────────────────
+// Slot availability and the location list/count are both intentionally
+// removed from the AI Assistant entirely — for every role, not just
+// regular users. This is a multi-location system, so "how many slots are
+// free" or "how many locations are there" has no single sensible answer,
+// and staff/admin already have dedicated screens (Staff Dashboard, Admin
+// Locations) for this instead of chat. The underlying .pkl classifier may
+// still predict `check_availability` / `location_list` for a message (it
+// has no concept of this policy), so we block both intents here, before
+// any tool call or reply is generated, regardless of who's asking.
+const REMOVED_INTENTS = new Set(['check_availability', 'location_list']);
+
 async function chat({ user, message }) {
   const prediction = await classify(message);
   let intentTag = prediction.intent;
   let def = intentByTag(intentTag);
+
+  if (REMOVED_INTENTS.has(intentTag)) {
+    return {
+      reply:
+        "I'm not able to help with slot availability or location lists here — please check the map/location pages (e.g. Nearby Parking, or Staff/Admin Locations) for that.",
+      intent: intentTag,
+      confidence: prediction.confidence,
+    };
+  }
 
   // Guard against a role trying to trigger an intent it isn't permitted to
   // use (e.g. a regular user's message happening to match "revenue_report").

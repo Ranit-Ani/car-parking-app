@@ -136,17 +136,32 @@ export default function NearbyParking() {
     setSearchCandidates([]);
   }
 
-  async function openLocation(loc) {
+  function openLocation(loc) {
     setActiveLocation(loc);
-    setLocationSlots(null);
-    setLoadingSlots(true);
-    let url = `/slots?locationId=${loc._id}&limit=100`;
-    if (slotType) url += `&type=${encodeURIComponent(slotType)}`;
-    const d = await apiRequest(url);
-    setLoadingSlots(false);
-    if (d && d.success) setLocationSlots(d.data);
-    else setLocationSlots([]);
   }
+
+  // Fetch (and re-fetch) the slot grid for whichever location is open,
+  // whenever the open location OR the slot type filter changes — so
+  // switching the "Slot Type" dropdown while a location is already open
+  // immediately re-filters the grid instead of leaving the stale,
+  // unfiltered list on screen.
+  const fetchLocationSlots = useCallback(async (locationId, type, opts = {}) => {
+    if (!opts.silent) {
+      setLocationSlots(null);
+      setLoadingSlots(true);
+    }
+    let url = `/slots?locationId=${locationId}&limit=100`;
+    if (type) url += `&type=${encodeURIComponent(type)}`;
+    const d = await apiRequest(url);
+    if (!opts.silent) setLoadingSlots(false);
+    if (d && d.success) setLocationSlots(d.data);
+    else if (!opts.silent) setLocationSlots([]);
+  }, []);
+
+  useEffect(() => {
+    if (!activeLocation) return;
+    fetchLocationSlots(activeLocation._id, slotType);
+  }, [activeLocation, slotType, fetchLocationSlots]);
 
   // Live sync: while a location's slot grid is open, reflect any booking
   // made elsewhere (by this user on another tab, or anyone else) right away
@@ -154,19 +169,14 @@ export default function NearbyParking() {
   useEffect(() => {
     if (!activeLocation) return undefined;
     const socket = getSocket();
-    const refreshSlots = async () => {
-      let url = `/slots?locationId=${activeLocation._id}&limit=100`;
-      if (slotType) url += `&type=${encodeURIComponent(slotType)}`;
-      const d = await apiRequest(url);
-      if (d && d.success) setLocationSlots(d.data);
-    };
+    const refreshSlots = () => fetchLocationSlots(activeLocation._id, slotType, { silent: true });
     socket.on('slotUpdated', refreshSlots);
     socket.on('slotDeleted', refreshSlots);
     return () => {
       socket.off('slotUpdated', refreshSlots);
       socket.off('slotDeleted', refreshSlots);
     };
-  }, [activeLocation, slotType]);
+  }, [activeLocation, slotType, fetchLocationSlots]);
 
   function handleBooked(booking) {
     setBookingSlot(null);

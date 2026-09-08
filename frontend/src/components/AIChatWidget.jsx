@@ -3,12 +3,13 @@ import { apiRequest } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 const SUGGESTIONS_BY_ROLE = {
-  user: ['Which slots are free right now?', 'What parking locations do you have?', 'Show my recent bookings'],
-  // Staff are scoped to their assigned location automatically, so their
-  // suggestions stay location-agnostic in wording — the assistant answers
-  // for their site either way.
-  staff: ['Which slots are free right now?', 'When is parking usually busiest?'],
-  admin: ['Revenue by location this month', 'Which location has the most free slots?', 'How many staff accounts do we have?'],
+  // Slot-availability and location-list/count queries ("which slots are
+  // free", "how many locations are there", etc.) are fully removed from the
+  // AI Assistant for every role, so none of these lists suggest them —
+  // the assistant would just decline to answer anyway.
+  user: ['Show my recent bookings'],
+  staff: ['When is parking usually busiest?'],
+  admin: ['Revenue by location this month', 'How many staff accounts do we have?'],
 };
 
 export default function AIChatWidget() {

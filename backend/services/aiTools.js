@@ -102,7 +102,9 @@ async function runTool(name, args, ctx) {
       return { ...data, scopedToLocationName: await resolveLocationName(locId, args) };
     }
     case 'get_my_bookings': {
-      const limit = Math.min(args.limit || 10, 25);
+      // Always the latest 5 — "show my recent bookings" should never dump a
+      // user's whole booking history into the chat.
+      const limit = 5;
       return Booking.find({ userId: ctx.userId })
         .populate('slotId', 'slotNumber location')
         .populate('locationId', 'name')

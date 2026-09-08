@@ -54,7 +54,7 @@ export default function UserDashboard() {
   const active = bookings.filter((b) => ['Booked', 'Active'].includes(b.status));
   const completed = bookings.filter((b) => b.status === 'Completed');
   const spent = completed.reduce((s, b) => s + (b.totalAmount || 0), 0);
-  const recent = bookings.slice(0, 8);
+  const recent = bookings.slice(0, 5);
 
   return (
     <Layout title="Mission Control">
