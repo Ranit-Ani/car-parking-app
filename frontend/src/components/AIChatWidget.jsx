@@ -7,9 +7,19 @@ const SUGGESTIONS_BY_ROLE = {
   // free", "how many locations are there", etc.) are fully removed from the
   // AI Assistant for every role, so none of these lists suggest them —
   // the assistant would just decline to answer anyway.
-  user: ['Show my recent bookings'],
-  staff: ['When is parking usually busiest?'],
-  admin: ['Revenue by location this month', 'How many staff accounts do we have?'],
+  user: ['Show my recent bookings', 'How does booking work?', 'Show my saved vehicles'],
+  staff: ["When is parking usually busiest?", "What's the check-in process?", "What's the check-out process?"],
+  admin: ['Revenue by location this month', 'How many staff accounts do we have?', 'How do I manage slots as admin?'],
+};
+
+// Keep this in sync with SUGGESTIONS_BY_ROLE above — it's the intro line
+// shown before the chips, so it should only promise topics the assistant
+// actually offers for that role (no more "slot availability, parking
+// locations", since those intents are disabled for everyone).
+const INTRO_TOPICS_BY_ROLE = {
+  user: 'your bookings, your saved vehicles, booking policies',
+  staff: 'check-in/check-out, busy hours',
+  admin: 'revenue, staff accounts, slot management',
 };
 
 export default function AIChatWidget() {
@@ -60,6 +70,7 @@ export default function AIChatWidget() {
 
   if (!user) return null;
   const suggestions = SUGGESTIONS_BY_ROLE[user.role] || SUGGESTIONS_BY_ROLE.user;
+  const introTopics = INTRO_TOPICS_BY_ROLE[user.role] || INTRO_TOPICS_BY_ROLE.user;
 
   return (
     <>
@@ -88,7 +99,7 @@ export default function AIChatWidget() {
             {messages.length === 0 && (
               <div className="ai-empty">
                 <p>
-                  Ask me about slot availability, parking locations, your bookings, busy hours, {user.role === 'admin' ? 'revenue, ' : ''}and more.
+                  Ask me about {introTopics}, and more.
                   {user.role === 'staff' && user.locationName && (
                     <> I'll answer for <strong>{user.locationName}</strong>, your assigned location.</>
                   )}
