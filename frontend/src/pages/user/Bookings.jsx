@@ -25,8 +25,8 @@ const FILTERS = [
   { key: 'Booked', label: 'Upcoming', cls: 'solar' },
   { key: 'Active', label: 'Active', cls: 'plasma' },
   { key: 'Completed', label: 'Completed', cls: 'aurora' },
-  { key: 'Cancelled', label: 'Cancelled', cls: 'ghost' },
-  { key: 'Expired', label: 'Expired', cls: 'ghost' },
+  { key: 'Cancelled', label: 'Cancelled', cls: 'nova' },
+  { key: 'Expired', label: 'Expired', cls: 'smoke' },
 ];
 
 export default function UserBookings() {
