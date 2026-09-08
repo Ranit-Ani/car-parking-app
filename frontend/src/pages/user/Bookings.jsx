@@ -22,9 +22,9 @@ function destinationFor(booking) {
 
 const FILTERS = [
   { key: 'all', label: 'All', cls: 'primary' },
-  { key: 'Booked', label: 'Upcoming', cls: 'ghost' },
-  { key: 'Active', label: 'Active', cls: 'cyan' },
-  { key: 'Completed', label: 'Completed', cls: 'green' },
+  { key: 'Booked', label: 'Upcoming', cls: 'solar' },
+  { key: 'Active', label: 'Active', cls: 'plasma' },
+  { key: 'Completed', label: 'Completed', cls: 'aurora' },
   { key: 'Cancelled', label: 'Cancelled', cls: 'ghost' },
   { key: 'Expired', label: 'Expired', cls: 'ghost' },
 ];
