@@ -37,6 +37,12 @@ export default function Profile() {
   const [deletePwd, setDeletePwd] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
 
+  // ─── Profile photo action menu (view / edit / delete) ──────────────────────
+  const [photoMenu, setPhotoMenu] = useState(false);
+  const [viewPhotoModal, setViewPhotoModal] = useState(false);
+  const [deletePhotoModal, setDeletePhotoModal] = useState(false);
+  const [deletePhotoBusy, setDeletePhotoBusy] = useState(false);
+
   // ─── Saved Vehicles (Rule 3) ───────────────────────────────────────────────
   const [vehicles, setVehicles] = useCachedState('profile:vehicles', []);
   const [vehicleModal, setVehicleModal] = useState(false);
@@ -146,6 +152,32 @@ export default function Profile() {
     reader.readAsDataURL(file);
   }
 
+  function openEditPhoto() {
+    setPhotoMenu(false);
+    fileRef.current?.click();
+  }
+
+  // Deletion reuses the existing PUT /auth/profile endpoint: the backend
+  // already treats `profilePhoto: null` as "clear the photo" (it only
+  // skips the field when it's `undefined`), so no new backend route is
+  // needed — omitting `name` here also means this call can't accidentally
+  // touch the display name.
+  async function doDeletePhoto() {
+    setDeletePhotoBusy(true);
+    const d = await apiRequest('/auth/profile', { method: 'PUT', body: { profilePhoto: null } });
+    setDeletePhotoBusy(false);
+    if (d && d.success) {
+      setPreview('');
+      setPhotoBase64(undefined);
+      updateUser({ profilePhoto: null });
+      setProfile((p) => ({ ...p, profilePhoto: null }));
+      setDeletePhotoModal(false);
+      showToast('Profile photo removed.', 'success');
+    } else {
+      showToast((d && d.message) || 'Failed to remove photo.', 'danger');
+    }
+  }
+
   async function saveProfile(e) {
     e.preventDefault();
     setSaveBusy(true);
@@ -231,16 +263,16 @@ export default function Profile() {
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.4rem' }}>Identity</div>
 
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div className="profile-avatar-wrap" onClick={() => fileRef.current?.click()}>
+            <div className="profile-avatar-wrap" onClick={() => setPhotoMenu(true)}>
               {preview ? (
                 <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
               ) : (
                 <span>{profile.name.charAt(0).toUpperCase()}</span>
               )}
-              <div className="profile-avatar-overlay"><i className="bi bi-camera-fill" style={{ fontSize: '1.1rem' }} /><span>Change</span></div>
+              <div className="profile-avatar-overlay"><i className="bi bi-three-dots" style={{ fontSize: '1.1rem' }} /><span>Options</span></div>
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
-            <div style={{ fontSize: '.72rem', color: 'var(--t2)', fontFamily: "'Syne',sans-serif", letterSpacing: '.08em' }}>CLICK TO CHANGE PHOTO</div>
+            <div style={{ fontSize: '.72rem', color: 'var(--t2)', fontFamily: "'Syne',sans-serif", letterSpacing: '.08em' }}>CLICK FOR PHOTO OPTIONS</div>
           </div>
 
           <form onSubmit={saveProfile}>
@@ -382,6 +414,65 @@ export default function Profile() {
           <label className="ag-label">Password</label>
           <div className="ag-input-icon"><i className="bi bi-lock" /><input className="ag-input" type="password" placeholder="Your password" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} /></div>
         </div>
+      </Modal>
+
+      <Modal show={photoMenu} onClose={() => setPhotoMenu(false)} title="Profile Photo" icon="bi-person-badge" size="sm">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+          <button
+            type="button"
+            className="btn-ag ghost full"
+            disabled={!preview}
+            onClick={() => { setPhotoMenu(false); setViewPhotoModal(true); }}
+          >
+            <i className="bi bi-eye" /> View Photo
+          </button>
+          <button type="button" className="btn-ag plasma full" onClick={openEditPhoto}>
+            <i className="bi bi-pencil" /> Edit Photo
+          </button>
+          <button
+            type="button"
+            className="btn-ag nova full"
+            disabled={!preview}
+            onClick={() => { setPhotoMenu(false); setDeletePhotoModal(true); }}
+          >
+            <i className="bi bi-trash3" /> Delete Photo
+          </button>
+        </div>
+      </Modal>
+
+      <Modal show={viewPhotoModal} onClose={() => setViewPhotoModal(false)} title="Profile Photo" icon="bi-image" size="sm">
+        <div style={{ textAlign: 'center' }}>
+          {preview ? (
+            <img
+              src={preview}
+              alt="Profile"
+              style={{ maxWidth: '100%', maxHeight: '60vh', borderRadius: '12px', objectFit: 'contain' }}
+            />
+          ) : (
+            <p style={{ color: 'var(--t2)' }}>No profile photo set.</p>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        show={deletePhotoModal}
+        onClose={() => setDeletePhotoModal(false)}
+        title="Delete Photo"
+        icon="bi-exclamation-triangle"
+        size="sm"
+        headerStyle={{ background: 'linear-gradient(135deg,rgba(255,60,120,.12),rgba(200,0,50,.08))' }}
+        footer={(
+          <>
+            <button className="btn-ag ghost" onClick={() => setDeletePhotoModal(false)}>Cancel</button>
+            <ActionButton busy={deletePhotoBusy} busyLabel="Removing..." className="btn-ag nova" onClick={doDeletePhoto}>
+              <i className="bi bi-trash3" /> Confirm Delete
+            </ActionButton>
+          </>
+        )}
+      >
+        <p style={{ fontSize: '.84rem', color: 'var(--t2)' }}>
+          Are you sure you want to remove your profile photo? This action cannot be undone.
+        </p>
       </Modal>
 
       {isUserRole && (
