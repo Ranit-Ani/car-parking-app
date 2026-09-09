@@ -38,10 +38,28 @@ export default function Profile() {
   const [deleteBusy, setDeleteBusy] = useState(false);
 
   // ─── Profile photo action menu (view / edit / delete) ──────────────────────
+  // A plain anchored dropdown, not the shared Modal — see the CSS comment on
+  // .photo-actions-menu for why (the shared Modal's blurred backdrop made
+  // this feel laggy for something that should open instantly).
   const [photoMenu, setPhotoMenu] = useState(false);
+  const photoMenuRef = useRef(null);
   const [viewPhotoModal, setViewPhotoModal] = useState(false);
   const [deletePhotoModal, setDeletePhotoModal] = useState(false);
   const [deletePhotoBusy, setDeletePhotoBusy] = useState(false);
+
+  useEffect(() => {
+    if (!photoMenu) return undefined;
+    function onDocClick(e) {
+      if (photoMenuRef.current && !photoMenuRef.current.contains(e.target)) setPhotoMenu(false);
+    }
+    function onKeyDown(e) { if (e.key === 'Escape') setPhotoMenu(false); }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [photoMenu]);
 
   // ─── Saved Vehicles (Rule 3) ───────────────────────────────────────────────
   const [vehicles, setVehicles] = useCachedState('profile:vehicles', []);
@@ -263,13 +281,39 @@ export default function Profile() {
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.4rem' }}>Identity</div>
 
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div className="profile-avatar-wrap" onClick={() => setPhotoMenu(true)}>
-              {preview ? (
-                <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-              ) : (
-                <span>{profile.name.charAt(0).toUpperCase()}</span>
+            <div ref={photoMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+              <div className="profile-avatar-wrap" onClick={() => setPhotoMenu((v) => !v)}>
+                {preview ? (
+                  <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                ) : (
+                  <span>{profile.name.charAt(0).toUpperCase()}</span>
+                )}
+                <div className="profile-avatar-overlay"><i className="bi bi-three-dots" style={{ fontSize: '1.1rem' }} /><span>Options</span></div>
+              </div>
+              {photoMenu && (
+                <div className="photo-actions-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={!preview}
+                    onClick={() => { setPhotoMenu(false); setViewPhotoModal(true); }}
+                  >
+                    <i className="bi bi-eye" /> View Photo
+                  </button>
+                  <button type="button" role="menuitem" onClick={openEditPhoto}>
+                    <i className="bi bi-pencil" /> Edit Photo
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="danger"
+                    disabled={!preview}
+                    onClick={() => { setPhotoMenu(false); setDeletePhotoModal(true); }}
+                  >
+                    <i className="bi bi-trash3" /> Delete Photo
+                  </button>
+                </div>
               )}
-              <div className="profile-avatar-overlay"><i className="bi bi-three-dots" style={{ fontSize: '1.1rem' }} /><span>Options</span></div>
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
             <div style={{ fontSize: '.72rem', color: 'var(--t2)', fontFamily: "'Syne',sans-serif", letterSpacing: '.08em' }}>CLICK FOR PHOTO OPTIONS</div>
@@ -413,30 +457,6 @@ export default function Profile() {
         <div className="ag-input-group">
           <label className="ag-label">Password</label>
           <div className="ag-input-icon"><i className="bi bi-lock" /><input className="ag-input" type="password" placeholder="Your password" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} /></div>
-        </div>
-      </Modal>
-
-      <Modal show={photoMenu} onClose={() => setPhotoMenu(false)} title="Profile Photo" icon="bi-person-badge" size="sm">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
-          <button
-            type="button"
-            className="btn-ag ghost full"
-            disabled={!preview}
-            onClick={() => { setPhotoMenu(false); setViewPhotoModal(true); }}
-          >
-            <i className="bi bi-eye" /> View Photo
-          </button>
-          <button type="button" className="btn-ag plasma full" onClick={openEditPhoto}>
-            <i className="bi bi-pencil" /> Edit Photo
-          </button>
-          <button
-            type="button"
-            className="btn-ag nova full"
-            disabled={!preview}
-            onClick={() => { setPhotoMenu(false); setDeletePhotoModal(true); }}
-          >
-            <i className="bi bi-trash3" /> Delete Photo
-          </button>
         </div>
       </Modal>
 

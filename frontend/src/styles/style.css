@@ -451,6 +451,32 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .profile-avatar-wrap:hover .profile-avatar-overlay{opacity:1}
 .profile-avatar-wrap:hover{border-color:var(--plasma)}
 
+/* Lightweight photo-options menu — deliberately NOT the shared .ag-modal:
+   that backdrop uses a full-viewport backdrop-filter:blur(6px) plus a
+   scroll-lock effect (forces body into position:fixed and restores
+   scrollY on close), which is fine for a rarely-opened confirmation
+   dialog but was overkill for a 3-item quick menu — it made simply
+   clicking the avatar feel noticeably delayed/janky, especially on
+   mobile GPUs. This is a plain absolutely-positioned box: no blur, no
+   full-page overlay, no scroll-lock, so it opens instantly. */
+.photo-actions-menu{
+  position:absolute;top:calc(100% + .5rem);left:50%;transform:translateX(-50%);
+  z-index:20;min-width:180px;background:var(--card,#0b1929);
+  border:1px solid rgba(0,240,255,.18);border-radius:12px;
+  box-shadow:0 12px 32px rgba(0,0,0,.5);padding:.35rem;
+  display:flex;flex-direction:column;gap:.15rem;
+}
+.photo-actions-menu button{
+  display:flex;align-items:center;gap:.55rem;width:100%;text-align:left;
+  background:transparent;border:none;border-radius:8px;padding:.55rem .7rem;
+  font-size:.82rem;color:var(--t1,#fff);cursor:pointer;
+}
+.photo-actions-menu button:hover{background:rgba(0,240,255,.08)}
+.photo-actions-menu button:disabled{opacity:.4;cursor:not-allowed}
+.photo-actions-menu button:disabled:hover{background:transparent}
+.photo-actions-menu button.danger{color:var(--nova,#ff3c78)}
+.photo-actions-menu button.danger:hover{background:rgba(255,60,120,.08)}
+
 /* ══════════════════════════════════════════════════════════════
    MISC
 ══════════════════════════════════════════════════════════════ */
