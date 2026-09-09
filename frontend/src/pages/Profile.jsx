@@ -44,7 +44,6 @@ export default function Profile() {
   const [photoMenu, setPhotoMenu] = useState(false);
   const photoMenuRef = useRef(null);
   const [viewPhotoModal, setViewPhotoModal] = useState(false);
-  const [deletePhotoModal, setDeletePhotoModal] = useState(false);
   const [deletePhotoBusy, setDeletePhotoBusy] = useState(false);
 
   useEffect(() => {
@@ -180,7 +179,15 @@ export default function Profile() {
   // skips the field when it's `undefined`), so no new backend route is
   // needed — omitting `name` here also means this call can't accidentally
   // touch the display name.
+  //
+  // Confirmation uses the browser's native confirm() — the same pattern
+  // already used for "Cancel booking?" (user/Bookings.jsx, user/Dashboard.jsx)
+  // and "Remove this vehicle from your account?" (removeVehicle, above).
+  // It's the OS/browser's own dialog, so it opens instantly with no custom
+  // backdrop-blur or animation to wait on — swapped in here after the
+  // custom Modal version of this confirmation felt laggy.
   async function doDeletePhoto() {
+    if (!confirm('Remove your profile photo? This action cannot be undone.')) return;
     setDeletePhotoBusy(true);
     const d = await apiRequest('/auth/profile', { method: 'PUT', body: { profilePhoto: null } });
     setDeletePhotoBusy(false);
@@ -189,7 +196,6 @@ export default function Profile() {
       setPhotoBase64(undefined);
       updateUser({ profilePhoto: null });
       setProfile((p) => ({ ...p, profilePhoto: null }));
-      setDeletePhotoModal(false);
       showToast('Profile photo removed.', 'success');
     } else {
       showToast((d && d.message) || 'Failed to remove photo.', 'danger');
@@ -307,10 +313,10 @@ export default function Profile() {
                     type="button"
                     role="menuitem"
                     className="danger"
-                    disabled={!preview}
-                    onClick={() => { setPhotoMenu(false); setDeletePhotoModal(true); }}
+                    disabled={!preview || deletePhotoBusy}
+                    onClick={() => { setPhotoMenu(false); doDeletePhoto(); }}
                   >
-                    <i className="bi bi-trash3" /> Delete Photo
+                    <i className="bi bi-trash3" /> {deletePhotoBusy ? 'Removing...' : 'Delete Photo'}
                   </button>
                 </div>
               )}
@@ -472,27 +478,6 @@ export default function Profile() {
             <p style={{ color: 'var(--t2)' }}>No profile photo set.</p>
           )}
         </div>
-      </Modal>
-
-      <Modal
-        show={deletePhotoModal}
-        onClose={() => setDeletePhotoModal(false)}
-        title="Delete Photo"
-        icon="bi-exclamation-triangle"
-        size="sm"
-        headerStyle={{ background: 'linear-gradient(135deg,rgba(255,60,120,.12),rgba(200,0,50,.08))' }}
-        footer={(
-          <>
-            <button className="btn-ag ghost" onClick={() => setDeletePhotoModal(false)}>Cancel</button>
-            <ActionButton busy={deletePhotoBusy} busyLabel="Removing..." className="btn-ag nova" onClick={doDeletePhoto}>
-              <i className="bi bi-trash3" /> Confirm Delete
-            </ActionButton>
-          </>
-        )}
-      >
-        <p style={{ fontSize: '.84rem', color: 'var(--t2)' }}>
-          Are you sure you want to remove your profile photo? This action cannot be undone.
-        </p>
       </Modal>
 
       {isUserRole && (
