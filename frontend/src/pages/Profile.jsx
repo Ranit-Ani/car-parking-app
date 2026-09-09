@@ -253,7 +253,7 @@ export default function Profile() {
               <div style={{ position: 'relative' }}>
                 <div className="ag-input-icon"><i className="bi bi-at" /><input className="ag-input" type="email" disabled value={profile.email} style={{ opacity: .5, cursor: 'default', paddingRight: '5rem' }} /></div>
                 <button type="button" className="btn-ag plasma sm" style={{ position: 'absolute', right: '.4rem', top: '50%', transform: 'translateY(-50%)' }} onClick={openEmailChange}>
-                  <i className="bi bi-pencil" /> Change
+                  <i className="bi bi-pencil" /> 
                 </button>
               </div>
             </div>
