@@ -146,8 +146,13 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 /* First child is always the title block (see Layout.jsx PageHeader) — let
    it shrink/wrap its own text instead of squeezing the action button
    below its label's natural width, which is what clipped "Refresh" down
-   to "Refres" on narrow screens. */
-.page-header > div:first-child{min-width:0;flex:1 1 200px}
+   to "Refres" on narrow screens. flex-basis is 0 (not e.g. 200px) so the
+   browser's line-wrapping decision doesn't reserve hypothetical space for
+   the title before even considering the button — a larger basis made the
+   title+button pair "not fit" on longer names/titles (e.g. "Welcome,
+   Anindita Mondal!"), dropping the action button to its own line below
+   instead of keeping it beside the title like on shorter-name pages. */
+.page-header > div:first-child{min-width:0;flex:1 1 0}
 .page-header > *:not(div:first-child){flex-shrink:0}
 
 /* ══════════════════════════════════════════════════════════════
