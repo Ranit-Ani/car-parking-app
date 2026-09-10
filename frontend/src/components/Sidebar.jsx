@@ -75,7 +75,7 @@ export default function Sidebar({ open, onNavigate }) {
           </div>
           <div>
             <div className="brand-text">CAR PARKING</div>
-            <div className="brand-sub">{user.role === 'staff' && user.locationName ? user.locationName : cfg.sub}</div>
+            <div className="brand-sub">{cfg.sub}</div>
           </div>
         </NavLink>
 
