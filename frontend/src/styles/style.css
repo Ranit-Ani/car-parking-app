@@ -234,8 +234,8 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .btn-ag.primary:hover{box-shadow:0 6px 28px rgba(0,117,255,.5);color:white}
 .btn-ag.plasma{background:linear-gradient(135deg,rgba(0,240,255,.12),rgba(0,117,255,.12));border:1px solid rgba(0,240,255,.25);color:var(--plasma)}
 .btn-ag.plasma:hover{background:rgba(0,240,255,.18);border-color:var(--plasma);color:var(--plasma);box-shadow:0 0 20px rgba(0,240,255,.2)}
-.btn-ag.aurora{background:rgba(0,255,179,.1);border:1px solid rgba(0,255,179,.25);color:var(--aurora)}
-.btn-ag.aurora:hover{background:rgba(0,255,179,.18);border-color:var(--aurora);color:var(--aurora);box-shadow:var(--glow-aurora)}
+.btn-ag.aurora,.btn-ag.green{background:rgba(0,255,179,.1);border:1px solid rgba(0,255,179,.25);color:var(--aurora)}
+.btn-ag.aurora:hover,.btn-ag.green:hover{background:rgba(0,255,179,.18);border-color:var(--aurora);color:var(--aurora);box-shadow:var(--glow-aurora)}
 .btn-ag.nova{background:rgba(255,60,120,.1);border:1px solid rgba(255,60,120,.25);color:var(--nova)}
 .btn-ag.nova:hover{background:rgba(255,60,120,.18);border-color:var(--nova);color:var(--nova);box-shadow:var(--glow-nova)}
 .btn-ag.solar{background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.25);color:var(--solar)}
