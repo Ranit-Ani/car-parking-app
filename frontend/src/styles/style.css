@@ -483,7 +483,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
    can't be removed or restyled. This is a plain app-styled card instead,
    with a flat dim backdrop (no blur) so it opens instantly. */
 .confirm-sheet-backdrop{
-  position:fixed;inset:0;z-index:60;background:rgba(2,8,16,.6);
+  position:fixed;inset:0;z-index:2000;background:rgba(2,8,16,.6);
   display:flex;align-items:center;justify-content:center;padding:1rem;
 }
 .confirm-sheet{
