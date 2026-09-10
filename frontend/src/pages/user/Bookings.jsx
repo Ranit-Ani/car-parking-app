@@ -141,7 +141,7 @@ export default function UserBookings() {
         onClose={() => setBill(null)}
         title="Billing Receipt"
         icon="bi-receipt"
-        footer={bill && <button className="btn-ag cyan full" onClick={() => downloadReceipt(bill)}><i className="bi bi-file-earmark-pdf" /> Download PDF</button>}
+        footer={bill && <button className="btn-ag plasma full" onClick={() => downloadReceipt(bill)}><i className="bi bi-file-earmark-pdf" /> Download PDF</button>}
       >
         {bill && (
           <>

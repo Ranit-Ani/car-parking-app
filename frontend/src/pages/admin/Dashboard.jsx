@@ -117,7 +117,7 @@ export default function AdminDashboard() {
         <div className="ag-card" style={{ padding: '1.5rem' }}>
           <div style={{ fontFamily: 'Orbitron,monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>QUICK COMMANDS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <Link to="/admin/slots" className="btn-ag cyan full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-plus-circle" /> Add New Parking Slot</Link>
+            <Link to="/admin/slots" className="btn-ag plasma full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-plus-circle" /> Add New Parking Slot</Link>
             <Link to="/admin/users" className="btn-ag ghost full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-person-gear" /> Manage User Roles</Link>
             <Link to="/admin/revenue" className="btn-ag green full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-graph-up" /> Revenue Analytics</Link>
             <Link to="/admin/bookings" className="btn-ag ghost full" style={{ justifyContent: 'flex-start' }}><i className="bi bi-list-columns" /> All Bookings Log</Link>

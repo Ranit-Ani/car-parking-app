@@ -68,7 +68,7 @@ export default function StaffDashboard() {
       <PageHeader
         title={`Welcome, ${user?.name}!`}
         subtitle={user?.locationName ? `Real-time parking management — ${user.locationName}` : 'Real-time parking management'}
-        action={<button className="btn-ag cyan sm" onClick={load}><i className="bi bi-arrow-clockwise" /> Refresh</button>}
+        action={<button className="btn-ag plasma sm" onClick={load}><i className="bi bi-arrow-clockwise" /> Refresh</button>}
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

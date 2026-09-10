@@ -138,10 +138,17 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   background:var(--card);border:1px solid rgba(0,240,255,.08);border-radius:var(--r-card);
   padding:1.2rem 1.5rem;margin-bottom:1.5rem;
   box-shadow:var(--shadow-card);display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:.75rem;
   animation:riseIn .45s ease forwards;
 }
 .page-header h5{font-size:.88rem;letter-spacing:.07em;margin-bottom:.15rem}
 .page-header small{color:var(--t2);font-size:.78rem}
+/* First child is always the title block (see Layout.jsx PageHeader) — let
+   it shrink/wrap its own text instead of squeezing the action button
+   below its label's natural width, which is what clipped "Refresh" down
+   to "Refres" on narrow screens. */
+.page-header > div:first-child{min-width:0;flex:1 1 200px}
+.page-header > *:not(div:first-child){flex-shrink:0}
 
 /* ══════════════════════════════════════════════════════════════
    CARDS
@@ -215,6 +222,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   font-family:'DM Sans',sans-serif;font-weight:600;font-size:.84rem;cursor:pointer;
   transition:all .22s ease;display:inline-flex;align-items:center;gap:.4rem;
   text-decoration:none;position:relative;overflow:hidden;letter-spacing:.02em;
+  white-space:nowrap;
 }
 .btn-ag::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);opacity:0;transition:.2s}
 .btn-ag:hover::before{opacity:1}
