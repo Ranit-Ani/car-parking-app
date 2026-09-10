@@ -51,7 +51,7 @@ export default function Landing() {
       <section className="hero-section">
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 680 }}>
           <div className="hero-badge"><span className="dot" /> MULTI-LOCATION PARKING NETWORK v2.0</div>
-          <h1 className="hero-title display-title">CAR PARKING<br />ACROSS EVERY LOCATION</h1>
+          <h1 className="hero-title display-title">CAR PARKING<br />AT EVERY LOCATION</h1>
           <p className="hero-sub">
             One account, every parking location. Find nearby open slots, book instantly, and pay with
             automated billing at any location in the network, in real time.
