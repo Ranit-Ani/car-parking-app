@@ -67,7 +67,7 @@ export default function StaffDashboard() {
     <Layout title="Operations Control" badge="Staff">
       <PageHeader
         title={`Welcome, ${user?.name}!`}
-        subtitle={user?.locationName ? `Real-time parking management — ${user.locationName}` : 'Real-time parking management'}
+        subtitle={user?.locationName ? `${user.locationName}` : 'Real-time parking management'}
         action={<button className="btn-ag plasma sm" onClick={load}><i className="bi bi-arrow-clockwise" /> Refresh</button>}
       />
 
