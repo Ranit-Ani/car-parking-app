@@ -129,7 +129,7 @@ export default function Register() {
             <div className="auth-logo">
               <div className="logo-icon"><i className="bi bi-person-plus-fill" /></div>
               <h1>NEW OPERATOR</h1>
-              <p>Join the Smart Campus Network</p>
+              <p>Join the Parking Network</p>
             </div>
 
             <div className="step-indicator">
@@ -151,7 +151,7 @@ export default function Register() {
                     <label className="ag-label">Email Address</label>
                     <div className="ag-input-icon">
                       <i className="bi bi-at" />
-                      <input className="ag-input" type="email" placeholder="user@campus.edu" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                      <input className="ag-input" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                     </div>
                   </div>
                   <div className="ag-input-group">

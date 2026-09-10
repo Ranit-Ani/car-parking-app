@@ -92,7 +92,7 @@ export default function Login() {
             <div className="auth-logo">
               <div className="logo-icon"><i className="bi bi-shield-lock-fill" /></div>
               <h1>SYSTEM ACCESS</h1>
-              <p>Smart Campus Car-Parking</p>
+              <p>Multi-Location Car Parking</p>
             </div>
 
             <form onSubmit={handleSubmit} autoComplete="off">
@@ -100,7 +100,7 @@ export default function Login() {
                 <label className="ag-label">Email Address</label>
                 <div className="ag-input-icon">
                   <i className="bi bi-at" />
-                  <input className="ag-input" type="email" placeholder="user@campus.edu" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input className="ag-input" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
               </div>
               <div className="ag-input-group">

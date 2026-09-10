@@ -40,7 +40,7 @@ export default function Landing() {
       <nav className="pub-nav">
         <Link className="pub-nav-brand" to="/">
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
-          CAMPUS CAR-PARKING
+          CAR PARKING NETWORK
         </Link>
         <div style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
           <Link to="/login" className="btn-ag ghost sm">Sign In</Link>
@@ -50,11 +50,11 @@ export default function Landing() {
 
       <section className="hero-section">
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 680 }}>
-          <div className="hero-badge"><span className="dot" /> QUANTUM CAMPUS INFRASTRUCTURE v2.0</div>
-          <h1 className="hero-title display-title">CAMPUS CAR<br />PARKING SYSTEM</h1>
+          <div className="hero-badge"><span className="dot" /> MULTI-LOCATION PARKING NETWORK v2.0</div>
+          <h1 className="hero-title display-title">PARKING ACROSS<br />EVERY LOCATION</h1>
           <p className="hero-sub">
-            Zero-friction. Real-time. Role-based. The next generation campus parking infrastructure with
-            automated billing and live slot tracking.
+            One account, every parking location. Find nearby open slots, book instantly, and pay with
+            automated billing — at any location in the network, in real time.
           </p>
           <div className="hero-actions">
             <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
@@ -81,41 +81,41 @@ export default function Landing() {
       <section style={{ position: 'relative', zIndex: 1, paddingBottom: '1rem' }}>
         <div className="feature-grid">
           <div className="feature-card s1">
-            <div className="feature-icon" style={{ background: 'rgba(0,240,255,.08)', color: 'var(--plasma)' }}><i className="bi bi-broadcast-pin" /></div>
-            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Live Slot Radar</h5>
-            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Real-time slot status with instant updates across all portals.</p>
+            <div className="feature-icon" style={{ background: 'rgba(0,240,255,.08)', color: 'var(--plasma)' }}><i className="bi bi-geo-alt-fill" /></div>
+            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Multiple Locations</h5>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Every location is on the map with live availability, address, and turn-by-turn navigation.</p>
           </div>
           <div className="feature-card s2">
-            <div className="feature-icon" style={{ background: 'rgba(139,92,246,.1)', color: '#a78bfa' }}><i className="bi bi-shield-lock-fill" /></div>
-            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Email OTP Auth</h5>
-            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Secure account creation with email verification codes.</p>
+            <div className="feature-icon" style={{ background: 'rgba(0,255,179,.08)', color: 'var(--aurora)' }}><i className="bi bi-compass-fill" /></div>
+            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Find Nearby Parking</h5>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Geo-aware search surfaces the closest location with an open slot, wherever you are.</p>
           </div>
           <div className="feature-card s3">
-            <div className="feature-icon" style={{ background: 'rgba(0,255,179,.08)', color: 'var(--aurora)' }}><i className="bi bi-calculator-fill" /></div>
-            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Zero-Error Billing</h5>
-            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Min 1-hour, auto round-up billing engine. No disputes.</p>
+            <div className="feature-icon" style={{ background: 'rgba(139,92,246,.1)', color: '#a78bfa' }}><i className="bi bi-shield-lock-fill" /></div>
+            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>One Account, Every Location</h5>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Sign in once with email OTP verification and book at any location in the network.</p>
           </div>
           <div className="feature-card s4">
-            <div className="feature-icon" style={{ background: 'rgba(255,184,0,.08)', color: 'var(--solar)' }}><i className="bi bi-person-gear" /></div>
-            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Full Profile Control</h5>
-            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Avatar, email change (OTP verified), password, account deletion.</p>
+            <div className="feature-icon" style={{ background: 'rgba(255,184,0,.08)', color: 'var(--solar)' }}><i className="bi bi-calculator-fill" /></div>
+            <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Zero-Error Billing</h5>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Min 1-hour, auto round-up billing engine, consistent across every location. No disputes.</p>
           </div>
           <div className="feature-card s5">
             <div className="feature-icon" style={{ background: 'rgba(255,71,87,.08)', color: '#ff4757' }}><i className="bi bi-clock-history" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Full Booking History</h5>
-            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Track every booking, check-in/out time, and receipt in one place.</p>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Track every booking, check-in/out time, and receipt across all locations, in one place.</p>
           </div>
           <div className="feature-card s6">
             <div className="feature-icon" style={{ background: 'rgba(0,240,255,.08)', color: 'var(--plasma)' }}><i className="bi bi-diagram-3-fill" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Role-Based Portals</h5>
-            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Dedicated dashboards for students, staff check-in/out, and admins.</p>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Dedicated dashboards for drivers, per-location staff check-in/out, and admins overseeing every site.</p>
           </div>
         </div>
       </section>
 
       <footer className="pub-footer">
         <div className="pub-footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Campus Car-Parking System. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} Car Parking Network. All rights reserved.</span>
           <span className="pub-footer-credit">Built by Ranit Pramanick</span>
         </div>
       </footer>

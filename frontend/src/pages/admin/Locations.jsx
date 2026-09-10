@@ -236,7 +236,7 @@ export default function AdminLocations() {
         </div>
         <div className="ag-input-group" style={{ margin: 0, marginBottom: '0.9rem' }}>
           <label className="ag-label">Address</label>
-          <input className="ag-input" placeholder="Main Gate Road, Campus Sector 1" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          <input className="ag-input" placeholder="123 Main Street, Downtown" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </div>
         <div className="ag-input-group" style={{ margin: 0, marginBottom: '0.9rem' }}>
           <label className="ag-label">Description</label>
