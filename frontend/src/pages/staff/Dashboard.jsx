@@ -64,7 +64,7 @@ export default function StaffDashboard() {
   }
 
   return (
-    <Layout title="Operations Control" badge="Parking Staff">
+    <Layout title="Operations Control" badge="Staff">
       <PageHeader
         title={`Welcome, ${user?.name}!`}
         subtitle={user?.locationName ? `Real-time parking management — ${user.locationName}` : 'Real-time parking management'}
