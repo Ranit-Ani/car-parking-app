@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Modal from './Modal';
+import ConfirmSheet from './ConfirmSheet';
 
 const NAV = {
   user: {
@@ -117,26 +117,13 @@ export default function Sidebar({ open, onNavigate }) {
         </div>
       </aside>
 
-      <Modal
+      <ConfirmSheet
         show={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        title="Log Out"
-        icon="bi-box-arrow-right"
-        size="sm"
-        footer={(
-          <>
-            <button className="btn-ag ghost" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-            <button
-              className="btn-ag nova"
-              onClick={() => { setShowLogoutConfirm(false); closeNav(); logout(); }}
-            >
-              <i className="bi bi-box-arrow-right" /> Log Out
-            </button>
-          </>
-        )}
-      >
-        <p style={{ fontSize: '.84rem', color: 'var(--t2)' }}>Are you sure you want to log out?</p>
-      </Modal>
+        message="Are you sure to log out?"
+        confirmLabel="Log Out"
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={() => { setShowLogoutConfirm(false); closeNav(); logout(); }}
+      />
 
       {showPreview && (
         <div
