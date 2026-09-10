@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
+import ConfirmSheet from '../components/ConfirmSheet';
 import OtpInput from '../components/OtpInput';
 import { ActionButton } from '../components/Bits';
 import { apiRequest } from '../lib/api';
@@ -45,6 +46,7 @@ export default function Profile() {
   const photoMenuRef = useRef(null);
   const [viewPhotoModal, setViewPhotoModal] = useState(false);
   const [deletePhotoBusy, setDeletePhotoBusy] = useState(false);
+  const [deletePhotoConfirm, setDeletePhotoConfirm] = useState(false);
 
   useEffect(() => {
     if (!photoMenu) return undefined;
@@ -174,20 +176,17 @@ export default function Profile() {
     fileRef.current?.click();
   }
 
-  // Deletion reuses the existing PUT /auth/profile endpoint: the backend
-  // already treats `profilePhoto: null` as "clear the photo" (it only
-  // skips the field when it's `undefined`), so no new backend route is
-  // needed — omitting `name` here also means this call can't accidentally
-  // touch the display name.
-  //
-  // Confirmation uses the browser's native confirm() — the same pattern
-  // already used for "Cancel booking?" (user/Bookings.jsx, user/Dashboard.jsx)
-  // and "Remove this vehicle from your account?" (removeVehicle, above).
-  // It's the OS/browser's own dialog, so it opens instantly with no custom
-  // backdrop-blur or animation to wait on — swapped in here after the
-  // custom Modal version of this confirmation felt laggy.
+  // Confirmation is a small custom card (see .confirm-sheet in style.css),
+  // not window.confirm() — the browser always prefixes a native confirm()
+  // with the page's origin ("your-domain says ..."), which can't be
+  // removed/restyled, and isn't the clean look we want here.
+  function askDeletePhoto() {
+    setPhotoMenu(false);
+    setDeletePhotoConfirm(true);
+  }
+
   async function doDeletePhoto() {
-    if (!confirm('Remove your profile photo? This action cannot be undone.')) return;
+    setDeletePhotoConfirm(false);
     setDeletePhotoBusy(true);
     const d = await apiRequest('/auth/profile', { method: 'PUT', body: { profilePhoto: null } });
     setDeletePhotoBusy(false);
@@ -314,7 +313,7 @@ export default function Profile() {
                     role="menuitem"
                     className="danger"
                     disabled={!preview || deletePhotoBusy}
-                    onClick={() => { setPhotoMenu(false); doDeletePhoto(); }}
+                    onClick={askDeletePhoto}
                   >
                     <i className="bi bi-trash3" /> {deletePhotoBusy ? 'Removing...' : 'Delete Photo'}
                   </button>
@@ -479,6 +478,18 @@ export default function Profile() {
           )}
         </div>
       </Modal>
+
+      {deletePhotoConfirm && (
+        <ConfirmSheet
+          show={deletePhotoConfirm}
+          message="Remove profile picture?"
+          confirmLabel="Remove"
+          busy={deletePhotoBusy}
+          busyLabel="Removing..."
+          onCancel={() => setDeletePhotoConfirm(false)}
+          onConfirm={doDeletePhoto}
+        />
+      )}
 
       {isUserRole && (
         <Modal

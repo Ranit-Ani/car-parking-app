@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout, { PageHeader } from '../../components/Layout';
+import ConfirmSheet from '../../components/ConfirmSheet';
 import { StatCard, StatusBadge, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState, wasCached } from '../../lib/useCachedState';
@@ -17,6 +18,8 @@ export default function UserDashboard() {
   // Already have cached bookings from a previous visit? Show them instantly
   // instead of a loading state, and just refresh quietly in the background.
   const [loading, setLoading] = useState(!wasCached(CACHE_KEY));
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
 
   const load = useCallback(async () => {
     const data = await apiRequest('/bookings');
@@ -44,9 +47,15 @@ export default function UserDashboard() {
     };
   }, [load]);
 
-  async function cancelBooking(id) {
-    if (!confirm('Cancel this booking?')) return;
-    const d = await apiRequest('/bookings/' + id, { method: 'DELETE' });
+  function cancelBooking(id) {
+    setCancelTarget(id);
+  }
+
+  async function confirmCancelBooking() {
+    setCancelBusy(true);
+    const d = await apiRequest('/bookings/' + cancelTarget, { method: 'DELETE' });
+    setCancelBusy(false);
+    setCancelTarget(null);
     if (d && d.success) { showToast('Booking cancelled.', 'warning'); load(); }
     else showToast(d?.message || 'Failed.', 'danger');
   }
@@ -98,6 +107,17 @@ export default function UserDashboard() {
           </table>
         </div>
       </div>
+
+      <ConfirmSheet
+        show={!!cancelTarget}
+        message="Cancel this booking?"
+        cancelLabel="Keep it"
+        confirmLabel="Cancel Booking"
+        busy={cancelBusy}
+        busyLabel="Cancelling..."
+        onCancel={() => setCancelTarget(null)}
+        onConfirm={confirmCancelBooking}
+      />
     </Layout>
   );
 }

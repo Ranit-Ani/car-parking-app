@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
+import ConfirmSheet from '../../components/ConfirmSheet';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import NavigateModal from '../../components/NavigateModal';
 import { StatusBadge, EmptyState, RowActionsMenu } from '../../components/Bits';
@@ -33,6 +34,8 @@ export default function UserBookings() {
   const [filter, setFilter] = useState('all');
   const [bill, setBill] = useState(null);
   const [navBooking, setNavBooking] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
 
   const buildUrl = useCallback((page, limit) => {
     let url = `/bookings?page=${page}&limit=${limit}`;
@@ -55,9 +58,15 @@ export default function UserBookings() {
     };
   }, [refresh]);
 
-  async function cancel(id) {
-    if (!confirm('Cancel booking?')) return;
-    const d = await apiRequest('/bookings/' + id, { method: 'DELETE' });
+  function cancel(id) {
+    setCancelTarget(id);
+  }
+
+  async function confirmCancel() {
+    setCancelBusy(true);
+    const d = await apiRequest('/bookings/' + cancelTarget, { method: 'DELETE' });
+    setCancelBusy(false);
+    setCancelTarget(null);
     if (d && d.success) { showToast('Cancelled.', 'warning'); refresh(); }
     else showToast(d?.message || 'Failed.', 'danger');
   }
@@ -157,6 +166,17 @@ export default function UserBookings() {
       </Modal>
 
       <NavigateModal show={!!navBooking} onClose={() => setNavBooking(null)} destination={navBooking ? destinationFor(navBooking) : null} />
+
+      <ConfirmSheet
+        show={!!cancelTarget}
+        message="Cancel this booking?"
+        cancelLabel="Keep it"
+        confirmLabel="Cancel Booking"
+        busy={cancelBusy}
+        busyLabel="Cancelling..."
+        onCancel={() => setCancelTarget(null)}
+        onConfirm={confirmCancel}
+      />
     </Layout>
   );
 }
