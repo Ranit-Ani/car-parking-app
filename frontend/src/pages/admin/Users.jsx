@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import Modal from '../../components/Modal';
+import ConfirmSheet from '../../components/ConfirmSheet';
 import { ActionButton, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
@@ -185,6 +186,11 @@ export default function AdminUsers() {
   const [picker, setPicker] = useState(null); // { user, targetRole } | null
   const [pickedLocation, setPickedLocation] = useState('');
   const [busy, setBusy] = useState(false);
+  // Pending role change awaiting an explicit Yes/No, same pattern as the
+  // logout confirmation in Sidebar.jsx — changing someone's role forces
+  // their current session to end immediately (see AdminService.updateUserRole),
+  // so this shouldn't fire off a single accidental click on the select.
+  const [roleConfirm, setRoleConfirm] = useState(null); // { user, role } | null
 
   async function applyRoleChange(user, role, targetLocationId) {
     const d = await apiRequest('/admin/users/' + user._id + '/role', { method: 'PUT', body: { role, locationId: targetLocationId } });
@@ -196,7 +202,24 @@ export default function AdminUsers() {
     refreshAll();
   }
 
+  // Only opens the confirmation sheet — nothing is applied yet. The
+  // <select>'s value stays bound to the user's actual (unchanged) role
+  // until confirmRoleChange() below runs, so a Cancel simply closes the
+  // sheet and the dropdown snaps back to its current value with no API
+  // call ever made.
   function updateRole(user, role) {
+    if (role === user.role) return;
+    setRoleConfirm({ user, role });
+  }
+
+  // Runs only after the admin explicitly confirms in the ConfirmSheet.
+  // Staff targets still need a parking location chosen afterward, so this
+  // opens that existing picker instead of applying immediately in that case.
+  function confirmRoleChange() {
+    if (!roleConfirm) return;
+    const { user, role } = roleConfirm;
+    setRoleConfirm(null);
+
     if (role === 'staff') {
       // Every staff member must be linked to one parking location — ask
       // which one before applying the change.
@@ -378,6 +401,18 @@ export default function AdminUsers() {
       )}
 
       <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
+
+      <ConfirmSheet
+        show={!!roleConfirm}
+        message={
+          roleConfirm
+            ? `Change ${roleConfirm.user.name}'s role from ${roleConfirm.user.role} to ${roleConfirm.role}? If they're currently logged in, this will end their session immediately and they'll need to log back in.`
+            : ''
+        }
+        confirmLabel="Change Role"
+        onCancel={() => setRoleConfirm(null)}
+        onConfirm={confirmRoleChange}
+      />
 
       <Modal
         show={!!picker}
