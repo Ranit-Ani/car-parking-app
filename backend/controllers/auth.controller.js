@@ -194,7 +194,21 @@ exports.updateProfile = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     if (!user) return next(new AppError('User not found', 404));
     if (name) user.name = name.trim();
-    if (profilePhoto !== undefined) user.profilePhoto = profilePhoto;
+    if (profilePhoto !== undefined) {
+      // Defense-in-depth: the client already crops + compresses photos to
+      // ~1MB before ever sending them (see PhotoCropModal), so nothing
+      // resembling a full-size original should reach this endpoint. This
+      // is just a backstop against a bypassed/buggy client — base64
+      // encoding inflates raw bytes by ~4/3, so ~1.5MB of actual image
+      // data comes out to roughly 2,000,000 base64 characters.
+      if (profilePhoto && typeof profilePhoto === 'string') {
+        const approxBytes = Math.ceil((profilePhoto.length * 3) / 4);
+        if (approxBytes > 1.5 * 1024 * 1024) {
+          return next(new AppError('Profile photo is too large. Please pick a smaller image.', 400));
+        }
+      }
+      user.profilePhoto = profilePhoto;
+    }
     await user.save();
     res.json({
       success: true,

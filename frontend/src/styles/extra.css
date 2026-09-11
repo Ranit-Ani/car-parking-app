@@ -372,3 +372,42 @@
   font-size: 0.68rem;
   font-weight: 700;
 }
+/* ══════════════════════════════════════════════════════════════
+   Profile Photo Crop Modal (WhatsApp-style pan/zoom avatar cropper)
+══════════════════════════════════════════════════════════════ */
+.photo-crop-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+.photo-crop-viewport {
+  position: relative;
+  width: 280px; height: 280px; max-width: 100%;
+  border-radius: 12px; overflow: hidden;
+  background: #05070c;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.photo-crop-viewport:active { cursor: grabbing; }
+.photo-crop-mask {
+  position: absolute; inset: 0; pointer-events: none; border-radius: 50%;
+  /* Classic circular-crop trick: this div's own circle stays transparent,
+     while its box-shadow paints everything outside that circle (out to a
+     huge spread), dimming/masking the rest of the square viewport. */
+  box-shadow: 0 0 0 2000px rgba(2, 4, 10, .82), 0 0 0 2px rgba(0, 240, 255, .55) inset;
+}
+.photo-crop-loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--plasma, #00f0ff);
+}
+.photo-crop-zoom-row {
+  display: flex; align-items: center; gap: .7rem;
+  width: 100%; max-width: 280px;
+  color: var(--t2); font-size: .8rem;
+}
+.photo-crop-zoom-slider { flex: 1; accent-color: var(--plasma, #00f0ff); }
+.photo-crop-hint {
+  font-size: .72rem; color: var(--t2); text-align: center; margin: 0;
+}
+.photo-crop-actions {
+  display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.1rem;
+}

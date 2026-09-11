@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import ConfirmSheet from '../components/ConfirmSheet';
 import OtpInput from '../components/OtpInput';
+import PhotoCropModal from '../components/PhotoCropModal';
 import { ActionButton } from '../components/Bits';
 import { apiRequest } from '../lib/api';
 import { useCachedState } from '../lib/useCachedState';
@@ -47,6 +48,14 @@ export default function Profile() {
   const [viewPhotoModal, setViewPhotoModal] = useState(false);
   const [deletePhotoBusy, setDeletePhotoBusy] = useState(false);
   const [deletePhotoConfirm, setDeletePhotoConfirm] = useState(false);
+
+  // ─── Crop step (select any photo -> WhatsApp-style crop -> compress) ───────
+  // The selected file never leaves the browser as-is: cropSrc is only a
+  // local object URL used to render it inside the cropper, and the only
+  // thing that ever reaches photoBase64 (and later the server) is the
+  // cropped + compressed square JPEG produced by PhotoCropModal.
+  const [cropModal, setCropModal] = useState(false);
+  const [cropSrc, setCropSrc] = useState(null);
 
   useEffect(() => {
     if (!photoMenu) return undefined;
@@ -158,17 +167,28 @@ export default function Profile() {
 
   function handlePhoto(e) {
     const file = e.target.files[0];
+    e.target.value = ''; // allow re-selecting the same file next time
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showToast('Photo must be under 2MB.', 'warning');
+    if (!file.type || !file.type.startsWith('image/')) {
+      showToast('Please select an image file.', 'warning');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPhotoBase64(ev.target.result);
-      setPreview(ev.target.result);
-    };
-    reader.readAsDataURL(file);
+    // No size/resolution restriction here — any original can be selected.
+    // It's only ever read locally to drive the crop preview below; the
+    // cropped + compressed result is what actually gets uploaded.
+    setCropSrc(URL.createObjectURL(file));
+    setCropModal(true);
+  }
+
+  function closeCropModal() {
+    setCropModal(false);
+    if (cropSrc) { URL.revokeObjectURL(cropSrc); setCropSrc(null); }
+  }
+
+  function handleCropDone(dataUrl) {
+    setPhotoBase64(dataUrl);
+    setPreview(dataUrl);
+    closeCropModal();
   }
 
   function openEditPhoto() {
@@ -478,6 +498,13 @@ export default function Profile() {
           )}
         </div>
       </Modal>
+
+      <PhotoCropModal
+        show={cropModal}
+        imageSrc={cropSrc}
+        onCancel={closeCropModal}
+        onDone={handleCropDone}
+      />
 
       {deletePhotoConfirm && (
         <ConfirmSheet
