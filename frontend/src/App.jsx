@@ -5,6 +5,7 @@ import RequireAuth from './components/RequireAuth';
 import AppShell from './components/AppShell';
 import CursorEffect from './components/CursorEffect';
 import ToastHost from './components/ToastHost';
+import SessionExpiredOverlay from './components/SessionExpiredOverlay';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -35,6 +36,7 @@ export default function App() {
         <NavProvider>
         <CursorEffect />
         <ToastHost />
+        <SessionExpiredOverlay />
         <AppShell>
         <Routes>
           <Route path="/" element={<Landing />} />

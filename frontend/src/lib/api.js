@@ -178,11 +178,48 @@ export async function downloadFile(endpoint, filename) {
     return { success: false, message: 'Download failed.' };
   }
 }
+// ─── Forced session-termination handling ───────────────────────────────────
+// The backend's `protect` middleware rejects a request with one of these
+// `code`s whenever it had a token to check and that token no longer holds
+// (see backend/middleware/auth.middleware.js): the account's role/location
+// was changed by an admin, it was deactivated, the token expired, its
+// signature is bad, or the account is gone. In every one of these cases the
+// person was actively using the app under credentials that are no longer
+// valid, so instead of silently clearing storage (the old behavior — the
+// person would just see a broken, half-loaded page) we surface a blocking
+// "your session ended, please log in again" screen. AuthProvider registers
+// the handler below once, on mount, so this works from anywhere in the app
+// without every single apiRequest() call site needing to wire it up.
+//
+// A 401 WITHOUT one of these codes (e.g. wrong email/password on the
+// /auth/login screen, where there's no session to invalidate in the first
+// place) is deliberately left alone here — that's a normal form-validation
+// error, not a terminated session, and the calling page already knows how
+// to show it.
+const SESSION_TERMINATION_CODES = new Set([
+  'SESSION_INVALIDATED',
+  'TOKEN_EXPIRED',
+  'ACCOUNT_DEACTIVATED',
+  'USER_NOT_FOUND',
+  'INVALID_TOKEN',
+]);
+
+let sessionExpiredHandler = null;
+
+/** Registered by AuthProvider on mount; call with null to unregister. */
+export function setSessionExpiredHandler(fn) {
+  sessionExpiredHandler = fn;
+}
+
 /**
  * apiRequest(endpoint, options)
  * - Automatically attaches JSON content-type + bearer token
  * - Serializes object bodies to JSON
  * - On 401, clears the session (caller is responsible for redirecting)
+ * - If the 401 means the backend killed an active session (see
+ *   SESSION_TERMINATION_CODES above), also triggers the app-wide blocking
+ *   "session terminated" screen instead of leaving the caller to silently
+ *   fail against stale credentials.
  * - Never throws: returns null on network/parse failure
  */
 export async function apiRequest(endpoint, options = {}, onUnauthorized) {
@@ -201,7 +238,15 @@ export async function apiRequest(endpoint, options = {}, onUnauthorized) {
   try {
     const res = await fetch(API_BASE + endpoint, cfg);
     if (res.status === 401) {
+      const body = await res.json().catch(() => null);
       clearSession();
+      // Only a request that actually carried a token can have been
+      // rejected *because that session died* — a token-less 401 (or one
+      // without a recognized code, like a bad login attempt) is a
+      // different situation and shouldn't pop the blocking screen.
+      if (token && body && SESSION_TERMINATION_CODES.has(body.code) && sessionExpiredHandler) {
+        sessionExpiredHandler(body);
+      }
       if (onUnauthorized) onUnauthorized();
       return null;
     }

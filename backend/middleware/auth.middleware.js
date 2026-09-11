@@ -12,7 +12,7 @@ const protect = async (req, res, next) => {
   }
 
   if (!token) {
-    return res.status(401).json({ success: false, message: 'Not authorized. No token provided.' });
+    return res.status(401).json({ success: false, code: 'NO_TOKEN', message: 'Not authorized. No token provided.' });
   }
 
   try {
@@ -20,20 +20,42 @@ const protect = async (req, res, next) => {
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'User no longer exists.' });
+      return res.status(401).json({ success: false, code: 'USER_NOT_FOUND', message: 'User no longer exists.' });
     }
 
     if (!user.isActive) {
-      return res.status(401).json({ success: false, message: 'Your account has been deactivated.' });
+      return res.status(401).json({
+        success: false,
+        code: 'ACCOUNT_DEACTIVATED',
+        message: 'Your account has been deactivated.',
+      });
+    }
+
+    // ─── Session invalidation on role/permission change ───────────────────────
+    // `tokenVersion` is baked into the token at issue time (see
+    // User.generateJWT) and bumped on the user's DB record whenever an
+    // admin changes their role (see AdminService.updateUserRole /
+    // removeLocationStaff). If they don't match, this token was issued
+    // under a permission set that no longer applies — reject it outright
+    // rather than letting the request through with a stale role, even
+    // though the token itself is still validly signed and unexpired.
+    const tokenVersion = decoded.tokenVersion || 0;
+    const currentVersion = user.tokenVersion || 0;
+    if (tokenVersion !== currentVersion) {
+      return res.status(401).json({
+        success: false,
+        code: 'SESSION_INVALIDATED',
+        message: 'Your session has been terminated because your account role or permissions were changed by an administrator. Please log in again.',
+      });
     }
 
     req.user = user;
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ success: false, message: 'Token expired. Please login again.' });
+      return res.status(401).json({ success: false, code: 'TOKEN_EXPIRED', message: 'Token expired. Please login again.' });
     }
-    return res.status(401).json({ success: false, message: 'Invalid token.' });
+    return res.status(401).json({ success: false, code: 'INVALID_TOKEN', message: 'Invalid token.' });
   }
 };
 
@@ -41,7 +63,7 @@ const protect = async (req, res, next) => {
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ success: false, message: 'Not authenticated.' });
+      return res.status(401).json({ success: false, code: 'NO_TOKEN', message: 'Not authenticated.' });
     }
 
     if (!roles.includes(req.user.role)) {

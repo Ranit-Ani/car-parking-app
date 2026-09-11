@@ -159,6 +159,13 @@ class AdminService {
       throw err;
     }
 
+    const existing = await User.findById(userId);
+    if (!existing) {
+      const err = new Error('User not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
     const update = { role };
     if (role === 'staff') {
       if (!locationId) {
@@ -177,9 +184,28 @@ class AdminService {
       update.locationId = null;
     }
 
+    // Security: any actual change to what this user is allowed to do (role
+    // itself, or which location a staff member is scoped to) must kill
+    // their current session, not just relabel it. Bumping tokenVersion
+    // makes `protect` reject their existing JWT on the very next request
+    // — see auth.middleware.js — forcing them to log back in and pick up
+    // the new role. A no-op update (admin re-saves the same role/location)
+    // intentionally does NOT bump it, so we don't log someone out for no
+    // reason.
+    const roleChanged = existing.role !== role;
+    const locationChanged = String(existing.locationId || '') !== String(update.locationId || '');
+
+    // $set and $inc can't be mixed with plain top-level fields in the same
+    // MongoDB update document, so build it explicitly rather than bolting
+    // $inc onto the plain `update` object above.
+    const mongoUpdate = { $set: update };
+    if (roleChanged || locationChanged) {
+      mongoUpdate.$inc = { tokenVersion: 1 };
+    }
+
     const user = await User.findByIdAndUpdate(
       userId,
-      update,
+      mongoUpdate,
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -488,6 +514,13 @@ class AdminService {
         err.statusCode = 400;
         throw err;
       }
+      if (String(staff.locationId || '') !== String(newLoc._id)) {
+        // Reassigning a staff member to a different location changes what
+        // they're allowed to see/manage just as much as a role change does
+        // (StaffService scopes everything by locationId) — invalidate
+        // their existing session the same way.
+        staff.tokenVersion = (staff.tokenVersion || 0) + 1;
+      }
       staff.locationId = newLoc._id;
     }
 
@@ -513,6 +546,11 @@ class AdminService {
 
     staff.role = 'user';
     staff.locationId = null;
+    // This is a role change (staff -> user) just like updateUserRole above,
+    // so it must invalidate any session already issued under the old
+    // 'staff' role the same way — see the tokenVersion check in
+    // auth.middleware.js.
+    staff.tokenVersion = (staff.tokenVersion || 0) + 1;
     await staff.save();
 
     getIO().to('admin').emit('staffUpdated', { locationId, staffId: staff._id, removed: true });
