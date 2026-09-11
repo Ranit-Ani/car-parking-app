@@ -226,10 +226,20 @@
   position: fixed; right: 1.5rem; bottom: 5.5rem; z-index: 400;
   width: min(360px, calc(100vw - 2rem)); height: min(520px, calc(100vh - 8rem));
   background: var(--card); border: 1px solid var(--t4); border-radius: var(--r-card);
+  /* Force a fully opaque paint layer from the first frame, same reason as
+     .ag-modal-content: this panel has translucent children (chip backgrounds,
+     message bubbles) stacked on it, so a fading-in opacity let whatever is
+     behind the panel ghost through for a few frames on mobile GPUs. */
+  opacity: 1;
+  isolation: isolate;
   box-shadow: var(--shadow-float); display: flex; flex-direction: column; overflow: hidden;
   animation: aiPanelIn .22s ease both;
 }
-@keyframes aiPanelIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes aiPanelIn {
+  /* Only animate position/scale, never opacity — see .ag-modal-content comment above. */
+  from { transform: translateY(12px) scale(.98); }
+  to   { transform: none; }
+}
 
 .ai-panel-header {
   display: flex; align-items: center; justify-content: space-between;
