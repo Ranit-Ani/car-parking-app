@@ -83,9 +83,18 @@ export default function LeafletMap({ markers = [], route = null, center, zoom = 
 
   // Fix sizing if the map first rendered while hidden (e.g. inside a modal
   // that was mid-transition), which otherwise leaves Leaflet with a
-  // 0-height canvas.
+  // 0-height canvas. Guarded on offsetParent: while the container is
+  // display:none (see body.ag-modal-open in styles/extra.css — the map is
+  // hidden that way whenever any modal is open, to avoid a mobile
+  // rendering bug), offsetParent is null and its measured size would be
+  // 0x0, so calling invalidateSize() here would wrongly reset Leaflet's
+  // internal size and leave it blank/broken once it's shown again.
   useEffect(() => {
-    const t = setTimeout(() => mapRef.current && mapRef.current.invalidateSize(), 150);
+    const t = setTimeout(() => {
+      if (mapRef.current && containerRef.current && containerRef.current.offsetParent !== null) {
+        mapRef.current.invalidateSize();
+      }
+    }, 150);
     return () => clearTimeout(t);
   });
 

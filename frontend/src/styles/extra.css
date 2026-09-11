@@ -84,44 +84,67 @@
 /* ══════════════════════════════════════════════════════════════
    Custom React Modal (replaces Bootstrap's bootstrap.Modal JS)
 ══════════════════════════════════════════════════════════════ */
+/* Leaflet's map panes use `transform: translate3d(...)` for GPU-accelerated
+   panning, which promotes the map to its own separate GPU compositing
+   layer. Mobile Chromium/WebView has a known rendering bug where
+   backdrop-filter (and even a plain solid overlay, for a frame or two)
+   fails to correctly paint over a layer like that — so the map can flash
+   through a modal on mobile even though the modal's own opacity/z-index
+   are all correct (this doesn't happen on desktop, which composites
+   differently/faster). Rather than fight the compositor, just remove the
+   map from painting entirely while any modal is open — Modal.jsx toggles
+   this class. The map is never interactive while a modal covers the
+   screen anyway, so there's no functional loss.
+   display:none (not visibility:hidden) deliberately: on some Android
+   WebView builds, visibility:hidden alone didn't reliably tear down the
+   map's GPU-promoted layer in time — its last-painted frame could still
+   show through for a beat. display:none fully removes the element from
+   layout/paint, forcing that layer to be destroyed rather than merely
+   toggled invisible. LeafletMap.jsx already calls invalidateSize() a
+   moment after every render specifically to recover from being hidden
+   (originally written for the "opened while a modal was mid-transition"
+   case), so the map sizes itself correctly again once this class is
+   removed. */
+body.ag-modal-open .leaflet-container {
+  display: none !important;
+}
+
 .ag-modal-backdrop {
   position: fixed; inset: 0; z-index: 1050;
-  /* Slightly higher base opacity so the backdrop itself hides the page
-     content even on the frame(s) before blur finishes compositing on
-     mobile GPUs (fixes a brief "flash" of unblurred content behind the
-     modal on phones). */
-  background: rgba(2, 4, 10, .88);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  /* Hint the browser to start compositing the blur before paint instead
-     of catching up a frame or two late. */
-  will-change: backdrop-filter;
+  /* No animation, no backdrop-filter, here — deliberately.
+     Everything above this in the file (hiding the Leaflet map, forcing
+     .ag-modal-content opaque, dropping opacity from the dialog's
+     animation) was chasing a symptom rather than the actual root cause:
+     on Android WebView specifically (not desktop Chrome, which is why
+     this was invisible there), an element that is BOTH animated AND
+     using backdrop-filter has a documented rendering bug where the very
+     first painted frame can show the PREVIOUS DOM state — i.e. the page
+     as it looked before the modal existed — because the animated element
+     gets promoted to its own GPU layer and that layer's first composite
+     can lag a frame behind. That explains why hiding the map never fully
+     fixed it: the map was never the real problem, the animation+blur
+     combination was.
+     Fix: don't animate this element at all, and don't use
+     backdrop-filter — a plain, static, sufficiently dark solid color
+     appears correctly on the very first frame, every time, because
+     there's no animation lag and no blur-compositing race for a slow
+     WebView to get wrong. This does mean the backdrop no longer has a
+     frosted-glass blur look, and it pops in instantly rather than fading
+     — a deliberate trade of a little visual polish for the flicker being
+     fully, structurally impossible rather than merely less likely. */
+  background: rgb(6, 10, 18);
   display: flex; align-items: center; justify-content: center;
   padding: 1rem;
-  /* Only fade the color/blur in slightly rather than starting fully
-     transparent — starting from opacity:0 is what let the page show
-     through unblurred for a moment on slower mobile devices. */
-  animation: agModalFade .15s ease;
 }
-@keyframes agModalFade { from { opacity: .4; } to { opacity: 1; } }
 
 .ag-modal-dialog {
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
-  animation: agModalPop .2s ease;
+  /* Same reasoning as the backdrop above: no animation on mount, so
+     there's no first-frame race for WebView to lose. */
 }
 .ag-modal-dialog.sm { max-width: 380px; }
-
-@keyframes agModalPop {
-  /* Only animate position/scale, never opacity. Animating opacity here
-     made the whole solid dialog (including .ag-modal-content's opaque
-     background) briefly translucent, which is what let the blurred
-     backdrop/page content show through the card — most noticeably
-     through the already-tinted "SELECTED SLOT" panel at the top. */
-  from { transform: translateY(14px) scale(.98); }
-  to   { transform: translateY(0) scale(1); }
-}
 
 .ag-modal-content {
   background: var(--card, #0b1929);
@@ -226,20 +249,10 @@
   position: fixed; right: 1.5rem; bottom: 5.5rem; z-index: 400;
   width: min(360px, calc(100vw - 2rem)); height: min(520px, calc(100vh - 8rem));
   background: var(--card); border: 1px solid var(--t4); border-radius: var(--r-card);
-  /* Force a fully opaque paint layer from the first frame, same reason as
-     .ag-modal-content: this panel has translucent children (chip backgrounds,
-     message bubbles) stacked on it, so a fading-in opacity let whatever is
-     behind the panel ghost through for a few frames on mobile GPUs. */
-  opacity: 1;
-  isolation: isolate;
   box-shadow: var(--shadow-float); display: flex; flex-direction: column; overflow: hidden;
   animation: aiPanelIn .22s ease both;
 }
-@keyframes aiPanelIn {
-  /* Only animate position/scale, never opacity — see .ag-modal-content comment above. */
-  from { transform: translateY(12px) scale(.98); }
-  to   { transform: none; }
-}
+@keyframes aiPanelIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 
 .ai-panel-header {
   display: flex; align-items: center; justify-content: space-between;
