@@ -1,4 +1,4 @@
-package com.ranit.smartparking;
+package com.ranit.parkingapp;
 
 import com.getcapacitor.BridgeActivity;
 
