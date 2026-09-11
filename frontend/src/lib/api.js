@@ -212,6 +212,20 @@ export function setSessionExpiredHandler(fn) {
 }
 
 /**
+ * Clears whatever's left of the current session and, if AuthProvider has
+ * registered a handler, pops the blocking "session terminated" screen.
+ * Called from two places:
+ *  - apiRequest(), below, when a request is rejected with a termination code
+ *  - lib/socket.js's 'sessionInvalidated' listener, which is what makes
+ *    this near-instant instead of waiting for the next API call the
+ *    affected tab happens to make (a background poll, a click, etc.)
+ */
+export function triggerSessionExpired(body) {
+  clearSession();
+  if (sessionExpiredHandler) sessionExpiredHandler(body);
+}
+
+/**
  * apiRequest(endpoint, options)
  * - Automatically attaches JSON content-type + bearer token
  * - Serializes object bodies to JSON
@@ -239,13 +253,14 @@ export async function apiRequest(endpoint, options = {}, onUnauthorized) {
     const res = await fetch(API_BASE + endpoint, cfg);
     if (res.status === 401) {
       const body = await res.json().catch(() => null);
-      clearSession();
       // Only a request that actually carried a token can have been
       // rejected *because that session died* — a token-less 401 (or one
       // without a recognized code, like a bad login attempt) is a
       // different situation and shouldn't pop the blocking screen.
-      if (token && body && SESSION_TERMINATION_CODES.has(body.code) && sessionExpiredHandler) {
-        sessionExpiredHandler(body);
+      if (token && body && SESSION_TERMINATION_CODES.has(body.code)) {
+        triggerSessionExpired(body);
+      } else {
+        clearSession();
       }
       if (onUnauthorized) onUnauthorized();
       return null;

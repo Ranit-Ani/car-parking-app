@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { clearSession, getToken, getUser, setSession, setSessionExpiredHandler } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { clearPageCache } from '../lib/pageCache';
+import { rejoinSocketRooms } from '../lib/socket';
 
 const AuthContext = createContext(null);
 
@@ -22,6 +23,11 @@ export function AuthProvider({ children }) {
     clearPageCache();
     setSession(token, userObj);
     setUser(userObj);
+    // The shared socket connection (if one already exists from before this
+    // login) stays connected across login/logout in the same tab, so it
+    // won't naturally rejoin rooms for the new account on its own —
+    // nudge it to do so now instead of waiting for a reconnect.
+    rejoinSocketRooms(userObj);
   }, []);
 
   const updateUser = useCallback((patch) => {

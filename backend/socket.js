@@ -35,10 +35,17 @@ function initSocket(server) {
     // join a room scoped to their assigned parking location
     // (`loc:<locationId>`) so multi-location booking events (new booking,
     // cancellation, expiry) only reach the staff who should see them —
-    // see BookingService's staffBroadcastTargets().
+    // see BookingService's staffBroadcastTargets(). Each client also joins
+    // a room scoped to their own account id (`user:<userId>`), which lets
+    // the backend push a message straight at one specific logged-in user
+    // — currently used to instantly notify someone the moment an admin
+    // changes their role/location or deactivates their account (see
+    // AdminService's invalidateUserSession helper), instead of them only
+    // finding out on their next API call.
     const LOCATION_ROOM = /^loc:[a-f0-9]{24}$/i;
+    const USER_ROOM = /^user:[a-f0-9]{24}$/i;
     socket.on('join', (room) => {
-      if (['admin', 'staff', 'user'].includes(room) || LOCATION_ROOM.test(room)) {
+      if (['admin', 'staff', 'user'].includes(room) || LOCATION_ROOM.test(room) || USER_ROOM.test(room)) {
         socket.join(room);
       }
     });

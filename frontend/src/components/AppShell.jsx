@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import Sidebar from './Sidebar';
 import AIChatWidget from './AIChatWidget';
 import { useAuth } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
+import { getSocket } from '../lib/socket';
 
 /**
  * Every page used to render its own <Sidebar/> and <AIChatWidget/> inside
@@ -31,6 +33,17 @@ export default function AppShell({ children }) {
   const { user } = useAuth();
   const { navOpen, setNavOpen } = useNav();
   const uid = user?._id || user?.id || 'anon';
+
+  // Some pages (e.g. Profile) don't otherwise open a socket connection, so
+  // an admin changing THIS user's role/status while they're sitting on one
+  // of those pages would only be caught on their next API call instead of
+  // instantly. Ensuring the connection here, once, for every authenticated
+  // page guarantees the instant "sessionInvalidated" push (see lib/socket.js)
+  // always has a live socket to arrive on. getSocket() is a singleton, so
+  // this is a no-op if a page-level hook already created it.
+  useEffect(() => {
+    if (user) getSocket();
+  }, [user]);
 
   return (
     <>

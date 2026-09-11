@@ -22,6 +22,25 @@ function parseLatLng(latitude, longitude) {
   return { lat, lng };
 }
 
+// Pushed straight at one specific logged-in user (see socket.js's
+// `user:<id>` room) the instant an admin action invalidates their current
+// session — role/location change or deactivation. This is purely a
+// "notify them right now" nicety so they don't have to wait for their next
+// API call to discover it; the actual security enforcement is the
+// tokenVersion/isActive check in auth.middleware.js's `protect`, which
+// still runs regardless of whether this event ever arrives (dropped
+// socket messages, the user being offline, etc. can never leave stale
+// access in place).
+function invalidateUserSession(userId, code, message) {
+  try {
+    getIO().to(`user:${userId}`).emit('sessionInvalidated', { code, message });
+  } catch {
+    // getIO() throws if socket.io hasn't been initialized (e.g. some test
+    // contexts) — the REST-layer check is the real guarantee, so a missing
+    // socket server here should never block the admin action itself.
+  }
+}
+
 /**
  * AdminService - Admin dashboard and management operations
  */
@@ -215,6 +234,14 @@ class AdminService {
       throw err;
     }
 
+    if (roleChanged || locationChanged) {
+      invalidateUserSession(
+        user._id,
+        'SESSION_INVALIDATED',
+        'Your session has been terminated because your account role or permissions were changed by an administrator. Please log in again.'
+      );
+    }
+
     getIO().to('admin').emit('userUpdated', { userId: user._id, role: user.role, locationId: user.locationId });
 
     return user;
@@ -229,6 +256,15 @@ class AdminService {
     }
     user.isActive = !user.isActive;
     await user.save();
+
+    // Deactivating someone should kick them out just as instantly as a
+    // role change does. `protect` already rejects the very next request
+    // from a deactivated account (isActive check), so this socket push is
+    // just what makes it immediate instead of waiting on that next
+    // request — see invalidateUserSession's doc comment above.
+    if (!user.isActive) {
+      invalidateUserSession(user._id, 'ACCOUNT_DEACTIVATED', 'Your account has been deactivated by an administrator.');
+    }
 
     getIO().to('admin').emit('userUpdated', { userId: user._id, isActive: user.isActive });
 
@@ -505,8 +541,11 @@ class AdminService {
     }
 
     if (data.name !== undefined && data.name.trim()) staff.name = data.name.trim();
+
+    const wasActive = staff.isActive;
     if (data.isActive !== undefined) staff.isActive = !!data.isActive;
 
+    let locationReassigned = false;
     if (data.newLocationId !== undefined && data.newLocationId) {
       const newLoc = await ParkingLocation.findById(data.newLocationId);
       if (!newLoc) {
@@ -520,11 +559,23 @@ class AdminService {
         // (StaffService scopes everything by locationId) — invalidate
         // their existing session the same way.
         staff.tokenVersion = (staff.tokenVersion || 0) + 1;
+        locationReassigned = true;
       }
       staff.locationId = newLoc._id;
     }
 
     await staff.save();
+
+    if (locationReassigned) {
+      invalidateUserSession(
+        staff._id,
+        'SESSION_INVALIDATED',
+        'Your session has been terminated because your account role or permissions were changed by an administrator. Please log in again.'
+      );
+    } else if (wasActive && !staff.isActive) {
+      invalidateUserSession(staff._id, 'ACCOUNT_DEACTIVATED', 'Your account has been deactivated by an administrator.');
+    }
+
     const obj = staff.toObject();
     delete obj.password;
 
@@ -552,6 +603,12 @@ class AdminService {
     // auth.middleware.js.
     staff.tokenVersion = (staff.tokenVersion || 0) + 1;
     await staff.save();
+
+    invalidateUserSession(
+      staff._id,
+      'SESSION_INVALIDATED',
+      'Your session has been terminated because your account role or permissions were changed by an administrator. Please log in again.'
+    );
 
     getIO().to('admin').emit('staffUpdated', { locationId, staffId: staff._id, removed: true });
     return { message: 'Staff member removed from this location.' };
