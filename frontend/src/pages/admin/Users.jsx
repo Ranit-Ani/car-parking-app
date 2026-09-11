@@ -78,12 +78,12 @@ function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onR
                       <RowActionsMenu
                         items={[
                           { label: 'Change Location', icon: 'bi-geo-alt', onClick: () => onReassign(u) },
-                          { label: u.isActive ? 'Deactivate' : 'Activate', icon: u.isActive ? 'bi-slash-circle' : 'bi-check-circle', onClick: () => onToggle(u._id) },
+                          { label: u.isActive ? 'Deactivate' : 'Activate', icon: u.isActive ? 'bi-slash-circle' : 'bi-check-circle', onClick: () => onToggle(u) },
                           { label: 'Delete', icon: 'bi-trash', tone: 'danger', onClick: () => onDelete(u) },
                         ]}
                       />
                     ) : (
-                      <button className={`btn-ag ${u.isActive ? 'orange' : 'green'} sm`} onClick={() => onToggle(u._id)}>{u.isActive ? 'Deactivate' : 'Activate'}</button>
+                      <button className={`btn-ag ${u.isActive ? 'orange' : 'green'} sm`} onClick={() => onToggle(u)}>{u.isActive ? 'Deactivate' : 'Activate'}</button>
                     )
                   ) : (
                     <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>You</span>
@@ -191,6 +191,10 @@ export default function AdminUsers() {
   // their current session to end immediately (see AdminService.updateUserRole),
   // so this shouldn't fire off a single accidental click on the select.
   const [roleConfirm, setRoleConfirm] = useState(null); // { user, role } | null
+  // Same idea for activate/deactivate: deactivating ends the account's
+  // current session immediately too (see AdminService.toggleUserStatus),
+  // so it shouldn't fire off a single accidental click either.
+  const [toggleConfirm, setToggleConfirm] = useState(null); // user | null
 
   async function applyRoleChange(user, role, targetLocationId) {
     const d = await apiRequest('/admin/users/' + user._id + '/role', { method: 'PUT', body: { role, locationId: targetLocationId } });
@@ -247,11 +251,24 @@ export default function AdminUsers() {
     setPicker(null);
   }
 
-  async function toggleUser(id) {
-    const d = await apiRequest('/admin/users/' + id + '/toggle', { method: 'PUT' });
+  async function applyToggle(user) {
+    const d = await apiRequest('/admin/users/' + user._id + '/toggle', { method: 'PUT' });
     if (d && d.success) showToast(d.message, 'warning');
     else showToast((d && d.message) || 'Failed.', 'danger');
     refreshAll();
+  }
+
+  // Only opens the confirmation sheet — nothing is applied until
+  // confirmToggle() runs below.
+  function toggleUser(user) {
+    setToggleConfirm(user);
+  }
+
+  function confirmToggle() {
+    if (!toggleConfirm) return;
+    const user = toggleConfirm;
+    setToggleConfirm(null);
+    applyToggle(user);
   }
 
   async function deleteStaff(user) {
@@ -412,6 +429,20 @@ export default function AdminUsers() {
         confirmLabel="Change Role"
         onCancel={() => setRoleConfirm(null)}
         onConfirm={confirmRoleChange}
+      />
+
+      <ConfirmSheet
+        show={!!toggleConfirm}
+        message={
+          toggleConfirm
+            ? toggleConfirm.isActive
+              ? `Deactivate ${toggleConfirm.name}'s account? If they're currently logged in, this will end their session immediately and block them from logging back in until reactivated.`
+              : `Reactivate ${toggleConfirm.name}'s account? They'll be able to log in again.`
+            : ''
+        }
+        confirmLabel={toggleConfirm && toggleConfirm.isActive ? 'Deactivate' : 'Activate'}
+        onCancel={() => setToggleConfirm(null)}
+        onConfirm={confirmToggle}
       />
 
       <Modal
