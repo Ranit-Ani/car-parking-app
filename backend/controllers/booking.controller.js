@@ -115,6 +115,18 @@ class BookingController {
       next(err);
     }
   }
+
+  // GET /api/bookings/:id/qrcode - Fetch this booking's scannable entry QR
+  // (additive QR entry system; ownership check happens in the service,
+  // same rule as getBookingById/downloadReceipt above).
+  async getQRCode(req, res, next) {
+    try {
+      const data = await BookingService.getBookingQRImage(req.params.id, req.user);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new BookingController();

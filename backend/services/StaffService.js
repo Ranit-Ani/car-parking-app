@@ -1,8 +1,10 @@
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const ParkingSlot = require('../models/ParkingSlot');
 const Revenue = require('../models/Revenue');
 const BillingService = require('./BillingService');
 const { getIO } = require('../socket');
+const { parseQrPayload, tokensMatch } = require('../utils/qrCode');
 
 /**
  * StaffService - Handles check-in/check-out operations
@@ -124,6 +126,90 @@ class StaffService {
       booking: await booking.populate(['userId', 'slotId']),
       bill,
     };
+  }
+
+  // ─── QR-based entry system ────────────────────────────────────────────────
+  // Additive alongside checkIn()/checkOut() above: this is just a second,
+  // camera-driven way to reach the SAME checkIn() logic below — the
+  // existing manual Staff Check-In/Check-Out pages and endpoints are
+  // completely untouched and keep working exactly as before.
+
+  /**
+   * Verify a scanned booking QR without performing check-in. Rejects
+   * anything malformed, mismatched, already-used, not-yet/no-longer
+   * "Booked", expired, or (for staff) belonging to a different parking
+   * location.
+   * @param {string} qrData - raw string decoded from the camera/QR
+   * @param {string|null} [staffLocationId] - see checkIn() above
+   * @returns {Promise<Booking>} the verified, populated booking
+   */
+  async verifyQRToken(qrData, staffLocationId = null) {
+    const { bookingId, token } = parseQrPayload(qrData);
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      const err = new Error('Invalid QR code. Please rescan.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const booking = await Booking.findById(bookingId).select('+qrToken').populate(['userId', 'slotId']);
+
+    // Same "invalid QR" message whether the booking doesn't exist or the
+    // token doesn't match — deliberately not distinguishing the two, so a
+    // scan can't be used to probe for valid booking IDs.
+    if (!booking || !booking.qrToken || !tokensMatch(booking.qrToken, token)) {
+      const err = new Error('Invalid QR code. Please rescan.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (
+      staffLocationId &&
+      (!booking.locationId || booking.locationId.toString() !== staffLocationId.toString())
+    ) {
+      const err = new Error('This booking belongs to a different parking location.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (booking.qrUsed) {
+      const err = new Error('This QR code has already been used.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (booking.status !== 'Booked') {
+      const err = new Error(`This booking cannot be checked in via QR. Current status: ${booking.status}.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (booking.expiresAt && booking.expiresAt.getTime() <= Date.now()) {
+      const err = new Error('This booking has expired.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    return booking;
+  }
+
+  /**
+   * Verify + check-in in one step, then permanently mark the QR as used so
+   * it can never be replayed. Reuses checkIn() so the resulting state
+   * change (slot -> Occupied, booking -> Active, socket events) is
+   * byte-for-byte identical to a manual check-in from the Staff
+   * Check-In page.
+   * @param {string} qrData
+   * @param {string|null} [staffLocationId]
+   * @returns {Promise<Booking>}
+   */
+  async checkInByQR(qrData, staffLocationId = null) {
+    const verified = await this.verifyQRToken(qrData, staffLocationId);
+    const booking = await this.checkIn(verified._id, staffLocationId);
+    booking.qrUsed = true;
+    booking.qrUsedAt = new Date();
+    await booking.save();
+    return booking;
   }
 
   /**

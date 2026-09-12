@@ -5,6 +5,7 @@ import { EmptyState } from '../../components/Bits';
 import LeafletMap, { ICONS } from '../../components/LeafletMap';
 import BookingModal from '../../components/BookingModal';
 import NavigateModal from '../../components/NavigateModal';
+import QRCodeModal from '../../components/QRCodeModal';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
 import { getCurrentPosition, geocodeSearch, MAX_RADIUS_KM } from '../../lib/geo';
@@ -44,6 +45,7 @@ export default function NearbyParking() {
   const [bookingSlot, setBookingSlot] = useState(null);
   const [justBooked, setJustBooked] = useState(null); // booking returned right after a successful booking
   const [navDestination, setNavDestination] = useState(null);
+  const [showBookingQr, setShowBookingQr] = useState(false);
 
   const fetchNearby = useCallback(async (point, km, type, opts = {}) => {
     if (!point) return;
@@ -374,6 +376,9 @@ export default function NearbyParking() {
         footer={(
           <>
             <button className="btn-ag ghost" onClick={() => setJustBooked(null)}>Close</button>
+            <button className="btn-ag aurora" onClick={() => setShowBookingQr(true)}>
+              <i className="bi bi-qr-code" /> Show Entry QR
+            </button>
             <button className="btn-ag plasma" onClick={() => navigateNow(justBooked)}>
               <i className="bi bi-signpost-2" /> Navigate to Parking
             </button>
@@ -387,11 +392,13 @@ export default function NearbyParking() {
               Slot {justBooked.slotId && justBooked.slotId.slotNumber} booked!
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-              Check in within 1 hour, or open in-app navigation to head there now.
+              Check in within 1 hour — show your entry QR at the gate, or check in manually, then open in-app navigation to head there now.
             </div>
           </div>
         )}
       </Modal>
+
+      <QRCodeModal bookingId={justBooked?._id} show={showBookingQr} onClose={() => setShowBookingQr(false)} />
 
       <NavigateModal show={!!navDestination} onClose={() => setNavDestination(null)} destination={navDestination} />
     </Layout>

@@ -93,6 +93,30 @@ const BookingSchema = new mongoose.Schema(
       trim: true,
       maxlength: 300,
     },
+    // ─── QR-based entry system (additive; existing manual Check-In/Check-Out
+    // flow is untouched and keeps working exactly as before) ───────────────
+    // Random single-use token generated when the booking is created (see
+    // BookingService.createBooking + utils/qrCode.js). `select: false` so
+    // it is never accidentally included in a normal API response — it is
+    // only ever read internally via `.select('+qrToken')` when actually
+    // generating the QR image or verifying a scan.
+    qrToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    // Set the moment QR-based check-in succeeds, so the same QR code can
+    // never be used again even if someone photographs/screenshots it
+    // beforehand. (Checking in manually from the Staff Check-In page never
+    // touches this flag — it's purely informational for the QR flow.)
+    qrUsed: {
+      type: Boolean,
+      default: false,
+    },
+    qrUsedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

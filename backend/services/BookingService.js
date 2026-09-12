@@ -5,6 +5,7 @@ const Revenue = require('../models/Revenue');
 const BillingService = require('./BillingService');
 const { getIO } = require('../socket');
 const { isValidVehicleNumber, normalizeVehicleNumber } = require('../utils/vehicleValidation');
+const { generateQrToken, generateQrImage } = require('../utils/qrCode');
 
 const ALLOWED_CATEGORIES = ['2 Wheeler', '3 Wheeler', '4 Wheeler'];
 const BOOKED_TTL_MS = 60 * 60 * 1000; // Rule 2: 1 hour to check in before auto-expiry
@@ -155,6 +156,10 @@ class BookingService {
         vehicleNumber,
         registrationPending,
         status: 'Booked',
+        // QR-based entry system: every booking gets its own single-use
+        // token as soon as it's created, so the QR is ready to show the
+        // moment the booking succeeds (see the model comment on qrToken).
+        qrToken: generateQrToken(),
       });
 
       const populated = await booking.populate([
@@ -318,6 +323,47 @@ class BookingService {
       throw err;
     }
     return booking;
+  }
+
+  /**
+   * Get the scannable entry QR for a booking, regenerated fresh on every
+   * call from the token stored on the booking (nothing sensitive is ever
+   * cached client-side). Additive to the existing manual Check-In flow —
+   * this is purely a read of the same booking record.
+   * @param {string} bookingId
+   * @param {{_id: string, role: string}} requestingUser - same ownership
+   *   rule as getBookingById()/downloadReceipt(): a plain user may only
+   *   fetch their own booking's QR; staff/admin may fetch any.
+   * @returns {Promise<{qrImage: string, status: string, qrUsed: boolean, expiresAt: Date|null}>}
+   */
+  async getBookingQRImage(bookingId, requestingUser) {
+    const booking = await Booking.findById(bookingId).select('+qrToken');
+    if (!booking) {
+      const err = new Error('Booking not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (requestingUser.role === 'user' && booking.userId.toString() !== requestingUser._id.toString()) {
+      const err = new Error('Not authorized.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (!booking.qrToken) {
+      const err = new Error('QR code is not available for this booking.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const qrImage = await generateQrImage(booking._id, booking.qrToken);
+
+    return {
+      qrImage,
+      status: booking.status,
+      qrUsed: booking.qrUsed,
+      expiresAt: booking.expiresAt,
+    };
   }
 }
 

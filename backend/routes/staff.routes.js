@@ -13,4 +13,8 @@ router.post('/checkin/:bookingId', staffController.checkIn);
 router.post('/checkout/:bookingId', staffController.checkOut);
 router.post('/cancel/:bookingId', staffController.cancelBooking);
 
+// QR-based entry system (additive alongside the manual check-in above)
+router.post('/qr/verify', staffController.verifyQR);
+router.post('/qr/checkin', staffController.checkInByQR);
+
 module.exports = router;

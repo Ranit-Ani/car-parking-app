@@ -28,6 +28,7 @@ const NAV = {
         links: [
           { to: '/staff/dashboard', icon: 'bi-speedometer2', text: 'Dashboard' },
           { to: '/staff/checkin', icon: 'bi-box-arrow-in-right', text: 'Check-In' },
+          { to: '/staff/qr-checkin', icon: 'bi-qr-code-scan', text: 'QR Check-In' },
           { to: '/staff/checkout', icon: 'bi-box-arrow-right', text: 'Check-Out' },
           { to: '/staff/bookings', icon: 'bi-list-check', text: 'All Bookings' },
         ],

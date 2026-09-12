@@ -20,6 +20,7 @@ import StaffDashboard from './pages/staff/Dashboard';
 import StaffCheckIn from './pages/staff/CheckIn';
 import StaffCheckOut from './pages/staff/CheckOut';
 import StaffBookings from './pages/staff/Bookings';
+import StaffQRCheckIn from './pages/staff/QRCheckIn';
 
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminSlots from './pages/admin/Slots';
@@ -57,6 +58,7 @@ export default function App() {
 
           <Route path="/staff/dashboard" element={<RequireAuth roles={['staff', 'admin']}><StaffDashboard /></RequireAuth>} />
           <Route path="/staff/checkin" element={<RequireAuth roles={['staff', 'admin']}><StaffCheckIn /></RequireAuth>} />
+          <Route path="/staff/qr-checkin" element={<RequireAuth roles={['staff', 'admin']}><StaffQRCheckIn /></RequireAuth>} />
           <Route path="/staff/checkout" element={<RequireAuth roles={['staff', 'admin']}><StaffCheckOut /></RequireAuth>} />
           <Route path="/staff/bookings" element={<RequireAuth roles={['staff', 'admin']}><StaffBookings /></RequireAuth>} />
 

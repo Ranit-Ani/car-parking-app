@@ -106,6 +106,38 @@ class StaffController {
     }
   }
 
+  // ─── QR-based entry system (additive; manual check-in above is unchanged) ──
+
+  // POST /api/staff/qr/verify - Verify a scanned booking QR and return the
+  // booking/vehicle details for staff to review, WITHOUT checking in yet.
+  async verifyQR(req, res, next) {
+    try {
+      const booking = await StaffService.verifyQRToken(req.body.qrData, req.user.locationId);
+      res.json({
+        success: true,
+        message: 'QR code verified.',
+        data: booking,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /api/staff/qr/checkin - Verify + check-in in one step; marks the
+  // QR as used so it cannot be scanned again.
+  async checkInByQR(req, res, next) {
+    try {
+      const booking = await StaffService.checkInByQR(req.body.qrData, req.user.locationId);
+      res.json({
+        success: true,
+        message: `Check-in successful for slot ${booking.slotId.slotNumber}.`,
+        data: booking,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // POST /api/staff/cancel/:bookingId - Staff-initiated cancel
   async cancelBooking(req, res, next) {
     try {

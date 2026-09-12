@@ -4,6 +4,7 @@ import Modal from '../../components/Modal';
 import ConfirmSheet from '../../components/ConfirmSheet';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import NavigateModal from '../../components/NavigateModal';
+import QRCodeModal from '../../components/QRCodeModal';
 import { StatusBadge, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest, downloadFile } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
@@ -34,6 +35,7 @@ export default function UserBookings() {
   const [filter, setFilter] = useState('all');
   const [bill, setBill] = useState(null);
   const [navBooking, setNavBooking] = useState(null);
+  const [qrBookingId, setQrBookingId] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelBusy, setCancelBusy] = useState(false);
 
@@ -117,6 +119,7 @@ export default function UserBookings() {
                     {(b.status === 'Booked' || (b.status === 'Active' && destinationFor(b))) && (
                       <RowActionsMenu
                         items={[
+                          b.status === 'Booked' && { label: 'Show Entry QR', icon: 'bi-qr-code', onClick: () => setQrBookingId(b._id) },
                           b.status === 'Booked' && { label: 'Cancel Booking', icon: 'bi-x-circle', tone: 'danger', onClick: () => cancel(b._id) },
                           (b.status === 'Booked' || b.status === 'Active') && destinationFor(b) && { label: 'Navigate', icon: 'bi-signpost-2', onClick: () => setNavBooking(b) },
                         ]}
@@ -166,6 +169,8 @@ export default function UserBookings() {
       </Modal>
 
       <NavigateModal show={!!navBooking} onClose={() => setNavBooking(null)} destination={navBooking ? destinationFor(navBooking) : null} />
+
+      <QRCodeModal bookingId={qrBookingId} show={!!qrBookingId} onClose={() => setQrBookingId(null)} />
 
       <ConfirmSheet
         show={!!cancelTarget}
