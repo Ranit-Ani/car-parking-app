@@ -380,7 +380,7 @@ export default function NearbyParking() {
               style={{ flex: 1, minWidth: 0, justifyContent: 'center', whiteSpace: 'normal', textAlign: 'center' }}
               onClick={() => setShowBookingQr(true)}
             >
-              <i className="bi bi-qr-code" /> Show Entry QR
+              <i className="bi bi-qr-code" /> Entry QR
             </button>
             <button
               className="btn-ag plasma"

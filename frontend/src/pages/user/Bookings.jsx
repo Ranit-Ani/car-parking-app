@@ -120,8 +120,8 @@ export default function UserBookings() {
                       <RowActionsMenu
                         items={[
                           b.status === 'Booked' && { label: 'Show Entry QR', icon: 'bi-qr-code', onClick: () => setQrBookingId(b._id) },
-                          b.status === 'Booked' && { label: 'Cancel Booking', icon: 'bi-x-circle', tone: 'danger', onClick: () => cancel(b._id) },
                           (b.status === 'Booked' || b.status === 'Active') && destinationFor(b) && { label: 'Navigate', icon: 'bi-signpost-2', onClick: () => setNavBooking(b) },
+                          b.status === 'Booked' && { label: 'Cancel Booking', icon: 'bi-x-circle', tone: 'danger', onClick: () => cancel(b._id) },
                         ]}
                       />
                     )}

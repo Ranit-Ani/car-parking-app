@@ -232,7 +232,7 @@ class StaffService {
     const [bookings, total] = await Promise.all([
       Booking.find(query)
         .populate('userId', 'name email role')
-        .populate('slotId', 'slotNumber location floor slotType')
+        .populate('slotId', 'slotNumber location floor slotType hourlyRate')
         .sort({ bookingTime: -1 })
         .skip(skip)
         .limit(limit),
