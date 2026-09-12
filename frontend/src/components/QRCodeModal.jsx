@@ -59,7 +59,7 @@ export default function QRCodeModal({ bookingId, show, onClose }) {
               </div>
             ) : (
               <div className="ag-alert info" style={{ fontSize: '0.8rem' }}>
-                <i className="bi bi-camera" /> Show this to parking staff at entry to check in.
+                <i className="bi bi-camera" /> Show this at entry to check in.
               </div>
             )}
 
