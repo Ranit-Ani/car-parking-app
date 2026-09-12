@@ -40,9 +40,6 @@ export default function QRCheckIn() {
   const [scanResult, setScanResult] = useState(null); // { qrData, booking }
   const [checkinBusy, setCheckinBusy] = useState(false);
 
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manualValue, setManualValue] = useState('');
-
   const stopCamera = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
@@ -111,7 +108,7 @@ export default function QRCheckIn() {
       rafRef.current = requestAnimationFrame(tick);
     } catch (err) {
       console.error('Camera:', err);
-      setCameraError('Could not access the camera. Check permissions and try again, or enter the code manually below.');
+      setCameraError('Could not access the camera. Check permissions and try again.');
     }
   }, [tick]);
 
@@ -124,15 +121,6 @@ export default function QRCheckIn() {
   function resumeScanning() {
     setScanResult(null);
     scanningRef.current = true;
-  }
-
-  async function submitManual() {
-    const val = manualValue.trim();
-    if (!val) return;
-    setManualOpen(false);
-    setManualValue('');
-    scanningRef.current = false;
-    await handleScan(val);
   }
 
   async function confirmCheckIn() {
@@ -160,13 +148,10 @@ export default function QRCheckIn() {
       </div>
 
       <div className="table-card" style={{ padding: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
           <h6 style={{ margin: 0 }}>
             {cameraReady ? <><i className="bi bi-camera-video" /> Point the camera at the booking's QR code</> : 'Camera'}
           </h6>
-          <button className="btn-ag ghost sm" onClick={() => setManualOpen(true)}>
-            <i className="bi bi-keyboard" /> Enter code manually
-          </button>
         </div>
 
         <div
@@ -246,30 +231,6 @@ export default function QRCheckIn() {
             </div>
           </>
         )}
-      </Modal>
-
-      <Modal
-        show={manualOpen}
-        onClose={() => setManualOpen(false)}
-        title="Enter QR Code Manually"
-        icon="bi-keyboard"
-        footer={(
-          <>
-            <button className="btn-ag ghost" onClick={() => setManualOpen(false)}>Cancel</button>
-            <button className="btn-ag plasma" onClick={submitManual}><i className="bi bi-check-circle" /> Verify</button>
-          </>
-        )}
-      >
-        <div className="ag-input-group">
-          <label className="ag-label">Scanned QR text</label>
-          <textarea
-            className="ag-input"
-            rows={3}
-            placeholder="Paste the QR code's raw text here (fallback for when the camera can't be used)."
-            value={manualValue}
-            onChange={(e) => setManualValue(e.target.value)}
-          />
-        </div>
       </Modal>
     </Layout>
   );

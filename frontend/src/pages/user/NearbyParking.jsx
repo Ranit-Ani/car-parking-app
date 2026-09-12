@@ -375,7 +375,6 @@ export default function NearbyParking() {
         icon="bi-check-circle"
         footer={(
           <>
-            <button className="btn-ag ghost" onClick={() => setJustBooked(null)}>Close</button>
             <button className="btn-ag aurora" onClick={() => setShowBookingQr(true)}>
               <i className="bi bi-qr-code" /> Show Entry QR
             </button>
