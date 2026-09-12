@@ -86,10 +86,6 @@ export default function NavigateModal({ show, onClose, destination }) {
           <div className="stat-label">ETA</div>
           <div className="stat-value" style={{ fontSize: '1.1rem' }}>{route ? formatDuration(route.durationMin) : routeLoading ? '…' : '—'}</div>
         </div>
-        <div className="stat-card solar">
-          <div className="stat-label">Destination</div>
-          <div className="stat-value" style={{ fontSize: '0.85rem' }}>{(destination && destination.name) || 'Parking'}</div>
-        </div>
       </div>
 
       {!userPos && !error && (
