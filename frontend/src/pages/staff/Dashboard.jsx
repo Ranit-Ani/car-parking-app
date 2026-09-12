@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout, { PageHeader } from '../../components/Layout';
 import Modal from '../../components/Modal';
-import { StatCard, StatusBadge, EmptyState } from '../../components/Bits';
+import { StatCard, StatusBadge, EmptyState, ActionButton } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
@@ -16,6 +16,13 @@ export default function StaffDashboard() {
   const [stats, setStats] = useCachedState('staff:dashboard:stats', { Booked: '--', Occupied: '--', Available: '--', total: '--' });
   const [rows, setRows] = useCachedState('staff:dashboard:rows', []);
   const [bill, setBill] = useState(null);
+  // Selected booking pending confirmation in each styled modal (mirrors
+  // staff/CheckIn.jsx and staff/CheckOut.jsx, instead of a bare browser
+  // confirm() popup).
+  const [ciSel, setCiSel] = useState(null);
+  const [ciBusy, setCiBusy] = useState(false);
+  const [coSel, setCoSel] = useState(null);
+  const [coBusy, setCoBusy] = useState(false);
 
   const load = useCallback(async () => {
     // /staff/stats (not the system-wide /slots/stats) so this only ever
@@ -49,16 +56,22 @@ export default function StaffDashboard() {
     };
   }, [load]);
 
-  async function doCI(id) {
-    if (!confirm('Confirm check-in?')) return;
-    const d = await apiRequest('/staff/checkin/' + id, { method: 'POST' });
+  async function confirmCheckIn() {
+    if (!ciSel) return;
+    setCiBusy(true);
+    const d = await apiRequest('/staff/checkin/' + ciSel._id, { method: 'POST' });
+    setCiBusy(false);
+    setCiSel(null);
     if (d && d.success) { showToast('Check-in: Slot ' + d.data.slotId?.slotNumber, 'success'); load(); }
     else showToast(d?.message || 'Failed.', 'danger');
   }
 
-  async function doCO(id) {
-    if (!confirm('Confirm check-out?')) return;
-    const d = await apiRequest('/staff/checkout/' + id, { method: 'POST' });
+  async function confirmCheckOut() {
+    if (!coSel) return;
+    setCoBusy(true);
+    const d = await apiRequest('/staff/checkout/' + coSel._id, { method: 'POST' });
+    setCoBusy(false);
+    setCoSel(null);
     if (d && d.success) setBill(d.data);
     else showToast(d?.message || 'Failed.', 'danger');
   }
@@ -95,8 +108,8 @@ export default function StaffDashboard() {
                   <td>{b.checkInTime ? formatDateTime(b.checkInTime) : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
                   <td><StatusBadge status={b.status} /></td>
                   <td>
-                    {b.status === 'Booked' && <button className="btn-ag green sm" onClick={() => doCI(b._id)}><i className="bi bi-box-arrow-in-right" /> Check In</button>}
-                    {b.status === 'Active' && <button className="btn-ag red sm" onClick={() => doCO(b._id)}><i className="bi bi-box-arrow-right" /> Check Out</button>}
+                    {b.status === 'Booked' && <button className="btn-ag green sm" onClick={() => setCiSel(b)}><i className="bi bi-box-arrow-in-right" /> Check In</button>}
+                    {b.status === 'Active' && <button className="btn-ag red sm" onClick={() => setCoSel(b)}><i className="bi bi-box-arrow-right" /> Check Out</button>}
                   </td>
                 </tr>
               ))}
@@ -104,6 +117,75 @@ export default function StaffDashboard() {
           </table>
         </div>
       </div>
+
+      <Modal
+        show={!!ciSel}
+        onClose={() => setCiSel(null)}
+        title="Confirm Check-In"
+        icon="bi-box-arrow-in-right"
+        headerStyle={{ background: 'linear-gradient(135deg,rgba(0,255,157,0.12),rgba(0,136,255,0.08))' }}
+        footer={(
+          <>
+            <button className="btn-ag ghost" onClick={() => setCiSel(null)}>Cancel</button>
+            <ActionButton busy={ciBusy} busyLabel="Confirming..." className="btn-ag green" onClick={confirmCheckIn}>
+              <i className="bi bi-check-circle" /> Confirm Check-In
+            </ActionButton>
+          </>
+        )}
+      >
+        {ciSel && (
+          <>
+            <table className="bill-table">
+              <tbody>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{ciSel.userId?.name}</td></tr>
+                <tr><td>Vehicle</td><td style={{ color: 'var(--neon-green)', fontWeight: 700 }}>{ciSel.vehicleCategory || '—'}</td></tr>
+                <tr><td>Registration No.</td><td style={{ color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'monospace' }}>{ciSel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (ciSel.vehicleNumber || '—')}</td></tr>
+                <tr><td>Slot</td><td style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{ciSel.slotId?.slotNumber}</td></tr>
+                <tr><td>Location</td><td>{ciSel.slotId?.location}</td></tr>
+                <tr><td>Rate</td><td>₹{ciSel.slotId?.hourlyRate}/hour</td></tr>
+                <tr><td>Check-In Time</td><td style={{ color: 'var(--neon-green)' }}>{new Date().toLocaleString('en-IN')}</td></tr>
+              </tbody>
+            </table>
+            <div className="ag-alert info" style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.8rem' }}>
+              <i className="bi bi-arrow-right-circle" /> Status will change: Booked → Occupied
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        show={!!coSel}
+        onClose={() => setCoSel(null)}
+        title="Confirm Check-Out"
+        icon="bi-box-arrow-right"
+        headerStyle={{ background: 'linear-gradient(135deg,rgba(255,45,85,0.12),rgba(255,107,53,0.08))' }}
+        footer={(
+          <>
+            <button className="btn-ag ghost" onClick={() => setCoSel(null)}>Cancel</button>
+            <ActionButton busy={coBusy} busyLabel="Processing..." className="btn-ag red" onClick={confirmCheckOut}>
+              <i className="bi bi-box-arrow-right" /> Confirm &amp; Generate Bill
+            </ActionButton>
+          </>
+        )}
+      >
+        {coSel && (
+          <>
+            <table className="bill-table">
+              <tbody>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{coSel.userId?.name}</td></tr>
+                <tr><td>Vehicle</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{coSel.vehicleCategory || '—'}</td></tr>
+                <tr><td>Registration No.</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700, fontFamily: 'monospace' }}>{coSel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (coSel.vehicleNumber || '—')}</td></tr>
+                <tr><td>Slot</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{coSel.slotId?.slotNumber}</td></tr>
+                <tr><td>Check-In</td><td>{formatDateTime(coSel.checkInTime)}</td></tr>
+                <tr><td>Check-Out</td><td style={{ color: 'var(--neon-red)', fontWeight: 700 }}>{new Date().toLocaleString('en-IN')}</td></tr>
+              </tbody>
+            </table>
+            <div className="ag-alert warning" style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.8rem' }}>
+              <i className="bi bi-calculator" /> Final bill calculated after confirm. Min 1h applies.
+            </div>
+          </>
+        )}
+      </Modal>
 
       <Modal
         show={!!bill}

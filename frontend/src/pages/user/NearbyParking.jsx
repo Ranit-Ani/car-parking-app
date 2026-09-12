@@ -374,14 +374,22 @@ export default function NearbyParking() {
         title="Booking Confirmed"
         icon="bi-check-circle"
         footer={(
-          <>
-            <button className="btn-ag aurora" onClick={() => setShowBookingQr(true)}>
+          <div style={{ display: 'flex', gap: '0.6rem', width: '100%' }}>
+            <button
+              className="btn-ag aurora"
+              style={{ flex: 1, minWidth: 0, justifyContent: 'center', whiteSpace: 'normal', textAlign: 'center' }}
+              onClick={() => setShowBookingQr(true)}
+            >
               <i className="bi bi-qr-code" /> Show Entry QR
             </button>
-            <button className="btn-ag plasma" onClick={() => navigateNow(justBooked)}>
-              <i className="bi bi-signpost-2" /> Navigate to Parking
+            <button
+              className="btn-ag plasma"
+              style={{ flex: 1, minWidth: 0, justifyContent: 'center', whiteSpace: 'normal', textAlign: 'center' }}
+              onClick={() => navigateNow(justBooked)}
+            >
+              <i className="bi bi-signpost-2" /> Navigate
             </button>
-          </>
+          </div>
         )}
       >
         {justBooked && (
