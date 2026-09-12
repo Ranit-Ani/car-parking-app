@@ -109,6 +109,13 @@ body.ag-modal-open .leaflet-container {
   display: none !important;
 }
 
+/* Exception: a map that lives INSIDE the open modal's own content (e.g.
+   NavigateModal's live tracking map) must stay visible — the rule above
+   is only meant to hide maps on the page BEHIND the modal backdrop. */
+body.ag-modal-open .ag-modal-content .leaflet-container {
+  display: block !important;
+}
+
 .ag-modal-backdrop {
   position: fixed; inset: 0; z-index: 1050;
   /* No animation, no backdrop-filter, here — deliberately.
