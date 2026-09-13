@@ -61,9 +61,10 @@ export default function LeafletMap({ markers = [], route = null, center, zoom = 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
     const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      subdomains: 'abcd',
+      attribution: '&copy; OpenStreetMap contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(map);
     map.setView(center ? [center.lat, center.lng] : [20.5937, 78.9629], center ? zoom : 5);
     markerLayerRef.current = L.layerGroup().addTo(map);
