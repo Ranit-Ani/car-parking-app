@@ -35,12 +35,13 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc:      ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
       fontSrc:       ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"],
-      // Nearby Parking's in-app map needs: OpenStreetMap tile images, plus
-      // fetch() access to OSM's Nominatim (geocoding a searched place) and
-      // OSRM's public router (turn-by-turn distance/ETA) — both free,
-      // keyless services rendered on our own Leaflet map, never a redirect
-      // out to Google Maps or another navigation app.
-      imgSrc:        ["'self'", "data:", "blob:", "https://*.tile.openstreetmap.org"],
+      // Nearby Parking's in-app map needs: Esri's World Street Map tile
+      // images, plus fetch() access to OSM's Nominatim (geocoding a
+      // searched place) and OSRM's public router (turn-by-turn
+      // distance/ETA) — both free, keyless services rendered on our own
+      // Leaflet map, never a redirect out to Google Maps or another
+      // navigation app.
+      imgSrc:        ["'self'", "data:", "blob:", "https://server.arcgisonline.com", "https://*.arcgisonline.com"],
       connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "https://nominatim.openstreetmap.org", "https://router.project-osrm.org"],
     },
   },
