@@ -41,15 +41,9 @@ __pycache__/
 venv/
 env/
 
-# AI / ML generated files
-ai/models/
+# AI / ML training generated files
 ai/checkpoints/
 ai/runs/
-*.onnx
-*.pt
-*.pth
-*.h5
-*.pkl
 
 # Android / Capacitor
 frontend/android/.gradle/
