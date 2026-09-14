@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { clearSession, getToken, getUser, setSession, setSessionExpiredHandler } from '../lib/api';
+import { apiRequest, clearSession, getToken, getUser, setSession, setSessionExpiredHandler } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { clearPageCache } from '../lib/pageCache';
 import { rejoinSocketRooms } from '../lib/socket';
@@ -34,6 +34,34 @@ export function AuthProvider({ children }) {
     const merged = { ...getUser(), ...patch };
     localStorage.setItem('agp_user', JSON.stringify(merged));
     setUser(merged);
+  }, []);
+
+  // The `user` state above is seeded from whatever this DEVICE's
+  // localStorage happened to cache the last time it logged in or saved a
+  // profile change locally (see updateUser). That cache goes stale the
+  // moment the account is edited from *another* device/tab/browser: this
+  // device has no way to know its copy is outdated until something tells
+  // it. The Profile page masks this by always fetching '/auth/me' itself
+  // on mount, which is why the name looked "fixed" there while the
+  // Sidebar/Dashboard — which only ever read the cached `user` from this
+  // context — kept showing whatever name was cached the last time this
+  // device logged in. Refreshing from the server once on load (whenever a
+  // session exists) keeps every device's header/sidebar/dashboard in sync
+  // with the account's actual current data, not just the page that
+  // happens to fetch it itself.
+  useEffect(() => {
+    if (!getToken()) return;
+    let cancelled = false;
+    (async () => {
+      const d = await apiRequest('/auth/me');
+      if (!cancelled && d && d.success && d.user) {
+        const merged = { ...getUser(), ...d.user };
+        localStorage.setItem('agp_user', JSON.stringify(merged));
+        setUser(merged);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logout = useCallback(() => {
