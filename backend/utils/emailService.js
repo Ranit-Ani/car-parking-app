@@ -21,7 +21,7 @@ const getOTPEmailHTML = (otp, purpose, name) => {
   <div style="max-width:480px;margin:40px auto;background:#0a1628;border:1px solid rgba(0,245,255,0.2);border-radius:16px;overflow:hidden;">
     <div style="background:linear-gradient(135deg,#0088ff,#00f5ff);padding:2rem;text-align:center;">
       <div style="font-size:2rem;font-weight:900;color:#020408;letter-spacing:0.1em;">CAR·PARKING</div>
-      <div style="font-size:0.75rem;color:rgba(2,4,8,0.7);letter-spacing:0.2em;margin-top:4px;">CAMPUS CAR-PARKING SYSTEM</div>
+      <div style="font-size:0.75rem;color:rgba(2,4,8,0.7);letter-spacing:0.2em;margin-top:4px;">SMART CAR-PARKING SYSTEM</div>
     </div>
     <div style="padding:2rem;">
       <p style="color:#e8f4ff;margin:0 0 1rem;">Hello <strong style="color:#00f5ff;">${name}</strong>,</p>
@@ -34,7 +34,7 @@ const getOTPEmailHTML = (otp, purpose, name) => {
       <p style="color:#5a7a9a;font-size:0.8rem;margin:0;">If you didn't request this, ignore this email. Never share this code.</p>
     </div>
     <div style="padding:1rem 2rem;border-top:1px solid rgba(0,136,255,0.1);text-align:center;">
-      <span style="color:#2a4a6a;font-size:0.7rem;">© Smart Campus Car-Parking System</span>
+      <span style="color:#2a4a6a;font-size:0.7rem;">© Smart Car-Parking System</span>
     </div>
   </div>
 </body>
@@ -53,7 +53,7 @@ const sendOTP = async ({ to, name, otp, purpose }) => {
     sendSmtpEmail.subject = subjects[purpose] || 'Verification Code';
     sendSmtpEmail.htmlContent = getOTPEmailHTML(otp, purpose, name);
     sendSmtpEmail.sender = {
-      name:  'Campus Parking',
+      name:  'Car Parking',
       email: process.env.EMAIL_USER,
     };
     sendSmtpEmail.to = [{ email: to, name }];
