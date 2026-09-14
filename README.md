@@ -1,6 +1,6 @@
-# 🅿️ AG Parking — Smart Campus Car Parking System
+# 🅿️ Smart Car Parking Management System
 
-A full-stack campus parking management system with real-time slot booking, staff operations, admin dashboard, OTP email verification, and an anti-gravity spider web cursor UI.
+A full-stack Smart Car Parking Management System designed to manage parking slots across multiple locations with Admin, Staff, and User roles. Features include slot management, booking, vehicle management, location-based parking, and revenue tracking.
 
 ---
 
