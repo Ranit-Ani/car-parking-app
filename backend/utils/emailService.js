@@ -56,21 +56,23 @@ const sendOTP = async ({ to, name, otp, purpose }) => {
       name:  'Car Parking',
       email: process.env.EMAIL_USER,
     };
+    sendSmtpEmail.replyTo = {
+      email: process.env.EMAIL_USER,
+    };
     sendSmtpEmail.to = [{ email: to, name }];
 
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log(`✅ OTP email sent to ${to}`, data.messageId);
     return true;
   } catch (err) {
-  console.error("❌ FULL ERROR:");
-  console.error("Status:", err.response?.status);
-  console.error("Body:", err.response?.body);
-  console.error("Headers:", err.response?.headers);
-  console.error("Message:", err.message);
-  console.error("Stack:", err.stack);
-  return false;
-}
-
+    console.error("❌ FULL ERROR:");
+    console.error("Status:", err.response?.status);
+    console.error("Body:", err.response?.body);
+    console.error("Headers:", err.response?.headers);
+    console.error("Message:", err.message);
+    console.error("Stack:", err.stack);
+    return false;
+  }
 };
 
 module.exports = { generateOTP, sendOTP };
