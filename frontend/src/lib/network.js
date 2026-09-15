@@ -58,9 +58,6 @@ async function attachUnderlyingListener() {
     } catch {
       // Ignore — we'll still get updates from the listener below.
     }
-    const handle = await Network.addListener('networkStatusChange', (status) => {
-      notify(status.connected);
-    });
     // Belt-and-suspenders: on some Android OEM WebViews/OS versions the
     // plugin's own `networkStatusChange` event has been observed to just
     // stop being delivered after the app's been running a while (this is
@@ -71,6 +68,14 @@ async function attachUnderlyingListener() {
     // caught within a couple of seconds even if that push event never
     // fires, instead of the app being stuck "offline" until it's fully
     // closed and reopened.
+    //
+    // This is set up FIRST, before addListener — not after it — because
+    // addListener's own native call has been observed to hang/fail to
+    // settle on some devices. Chaining the poll after it meant a stuck
+    // addListener call silently prevented the poll from ever being armed
+    // too, which is exactly what made "turn WiFi back on while the app
+    // stays open" invisible until a full app restart. Now the poll runs
+    // independently of whatever addListener below does.
     const pollId = setInterval(async () => {
       try {
         const s = await Network.getStatus();
@@ -79,8 +84,19 @@ async function attachUnderlyingListener() {
         // Transient — the next poll will try again.
       }
     }, 2000);
+
+    let handle = null;
+    try {
+      handle = await Network.addListener('networkStatusChange', (status) => {
+        notify(status.connected);
+      });
+    } catch {
+      // Native listener unavailable/hung for some reason — the poll
+      // above still catches every transition within ~2s regardless.
+    }
+
     detachUnderlying = () => {
-      handle.remove();
+      if (handle) handle.remove();
       clearInterval(pollId);
     };
   } else if (typeof window !== 'undefined') {

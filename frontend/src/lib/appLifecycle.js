@@ -39,11 +39,21 @@ async function attachUnderlyingListener() {
   if (refCount <= 0) return; // last subscriber left while importing
 
   if (App) {
-    const handle = await App.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) notifyResume();
-    });
-    detachUnderlying = () => handle.remove();
-  } else if (typeof document !== 'undefined') {
+    // Guarded the same way as lib/network.js's Network.addListener: if the
+    // native listener call throws or never settles, fall through to the
+    // browser's visibilitychange listener below instead of silently
+    // ending up with zero resume detection for the rest of the session.
+    try {
+      const handle = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) notifyResume();
+      });
+      detachUnderlying = () => handle.remove();
+      return;
+    } catch {
+      // Fall through to the visibilitychange fallback below.
+    }
+  }
+  if (typeof document !== 'undefined') {
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') notifyResume();
     };
