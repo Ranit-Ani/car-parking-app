@@ -61,16 +61,46 @@ async function attachUnderlyingListener() {
     const handle = await Network.addListener('networkStatusChange', (status) => {
       notify(status.connected);
     });
-    detachUnderlying = () => handle.remove();
+    // Belt-and-suspenders: on some Android OEM WebViews/OS versions the
+    // plugin's own `networkStatusChange` event has been observed to just
+    // stop being delivered after the app's been running a while (this is
+    // exactly the kind of native flakiness this plugin exists to work
+    // around in the first place — see the top-of-file comment — but it
+    // isn't itself perfectly immune to it). Re-checking the plugin's
+    // status directly on a short interval means a reconnect is still
+    // caught within a couple of seconds even if that push event never
+    // fires, instead of the app being stuck "offline" until it's fully
+    // closed and reopened.
+    const pollId = setInterval(async () => {
+      try {
+        const s = await Network.getStatus();
+        notify(s.connected);
+      } catch {
+        // Transient — the next poll will try again.
+      }
+    }, 2000);
+    detachUnderlying = () => {
+      handle.remove();
+      clearInterval(pollId);
+    };
   } else if (typeof window !== 'undefined') {
     const onOnline = () => notify(true);
     const onOffline = () => notify(false);
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
     notify(navigator.onLine);
+    // Same reasoning as the native branch above: the browser's 'online'
+    // event is well known to be unreliable in some setups (virtual NICs,
+    // some VPN clients, some mobile browsers, certain sandboxed/embedded
+    // webviews) — it simply never fires even once the connection is back.
+    // Polling navigator.onLine directly is cheap and guarantees the
+    // reconnect is caught within a couple of seconds regardless of
+    // whether that event ever arrives.
+    const pollId = setInterval(() => notify(navigator.onLine), 2000);
     detachUnderlying = () => {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
+      clearInterval(pollId);
     };
   }
 }
