@@ -40,13 +40,20 @@ let detachUnderlying = null;
 let refCount = 0;
 
 function notify(next) {
+  // TEMPORARY DIAGNOSTIC — remove once reconnect detection is confirmed
+  // working. Open chrome://inspect on the device while reproducing the
+  // bug and watch for these lines; they show exactly what the native
+  // plugin is reporting and when.
+  console.log('[network] notify called with', next, '(current isOnline:', isOnline, ')');
   if (next === isOnline) return;
   isOnline = next;
+  console.log('[network] isOnline CHANGED to', isOnline, '— notifying', subscribers.size, 'subscriber(s)');
   subscribers.forEach((cb) => cb(isOnline));
 }
 
 async function attachUnderlyingListener() {
   const Network = await getCapacitorNetwork();
+  console.log('[network] attachUnderlyingListener: Capacitor Network plugin =', Network ? 'AVAILABLE' : 'NULL (falling back to browser events)');
   // Another subscriber may have unsubscribed while the dynamic import
   // above was in flight — don't attach a listener nobody wants anymore.
   if (refCount <= 0) return;
@@ -54,9 +61,10 @@ async function attachUnderlyingListener() {
   if (Network) {
     try {
       const status = await Network.getStatus();
+      console.log('[network] initial Network.getStatus() succeeded:', status);
       notify(status.connected);
-    } catch {
-      // Ignore — we'll still get updates from the listener below.
+    } catch (err) {
+      console.log('[network] initial Network.getStatus() THREW:', err);
     }
     // Belt-and-suspenders: on some Android OEM WebViews/OS versions the
     // plugin's own `networkStatusChange` event has been observed to just
@@ -79,18 +87,22 @@ async function attachUnderlyingListener() {
     const pollId = setInterval(async () => {
       try {
         const s = await Network.getStatus();
+        console.log('[network] poll: Network.getStatus() =', s);
         notify(s.connected);
-      } catch {
-        // Transient — the next poll will try again.
+      } catch (err) {
+        console.log('[network] poll: Network.getStatus() THREW:', err);
       }
     }, 2000);
 
     let handle = null;
     try {
       handle = await Network.addListener('networkStatusChange', (status) => {
+        console.log('[network] networkStatusChange event fired:', status);
         notify(status.connected);
       });
-    } catch {
+      console.log('[network] addListener resolved OK');
+    } catch (err) {
+      console.log('[network] addListener THREW:', err);
       // Native listener unavailable/hung for some reason — the poll
       // above still catches every transition within ~2s regardless.
     }
