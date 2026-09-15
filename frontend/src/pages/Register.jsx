@@ -120,7 +120,7 @@ export default function Register() {
     <>
       <ThreeBackground />
       <div className="auth-wrapper">
-        <div style={{ width: '100%', maxWidth: 420 }}>
+        <div style={{ width: '100%', maxWidth: 380 }}>
           <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: '.4rem', fontSize: '.8rem', color: 'var(--t2)', textDecoration: 'none', marginBottom: '1.2rem', fontFamily: "'Syne',sans-serif", letterSpacing: '.08em' }}>
             <i className="bi bi-arrow-left" /> BACK TO LOGIN
           </Link>
@@ -183,8 +183,8 @@ export default function Register() {
 
             {step === 2 && (
               <div className="step active">
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(0,255,179,.1)', border: '2px solid rgba(0,255,179,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto .8rem', fontSize: '1.3rem', color: 'var(--aurora)' }}>
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(0,255,179,.1)', border: '2px solid rgba(0,255,179,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto .6rem', fontSize: '1.3rem', color: 'var(--aurora)' }}>
                     <i className="bi bi-envelope-open" />
                   </div>
                   <div style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', fontWeight: 700, color: 'var(--t1)', marginBottom: '.3rem' }}>Check Your Inbox</div>
@@ -192,12 +192,12 @@ export default function Register() {
                   <div style={{ fontSize: '.88rem', color: 'var(--plasma)', fontWeight: 600, marginTop: '.2rem' }}>{email}</div>
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label className="ag-label" style={{ display: 'block', textAlign: 'center', marginBottom: '.8rem' }}>Enter Verification Code</label>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label className="ag-label" style={{ display: 'block', textAlign: 'center', marginBottom: '.6rem' }}>Enter Verification Code</label>
                   <OtpInput value={otp} onChange={setOtp} autoFocus />
                 </div>
 
-                <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '.9rem' }}>
                   {!expired ? (
                     <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.72rem', color: 'var(--t2)', letterSpacing: '.08em' }}>
                       CODE EXPIRES IN <span style={{ color: 'var(--solar)' }}>{mm}:{ss}</span>

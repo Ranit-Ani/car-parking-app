@@ -75,11 +75,11 @@
 /* ── Register: step indicator + password strength ───────────── */
 .step { display: none; }
 .step.active { display: block; }
-.step-indicator { display: flex; gap: .5rem; justify-content: center; margin-bottom: 1.6rem; }
+.step-indicator { display: flex; gap: .5rem; justify-content: center; margin-bottom: 1rem; }
 .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--t4); transition: .3s; }
 .step-dot.done { background: var(--aurora); }
 .step-dot.active { background: var(--plasma); box-shadow: 0 0 12px rgba(0, 240, 255, .5); width: 24px; border-radius: 4px; }
-.pwd-strength { height: 3px; border-radius: 2px; margin-top: .4rem; transition: all .3s; background: var(--t4); }
+.pwd-strength { height: 3px; border-radius: 2px; margin-top: .3rem; transition: all .3s; background: var(--t4); }
 
 /* ══════════════════════════════════════════════════════════════
    Custom React Modal (replaces Bootstrap's bootstrap.Modal JS)

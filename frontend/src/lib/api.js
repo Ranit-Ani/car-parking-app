@@ -12,6 +12,9 @@
 // Leave it unset for the normal web build (keeps the relative '/api'
 // behavior); set it to your Render URL when building the frontend for the
 // Capacitor app. See frontend/.env.production.example.
+import { getIsOnline } from './network';
+import { showOfflineNotice } from './toast';
+
 const API_ROOT = import.meta.env.VITE_API_BASE_URL
   ? import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
   : '';
@@ -148,6 +151,14 @@ async function saveFileNative(blob, filename) {
  *    browser download trick silently does nothing in a native WebView.
  */
 export async function downloadFile(endpoint, filename) {
+  // Downloading is itself a network-required action — don't fire off a
+  // fetch that's guaranteed to fail (and eventually time out) when the
+  // device is already known to be offline; fail fast and let the person
+  // know via the shared offline notice instead.
+  if (!getIsOnline()) {
+    showOfflineNotice();
+    return { success: false, message: "You're offline." };
+  }
   const token = getToken();
   try {
     const res = await fetch(API_BASE + endpoint, {
@@ -237,6 +248,20 @@ export function triggerSessionExpired(body) {
  * - Never throws: returns null on network/parse failure
  */
 export async function apiRequest(endpoint, options = {}, onUnauthorized) {
+  // Every single API call in the app funnels through here, so this is the
+  // one place that needs to know about connectivity: if the device is
+  // already offline, skip the fetch entirely (it would just fail or hang
+  // until it times out) and surface the shared top-right offline notice
+  // instead. Any further attempts made while that notice is still showing
+  // are silently dropped by showOfflineNotice() itself — they don't queue
+  // up and don't produce a notice of their own once the current one goes
+  // away. The moment the device is back online, callers relying on
+  // useRevalidate() (see lib/useRevalidate.js) automatically retry on
+  // their own — no navigation or reload needed.
+  if (!getIsOnline()) {
+    showOfflineNotice();
+    return null;
+  }
   const token = getToken();
   const cfg = {
     ...options,

@@ -83,7 +83,7 @@ export default function Login() {
     <>
       <ThreeBackground />
       <div className="auth-wrapper">
-        <div style={{ width: '100%', maxWidth: 420 }}>
+        <div style={{ width: '100%', maxWidth: 380 }}>
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '.4rem', fontSize: '.8rem', color: 'var(--t2)', textDecoration: 'none', marginBottom: '1.2rem', fontFamily: "'Syne',sans-serif", letterSpacing: '.08em' }}>
             <i className="bi bi-arrow-left" /> BACK TO BASE
           </Link>
