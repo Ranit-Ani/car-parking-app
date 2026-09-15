@@ -12,6 +12,7 @@ import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
 import { useAdminLocations } from '../../lib/useAdminLocations';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 function RoleTable({ title, icon, rows, curUser, isStaffTable, onRoleChange, onReassign, onToggle, onDelete, emptyText, hideHeader }) {
   return (
@@ -180,6 +181,11 @@ export default function AdminUsers() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
+
+  // Reconnect/resume safety net for the users list itself (the shared
+  // locations list used for the staff-location filter/picker already
+  // revalidates itself inside useAdminLocations).
+  useRevalidate(refresh);
 
   // Location picker modal state — shared by "promote to Staff" and
   // "reassign an existing staff member's location".

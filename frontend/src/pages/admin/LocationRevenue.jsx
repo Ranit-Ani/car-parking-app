@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/api';
 import { getCached, setCached } from '../../lib/pageCache';
 import { getSocket } from '../../lib/socket';
 import { useAdminLocations } from '../../lib/useAdminLocations';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 function drawChart(canvas, chartRef, daily) {
   if (!canvas) return;
@@ -180,6 +181,11 @@ export default function LocationRevenue() {
       socket.off('bookingUpdated', load);
     };
   }, [load]);
+
+  // Reconnect/resume safety net for this location's own detail/chart data
+  // (the shared locations list used for the picker already revalidates
+  // itself inside useAdminLocations).
+  useRevalidate(load);
 
   useEffect(() => () => { if (chartRef.current) chartRef.current.destroy(); }, []);
 

@@ -1,9 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest, clearSession, getToken, getUser, setSession, setSessionExpiredHandler } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { clearPageCache } from '../lib/pageCache';
 import { rejoinSocketRooms } from '../lib/socket';
+import { useRevalidate } from '../lib/useRevalidate';
+import { getIsOnline } from '../lib/network';
 
 const AuthContext = createContext(null);
 
@@ -11,11 +13,21 @@ const DEFAULT_SESSION_EXPIRED_MESSAGE =
   'Your session has expired. Please log in again.';
 
 export function AuthProvider({ children }) {
+  // Seeded SYNCHRONOUSLY from localStorage, before the first paint. This is
+  // what "restores the persisted session before deciding what to show"
+  // actually means in practice: by the time Landing (or RequireAuth) runs
+  // its very first render, `user`/getToken() already reflect any saved
+  // session — with no dependency on the network being up, so an offline
+  // cold start still routes an already-logged-in person to their dashboard
+  // instead of the public Landing page.
   const [user, setUser] = useState(() => getUser());
   // Non-null while a forced/terminated-session screen must block the whole
   // app (see setSessionExpiredHandler below). Shape: { message }.
   const [sessionExpired, setSessionExpired] = useState(null);
   const navigate = useNavigate();
+  // Guards against two /auth/me calls racing each other (e.g. a network
+  // reconnect and an app resume firing close together).
+  const refreshingRef = useRef(false);
 
   const login = useCallback((token, userObj) => {
     // A new login means a (possibly different) account's data is about to
@@ -45,24 +57,52 @@ export function AuthProvider({ children }) {
   // on mount, which is why the name looked "fixed" there while the
   // Sidebar/Dashboard — which only ever read the cached `user` from this
   // context — kept showing whatever name was cached the last time this
-  // device logged in. Refreshing from the server once on load (whenever a
-  // session exists) keeps every device's header/sidebar/dashboard in sync
-  // with the account's actual current data, not just the page that
-  // happens to fetch it itself.
-  useEffect(() => {
-    if (!getToken()) return;
-    let cancelled = false;
-    (async () => {
+  // device logged in. Refreshing from the server (whenever a session
+  // exists) keeps every device's header/sidebar/dashboard in sync with the
+  // account's actual current data, not just the page that happens to fetch
+  // it itself.
+  //
+  // refreshSession() is also what makes the app recover on its own once
+  // connectivity returns (see useRevalidate() below): it distinguishes
+  // "no internet right now" from "this session is no longer valid" —
+  //  - offline / request failed: apiRequest() returns null here and the
+  //    saved session is left exactly as it is. It is NOT cleared just
+  //    because this call couldn't reach the server.
+  //  - session actually invalid/expired: the backend answers with a 401 +
+  //    one of SESSION_TERMINATION_CODES, which apiRequest() itself already
+  //    catches — that's what pops the blocking "session ended" screen via
+  //    setSessionExpiredHandler below, completely independent of this
+  //    effect's success/failure.
+  const refreshSession = useCallback(async () => {
+    if (!getToken() || refreshingRef.current) return;
+    // Skip outright while offline instead of firing a request that's
+    // guaranteed to fail — it'll run again the moment useRevalidate()
+    // sees the device come back online.
+    if (!getIsOnline()) return;
+    refreshingRef.current = true;
+    try {
       const d = await apiRequest('/auth/me');
-      if (!cancelled && d && d.success && d.user) {
+      if (d && d.success && d.user) {
         const merged = { ...getUser(), ...d.user };
         localStorage.setItem('agp_user', JSON.stringify(merged));
         setUser(merged);
       }
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } finally {
+      refreshingRef.current = false;
+    }
   }, []);
+
+  // Initial load, once, on mount.
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
+  // Re-run whenever the device reconnects or the app comes back to the
+  // foreground, so an active session (and this device's cached profile
+  // data) catches up automatically — no navigation, button click, or app
+  // restart required. Listeners are added/removed by this hook itself and
+  // cleaned up on unmount (see lib/useRevalidate.js).
+  useRevalidate(refreshSession);
 
   const logout = useCallback(() => {
     clearSession();

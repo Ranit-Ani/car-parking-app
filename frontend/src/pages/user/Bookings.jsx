@@ -8,6 +8,7 @@ import QRCodeModal from '../../components/QRCodeModal';
 import { StatusBadge, EmptyState, RowActionsMenu } from '../../components/Bits';
 import { apiRequest, downloadFile } from '../../lib/api';
 import { useInfiniteList } from '../../lib/useInfiniteList';
+import { useRevalidate } from '../../lib/useRevalidate';
 import { formatDate, formatDateTime } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
@@ -59,6 +60,10 @@ export default function UserBookings() {
       socket.off('bookingCancelled', refresh);
     };
   }, [refresh]);
+
+  // Reconnect/resume safety net — the list may be stale or never loaded at
+  // all if this page was open while the device was offline.
+  useRevalidate(refresh);
 
   function cancel(id) {
     setCancelTarget(id);

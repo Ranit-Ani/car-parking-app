@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import ThreeBackground from '../components/ThreeBackground';
 import { apiRequest, getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
+import { useRevalidate } from '../lib/useRevalidate';
 
 export default function Landing() {
   const [stats, setStats] = useState({ total: '--', avail: '--', occ: '--' });
@@ -10,26 +11,43 @@ export default function Landing() {
   // Checked during render (not in an effect) so a logged-in user is sent
   // straight to <Navigate> before the landing markup ever paints — an
   // effect-based redirect only fires *after* the first paint, which is
-  // what caused the landing page to flash for a moment on every load.
+  // what caused the landing page to flash for a moment on every load. This
+  // reads straight from localStorage (via AuthContext's own synchronous
+  // seed, mirrored here), so it holds even on an offline cold start: a
+  // saved session redirects a logged-in person to their dashboard with no
+  // network required.
   const token = getToken();
   const user = getUser();
+  const authenticated = !!(token && user);
+
+  const loadStats = useCallback(async () => {
+    const d = await apiRequest('/slots/stats');
+    if (d && d.success) {
+      setStats({
+        total: d.data.total,
+        avail: d.data.Available || 0,
+        occ: (d.data.Booked || 0) + (d.data.Occupied || 0),
+      });
+    }
+    // If this fails (e.g. offline), stats simply stay whatever they were —
+    // useRevalidate() below retries automatically once connectivity is back.
+  }, []);
 
   useEffect(() => {
-    if (token && user) return; // redirecting below; skip the stats fetch
-    (async () => {
-      const d = await apiRequest('/slots/stats');
-      if (d && d.success) {
-        setStats({
-          total: d.data.total,
-          avail: d.data.Available || 0,
-          occ: (d.data.Booked || 0) + (d.data.Occupied || 0),
-        });
-      }
-    })();
+    if (authenticated) return; // redirecting below; skip the stats fetch
+    loadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (token && user) {
+  // The device may well have been offline when the effect above ran, so
+  // the stats fetch silently failed and the numbers stayed at '--'.
+  // Without this, the only way they'd ever appear was navigating away and
+  // back (remounting the page) once a connection existed — refetch the
+  // instant the network (or the app itself) comes back while this page is
+  // still open instead.
+  useRevalidate(loadStats, { enabled: !authenticated });
+
+  if (authenticated) {
     return <Navigate to={homeForRole(user.role)} replace />;
   }
 

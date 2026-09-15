@@ -6,6 +6,7 @@ import { useCachedState } from '../../lib/useCachedState';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
 import { showToast } from '../../lib/toast';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 const empty = {
   revenue: { totalRevenue: 0, totalBookings: 0, avgAmount: 0 },
@@ -53,6 +54,10 @@ export default function AdminDashboard() {
       socket.off('userUpdated', refresh);
     };
   }, [load]);
+
+  // Reconnect/resume safety net — same reasoning as the socket/poll refresh
+  // above, for whenever the device was offline or the app was backgrounded.
+  useRevalidate(load);
 
   return (
     <Layout title="Command Dashboard" badge="Administrator">

@@ -9,6 +9,7 @@ import { formatDate, formatDateTime } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 const CACHE_KEY = 'user:dashboard:bookings';
 
@@ -46,6 +47,11 @@ export default function UserDashboard() {
       socket.off('bookingCancelled', load);
     };
   }, [load]);
+
+  // Reconnect/resume safety net: bookings could have changed (or simply
+  // failed to load at all) while the device was offline or the app was
+  // backgrounded — catch up automatically the moment connectivity's back.
+  useRevalidate(load);
 
   function cancelBooking(id) {
     setCancelTarget(id);

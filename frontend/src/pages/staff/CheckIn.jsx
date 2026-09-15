@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 export default function CheckIn() {
   // Cached so this list shows the last-known pending check-ins instantly on
@@ -41,6 +42,9 @@ export default function CheckIn() {
       socket.off('bookingUpdated', load);
     };
   }, [load]);
+
+  // Reconnect/resume safety net.
+  useRevalidate(load);
 
   const rows = useMemo(() => {
     const q = search.toLowerCase();

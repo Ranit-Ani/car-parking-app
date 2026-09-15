@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 function dur(ci) {
   const ms = Date.now() - new Date(ci);
@@ -51,6 +52,9 @@ export default function CheckOut() {
       socket.off('bookingCancelled', load);
     };
   }, [load]);
+
+  // Reconnect/resume safety net.
+  useRevalidate(load);
 
   const rows = useMemo(() => {
     const q = search.toLowerCase();

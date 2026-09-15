@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { apiRequest } from './api';
 import { getSocket } from './socket';
 import { useCachedState, wasCached } from './useCachedState';
+import { useRevalidate } from './useRevalidate';
 
 const CACHE_KEY = 'admin:locations';
 
@@ -50,6 +51,11 @@ export function useAdminLocations() {
       socket.off('staffUpdated', load);
     };
   }, [load]);
+
+  // Reconnect/resume safety net — shared by every page that uses this
+  // hook (Locations, Slots' location picker, Users' staff-location
+  // picker, Location Wise Revenue's picker).
+  useRevalidate(load);
 
   return { locations, loading, refresh: load };
 }

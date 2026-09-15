@@ -11,6 +11,7 @@ import { showToast } from '../lib/toast';
 import { formatDate } from '../lib/utils';
 import { isValidVehicleNumber, normalizeVehicleNumber } from '../lib/vehicleValidation';
 import { useAuth } from '../context/AuthContext';
+import { useRevalidate } from '../lib/useRevalidate';
 
 export default function Profile() {
   const { user, updateUser, logout } = useAuth();
@@ -90,7 +91,6 @@ export default function Profile() {
   };
 
   useEffect(() => { if (isUserRole) loadVehicles(); }, [isUserRole]);
-
   function openAddVehicle() {
     setVCategory(''); setVNumber(''); setVPending(false); setVNickname('');
     setVehicleModal(true);
@@ -154,16 +154,27 @@ export default function Profile() {
     else showToast((d && d.message) || 'Failed to remove vehicle.', 'danger');
   }
 
+  const loadProfile = async () => {
+    const d = await apiRequest('/auth/me');
+    if (d && d.success) {
+      setProfile(d.user);
+      setName(d.user.name);
+      setPreview(d.user.profilePhoto || '');
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      const d = await apiRequest('/auth/me');
-      if (d && d.success) {
-        setProfile(d.user);
-        setName(d.user.name);
-        setPreview(d.user.profilePhoto || '');
-      }
-    })();
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reconnect/resume safety net — this page's data (profile + saved
+  // vehicles) may be stale or never loaded at all if it was open while the
+  // device was offline.
+  useRevalidate(() => {
+    loadProfile();
+    if (isUserRole) loadVehicles();
+  });
 
   function handlePhoto(e) {
     const file = e.target.files[0];

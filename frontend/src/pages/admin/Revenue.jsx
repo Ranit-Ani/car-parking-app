@@ -5,6 +5,7 @@ import { EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { getCached, setCached } from '../../lib/pageCache';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 const CACHE_KEY = 'admin:revenue';
 
@@ -87,6 +88,9 @@ export default function Revenue() {
       if (chartRef.current) chartRef.current.destroy();
     };
   }, [load]);
+
+  // Reconnect/resume safety net.
+  useRevalidate(load);
 
   return (
     <Layout title="Revenue Analytics" badge={false}>

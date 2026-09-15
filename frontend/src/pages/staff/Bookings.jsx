@@ -6,6 +6,7 @@ import { StatusBadge, EmptyState } from '../../components/Bits';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { formatDate, formatDateTime } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 const COLORS = { Booked: 'booked', Active: 'active', Completed: 'completed', Cancelled: 'cancelled', Expired: 'expired' };
 
@@ -37,6 +38,9 @@ export default function StaffBookings() {
       socket.off('bookingCancelled', refresh);
     };
   }, [refresh]);
+
+  // Reconnect/resume safety net.
+  useRevalidate(refresh);
 
   const counts = useMemo(() => {
     const c = { Booked: 0, Active: 0, Completed: 0, Cancelled: 0, Expired: 0 };

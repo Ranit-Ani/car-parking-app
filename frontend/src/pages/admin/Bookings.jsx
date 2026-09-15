@@ -3,6 +3,7 @@ import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { StatusBadge, EmptyState } from '../../components/Bits';
 import { useInfiniteList } from '../../lib/useInfiniteList';
+import { useRevalidate } from '../../lib/useRevalidate';
 import { formatDate, formatDateTime } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
 
@@ -39,6 +40,9 @@ export default function AdminBookings() {
       socket.off('bookingCancelled', refresh);
     };
   }, [refresh]);
+
+  // Reconnect/resume safety net.
+  useRevalidate(refresh);
 
   const counts = useMemo(() => {
     const c = { Booked: 0, Active: 0, Completed: 0, Cancelled: 0, Expired: 0 };

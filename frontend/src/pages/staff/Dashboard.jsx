@@ -8,6 +8,7 @@ import { formatDateTime } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 export default function StaffDashboard() {
   const { user } = useAuth();
@@ -55,6 +56,11 @@ export default function StaffDashboard() {
       socket.off('bookingUpdated', load);
     };
   }, [load]);
+
+  // Reconnect/resume safety net, same as the socket/poll refresh above —
+  // catches the case where the device was offline or the app backgrounded
+  // when it would otherwise have caught a missed update.
+  useRevalidate(load);
 
   async function confirmCheckIn() {
     if (!ciSel) return;

@@ -10,6 +10,7 @@ import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
 import { getCurrentPosition, geocodeSearch, MAX_RADIUS_KM } from '../../lib/geo';
 import { getSocket } from '../../lib/socket';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 const TYPE_OPTIONS = [
   { value: '', label: 'All Types' },
@@ -179,6 +180,18 @@ export default function NearbyParking() {
       socket.off('slotDeleted', refreshSlots);
     };
   }, [activeLocation, slotType, fetchLocationSlots]);
+
+  // Reconnect/resume safety net: refetch nearby locations (and the open
+  // location's slot grid, if any) the instant connectivity is back —
+  // otherwise this page stayed silently blank/stale until the user
+  // navigated away and back, since the effects above only ever ran once
+  // per search/filter change.
+  const revalidateNearby = useCallback(() => {
+    if (center) fetchNearby(center, radiusKm, slotType, { silent: true });
+    if (activeLocation) fetchLocationSlots(activeLocation._id, slotType, { silent: true });
+  }, [center, radiusKm, slotType, activeLocation, fetchNearby, fetchLocationSlots]);
+
+  useRevalidate(revalidateNearby);
 
   function handleBooked(booking) {
     setBookingSlot(null);

@@ -8,6 +8,7 @@ import { useInfiniteList } from '../../lib/useInfiniteList';
 import { showToast } from '../../lib/toast';
 import { getSocket } from '../../lib/socket';
 import { useAdminLocations } from '../../lib/useAdminLocations';
+import { useRevalidate } from '../../lib/useRevalidate';
 
 const emptyForm = { slotNumber: '', hourlyRate: '', slotType: 'standard', location: '', floor: '', locationId: '' };
 
@@ -62,6 +63,11 @@ export default function AdminSlots() {
       socket.off('slotDeleted', refresh);
     };
   }, [refresh]);
+
+  // Reconnect/resume safety net for the slots list itself (the shared
+  // locations list used in the Add Slot picker already revalidates
+  // itself inside useAdminLocations).
+  useRevalidate(refresh);
 
   function clearF() { setFType(''); setSearch(''); }
 
