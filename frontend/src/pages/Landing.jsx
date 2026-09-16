@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import ThreeBackground from '../components/ThreeBackground';
+import HelpSupportModal from '../components/HelpSupportModal';
+import LegalModal from '../components/LegalModal';
 import { apiRequest, getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { useRevalidate } from '../lib/useRevalidate';
 
 export default function Landing() {
   const [stats, setStats] = useState({ total: '--', avail: '--', occ: '--' });
+  const [legalOpen, setLegalOpen] = useState(null); // 'about' | 'privacy' | 'terms' | null
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Checked during render (not in an effect) so a logged-in user is sent
   // straight to <Navigate> before the landing markup ever paints — an
@@ -131,12 +135,30 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="pub-support">
+        <div className="pub-support-links">
+          <button type="button" className="pub-support-link" onClick={() => setLegalOpen('about')}>About</button>
+          <span className="pub-support-sep">&bull;</span>
+          <button type="button" className="pub-support-link" onClick={() => setHelpOpen(true)}>Help &amp; Support</button>
+          <span className="pub-support-sep">&bull;</span>
+          <button type="button" className="pub-support-link" onClick={() => setLegalOpen('privacy')}>Privacy Policy</button>
+          <span className="pub-support-sep">&bull;</span>
+          <button type="button" className="pub-support-link" onClick={() => setLegalOpen('terms')}>Terms &amp; Conditions</button>
+        </div>
+      </section>
+
       <footer className="pub-footer">
         <div className="pub-footer-bottom">
           <span>&copy; {new Date().getFullYear()} Car Parking Network. All rights reserved.</span>
           <span className="pub-footer-credit">Built by Ranit Pramanick</span>
         </div>
       </footer>
+
+      {/* Public Landing page: no AI Assistant here (it's already gated to
+          logged-in users only in AIChatWidget), just the plain support
+          entry points below. */}
+      <HelpSupportModal show={helpOpen} onClose={() => setHelpOpen(false)} />
+      <LegalModal type={legalOpen} onClose={() => setLegalOpen(null)} />
     </>
   );
 }
