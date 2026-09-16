@@ -30,7 +30,7 @@ function getCapacitorNetwork() {
         console.log('[network] Capacitor.getPlatform() =', Capacitor.getPlatform(), '| isNativePlatform() =', Capacitor.isNativePlatform());
         if (!Capacitor.isNativePlatform()) {
           console.log('[network] not a native platform — using browser online/offline events + navigator.onLine polling.');
-          return null;
+          return { plugin: null };
         }
         // isNativePlatform() only says "this is Android/iOS" — it does NOT
         // mean the Network plugin's native side is actually registered.
@@ -53,16 +53,32 @@ function getCapacitorNetwork() {
             'android/app/src/main/assets/capacitor.plugins.json lists ' +
             '@capacitor/network, then do a full uninstall + reinstall.'
           );
-          return null;
+          return { plugin: null };
         }
         const { Network } = await import('@capacitor/network');
         console.log('[network] using NATIVE Network plugin.');
-        return Network;
+        // IMPORTANT: do NOT `return Network` directly here. Capacitor
+        // plugin objects are Proxies whose catch-all handler returns a
+        // function for ANY property access — including `.then`. When an
+        // async function's return value is resolved, JS's own promise
+        // machinery checks whether that value has a callable `.then` and,
+        // if so, treats it as a thenable and calls `Network.then(resolve,
+        // reject)` to chain onto it. Capacitor's fake `.then` never
+        // actually invokes resolve/reject — it just throws internally
+        // ("Network.then() is not implemented on android") — so the
+        // outer promise never settles and every awaiter of
+        // getCapacitorNetwork() hangs forever. This is exactly what was
+        // silently breaking reconnect detection: `await
+        // getCapacitorNetwork()` in attachUnderlyingListener() never
+        // resolved, so getStatus()/addListener()/the poll never ran.
+        // Wrapping the plugin in a plain object sidesteps this since a
+        // plain object has no `.then` for JS to misdetect.
+        return { plugin: Network };
       } catch (err) {
         // Plugin not installed/available (e.g. plain web build) — fall
         // back to browser events instead of failing the whole app.
         console.warn('[network] getCapacitorNetwork() threw, falling back to browser events:', err);
-        return null;
+        return { plugin: null };
       }
     })();
   }
@@ -83,7 +99,7 @@ function notify(next) {
 
 async function attachUnderlyingListener() {
   console.log('[network] attachUnderlyingListener() starting, refCount =', refCount);
-  const Network = await getCapacitorNetwork();
+  const { plugin: Network } = await getCapacitorNetwork();
   // Another subscriber may have unsubscribed while the dynamic import
   // above was in flight — don't attach a listener nobody wants anymore.
   if (refCount <= 0) return;

@@ -15,11 +15,20 @@ function getCapacitorApp() {
     capacitorAppPromise = (async () => {
       try {
         const { Capacitor } = await import('@capacitor/core');
-        if (!Capacitor.isNativePlatform()) return null;
+        if (!Capacitor.isNativePlatform()) return { plugin: null };
         const { App } = await import('@capacitor/app');
-        return App;
+        // See the matching comment in lib/network.js: Capacitor plugin
+        // objects are Proxies that return a callable function for ANY
+        // property access, including `.then`. Returning one directly from
+        // an async function makes JS's promise-resolution machinery
+        // mistake it for a thenable and try to chain onto it — Capacitor's
+        // fake `.then` never calls resolve/reject, so the outer promise
+        // hangs forever and every awaiter of getCapacitorApp() (i.e.
+        // subscribeAppResume()) silently never runs. Wrapping in a plain
+        // object avoids the misdetection.
+        return { plugin: App };
       } catch {
-        return null;
+        return { plugin: null };
       }
     })();
   }
@@ -35,25 +44,15 @@ function notifyResume() {
 }
 
 async function attachUnderlyingListener() {
-  const App = await getCapacitorApp();
+  const App = (await getCapacitorApp()).plugin;
   if (refCount <= 0) return; // last subscriber left while importing
 
   if (App) {
-    // Guarded the same way as lib/network.js's Network.addListener: if the
-    // native listener call throws or never settles, fall through to the
-    // browser's visibilitychange listener below instead of silently
-    // ending up with zero resume detection for the rest of the session.
-    try {
-      const handle = await App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) notifyResume();
-      });
-      detachUnderlying = () => handle.remove();
-      return;
-    } catch {
-      // Fall through to the visibilitychange fallback below.
-    }
-  }
-  if (typeof document !== 'undefined') {
+    const handle = await App.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) notifyResume();
+    });
+    detachUnderlying = () => handle.remove();
+  } else if (typeof document !== 'undefined') {
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') notifyResume();
     };
