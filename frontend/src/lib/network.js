@@ -15,23 +15,13 @@
 // more than one native/browser listener, and that listener is torn down
 // again once the last subscriber unmounts — see subscribeNetwork() below.
 
-// TEMP DIAGNOSTIC — remove once the reconnect issue is confirmed fixed.
-// Fires unconditionally the moment this module is loaded, regardless of
-// platform or plugin availability, so we can confirm from the device
-// console whether this file version is actually the one running.
-console.log('[network] module build marker: NETWORK-JS-V2');
-
 let capacitorNetworkPromise = null;
 function getCapacitorNetwork() {
   if (!capacitorNetworkPromise) {
     capacitorNetworkPromise = (async () => {
       try {
         const { Capacitor } = await import('@capacitor/core');
-        console.log('[network] Capacitor.getPlatform() =', Capacitor.getPlatform(), '| isNativePlatform() =', Capacitor.isNativePlatform());
-        if (!Capacitor.isNativePlatform()) {
-          console.log('[network] not a native platform — using browser online/offline events + navigator.onLine polling.');
-          return { plugin: null };
-        }
+        if (!Capacitor.isNativePlatform()) return { plugin: null };
         // isNativePlatform() only says "this is Android/iOS" — it does NOT
         // mean the Network plugin's native side is actually registered.
         // If `npx cap sync` was skipped (or ran before @capacitor/network
@@ -43,7 +33,6 @@ function getCapacitorNetwork() {
         // down where it's invisible from the JS side. Checking
         // isPluginAvailable() lets us detect that mismatch instead of
         // quietly running the broken path.
-        console.log('[network] Capacitor.isPluginAvailable("Network") =', Capacitor.isPluginAvailable('Network'));
         if (!Capacitor.isPluginAvailable('Network')) {
           console.warn(
             '[network] Running on native Android/iOS but the Network ' +
@@ -56,7 +45,6 @@ function getCapacitorNetwork() {
           return { plugin: null };
         }
         const { Network } = await import('@capacitor/network');
-        console.log('[network] using NATIVE Network plugin.');
         // IMPORTANT: do NOT `return Network` directly here. Capacitor
         // plugin objects are Proxies whose catch-all handler returns a
         // function for ANY property access — including `.then`. When an
@@ -91,14 +79,12 @@ let detachUnderlying = null;
 let refCount = 0;
 
 function notify(next) {
-  console.log('[network] notify() called with', next, '| current isOnline =', isOnline, next === isOnline ? '(no-op, same value)' : '(TRANSITION, will fire subscribers)');
   if (next === isOnline) return;
   isOnline = next;
   subscribers.forEach((cb) => cb(isOnline));
 }
 
 async function attachUnderlyingListener() {
-  console.log('[network] attachUnderlyingListener() starting, refCount =', refCount);
   const { plugin: Network } = await getCapacitorNetwork();
   // Another subscriber may have unsubscribed while the dynamic import
   // above was in flight — don't attach a listener nobody wants anymore.
@@ -107,17 +93,13 @@ async function attachUnderlyingListener() {
   if (Network) {
     try {
       const status = await Network.getStatus();
-      console.log('[network] initial Network.getStatus() =', status);
       notify(status.connected);
-    } catch (err) {
-      console.warn('[network] initial Network.getStatus() threw:', err);
+    } catch {
       // Ignore — we'll still get updates from the listener below.
     }
     const handle = await Network.addListener('networkStatusChange', (status) => {
-      console.log('[network] networkStatusChange event fired:', status);
       notify(status.connected);
     });
-    console.log('[network] native listener registered + 2s poll starting.');
     // Belt-and-suspenders: on some Android OEM WebViews/OS versions the
     // plugin's own `networkStatusChange` event has been observed to just
     // stop being delivered after the app's been running a while (this is
@@ -131,10 +113,8 @@ async function attachUnderlyingListener() {
     const pollId = setInterval(async () => {
       try {
         const s = await Network.getStatus();
-        console.log('[network] poll tick, Network.getStatus() =', s);
         notify(s.connected);
-      } catch (err) {
-        console.warn('[network] poll tick threw:', err);
+      } catch {
         // Transient — the next poll will try again.
       }
     }, 2000);
