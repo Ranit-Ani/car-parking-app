@@ -15,6 +15,12 @@
 // more than one native/browser listener, and that listener is torn down
 // again once the last subscriber unmounts — see subscribeNetwork() below.
 
+// TEMP DIAGNOSTIC — remove once the reconnect issue is confirmed fixed.
+// Fires unconditionally the moment this module is loaded, regardless of
+// platform or plugin availability, so we can confirm from the device
+// console whether this file version is actually the one running.
+console.log('[network] module build marker: NETWORK-JS-V2');
+
 let capacitorNetworkPromise = null;
 function getCapacitorNetwork() {
   if (!capacitorNetworkPromise) {
