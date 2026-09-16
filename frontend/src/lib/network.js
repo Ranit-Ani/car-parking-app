@@ -22,6 +22,28 @@ function getCapacitorNetwork() {
       try {
         const { Capacitor } = await import('@capacitor/core');
         if (!Capacitor.isNativePlatform()) return null;
+        // isNativePlatform() only says "this is Android/iOS" — it does NOT
+        // mean the Network plugin's native side is actually registered.
+        // If `npx cap sync` was skipped (or ran before @capacitor/network
+        // was added), Capacitor silently falls back to the *web*
+        // implementation of this plugin even inside the native app. That
+        // web fallback just reads `navigator.onLine`, which is exactly the
+        // value that's known to get stuck after page load inside an
+        // Android WebView — i.e. this exact bug, just moved one layer
+        // down where it's invisible from the JS side. Checking
+        // isPluginAvailable() lets us detect that mismatch instead of
+        // quietly running the broken path.
+        if (!Capacitor.isPluginAvailable('Network')) {
+          console.warn(
+            '[network] Running on native Android/iOS but the Network ' +
+            'plugin is not registered natively — falling back to ' +
+            'navigator.onLine, which will NOT reliably detect ' +
+            'reconnects on Android. Run `npx cap sync android`, confirm ' +
+            'android/app/src/main/assets/capacitor.plugins.json lists ' +
+            '@capacitor/network, then do a full uninstall + reinstall.'
+          );
+          return null;
+        }
         const { Network } = await import('@capacitor/network');
         return Network;
       } catch {
@@ -40,20 +62,13 @@ let detachUnderlying = null;
 let refCount = 0;
 
 function notify(next) {
-  // TEMPORARY DIAGNOSTIC — remove once reconnect detection is confirmed
-  // working. Open chrome://inspect on the device while reproducing the
-  // bug and watch for these lines; they show exactly what the native
-  // plugin is reporting and when.
-  console.log('[network] notify called with', next, '(current isOnline:', isOnline, ')');
   if (next === isOnline) return;
   isOnline = next;
-  console.log('[network] isOnline CHANGED to', isOnline, '— notifying', subscribers.size, 'subscriber(s)');
   subscribers.forEach((cb) => cb(isOnline));
 }
 
 async function attachUnderlyingListener() {
   const Network = await getCapacitorNetwork();
-  console.log('[network] attachUnderlyingListener: Capacitor Network plugin =', Network ? 'AVAILABLE' : 'NULL (falling back to browser events)');
   // Another subscriber may have unsubscribed while the dynamic import
   // above was in flight — don't attach a listener nobody wants anymore.
   if (refCount <= 0) return;
@@ -61,11 +76,13 @@ async function attachUnderlyingListener() {
   if (Network) {
     try {
       const status = await Network.getStatus();
-      console.log('[network] initial Network.getStatus() succeeded:', status);
       notify(status.connected);
-    } catch (err) {
-      console.log('[network] initial Network.getStatus() THREW:', err);
+    } catch {
+      // Ignore — we'll still get updates from the listener below.
     }
+    const handle = await Network.addListener('networkStatusChange', (status) => {
+      notify(status.connected);
+    });
     // Belt-and-suspenders: on some Android OEM WebViews/OS versions the
     // plugin's own `networkStatusChange` event has been observed to just
     // stop being delivered after the app's been running a while (this is
@@ -76,39 +93,16 @@ async function attachUnderlyingListener() {
     // caught within a couple of seconds even if that push event never
     // fires, instead of the app being stuck "offline" until it's fully
     // closed and reopened.
-    //
-    // This is set up FIRST, before addListener — not after it — because
-    // addListener's own native call has been observed to hang/fail to
-    // settle on some devices. Chaining the poll after it meant a stuck
-    // addListener call silently prevented the poll from ever being armed
-    // too, which is exactly what made "turn WiFi back on while the app
-    // stays open" invisible until a full app restart. Now the poll runs
-    // independently of whatever addListener below does.
     const pollId = setInterval(async () => {
       try {
         const s = await Network.getStatus();
-        console.log('[network] poll: Network.getStatus() =', s);
         notify(s.connected);
-      } catch (err) {
-        console.log('[network] poll: Network.getStatus() THREW:', err);
+      } catch {
+        // Transient — the next poll will try again.
       }
     }, 2000);
-
-    let handle = null;
-    try {
-      handle = await Network.addListener('networkStatusChange', (status) => {
-        console.log('[network] networkStatusChange event fired:', status);
-        notify(status.connected);
-      });
-      console.log('[network] addListener resolved OK');
-    } catch (err) {
-      console.log('[network] addListener THREW:', err);
-      // Native listener unavailable/hung for some reason — the poll
-      // above still catches every transition within ~2s regardless.
-    }
-
     detachUnderlying = () => {
-      if (handle) handle.remove();
+      handle.remove();
       clearInterval(pollId);
     };
   } else if (typeof window !== 'undefined') {
