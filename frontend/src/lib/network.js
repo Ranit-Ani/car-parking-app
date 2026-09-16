@@ -27,7 +27,11 @@ function getCapacitorNetwork() {
     capacitorNetworkPromise = (async () => {
       try {
         const { Capacitor } = await import('@capacitor/core');
-        if (!Capacitor.isNativePlatform()) return null;
+        console.log('[network] Capacitor.getPlatform() =', Capacitor.getPlatform(), '| isNativePlatform() =', Capacitor.isNativePlatform());
+        if (!Capacitor.isNativePlatform()) {
+          console.log('[network] not a native platform — using browser online/offline events + navigator.onLine polling.');
+          return null;
+        }
         // isNativePlatform() only says "this is Android/iOS" — it does NOT
         // mean the Network plugin's native side is actually registered.
         // If `npx cap sync` was skipped (or ran before @capacitor/network
@@ -39,6 +43,7 @@ function getCapacitorNetwork() {
         // down where it's invisible from the JS side. Checking
         // isPluginAvailable() lets us detect that mismatch instead of
         // quietly running the broken path.
+        console.log('[network] Capacitor.isPluginAvailable("Network") =', Capacitor.isPluginAvailable('Network'));
         if (!Capacitor.isPluginAvailable('Network')) {
           console.warn(
             '[network] Running on native Android/iOS but the Network ' +
@@ -51,10 +56,12 @@ function getCapacitorNetwork() {
           return null;
         }
         const { Network } = await import('@capacitor/network');
+        console.log('[network] using NATIVE Network plugin.');
         return Network;
-      } catch {
+      } catch (err) {
         // Plugin not installed/available (e.g. plain web build) — fall
         // back to browser events instead of failing the whole app.
+        console.warn('[network] getCapacitorNetwork() threw, falling back to browser events:', err);
         return null;
       }
     })();
@@ -68,12 +75,14 @@ let detachUnderlying = null;
 let refCount = 0;
 
 function notify(next) {
+  console.log('[network] notify() called with', next, '| current isOnline =', isOnline, next === isOnline ? '(no-op, same value)' : '(TRANSITION, will fire subscribers)');
   if (next === isOnline) return;
   isOnline = next;
   subscribers.forEach((cb) => cb(isOnline));
 }
 
 async function attachUnderlyingListener() {
+  console.log('[network] attachUnderlyingListener() starting, refCount =', refCount);
   const Network = await getCapacitorNetwork();
   // Another subscriber may have unsubscribed while the dynamic import
   // above was in flight — don't attach a listener nobody wants anymore.
@@ -82,13 +91,17 @@ async function attachUnderlyingListener() {
   if (Network) {
     try {
       const status = await Network.getStatus();
+      console.log('[network] initial Network.getStatus() =', status);
       notify(status.connected);
-    } catch {
+    } catch (err) {
+      console.warn('[network] initial Network.getStatus() threw:', err);
       // Ignore — we'll still get updates from the listener below.
     }
     const handle = await Network.addListener('networkStatusChange', (status) => {
+      console.log('[network] networkStatusChange event fired:', status);
       notify(status.connected);
     });
+    console.log('[network] native listener registered + 2s poll starting.');
     // Belt-and-suspenders: on some Android OEM WebViews/OS versions the
     // plugin's own `networkStatusChange` event has been observed to just
     // stop being delivered after the app's been running a while (this is
@@ -102,8 +115,10 @@ async function attachUnderlyingListener() {
     const pollId = setInterval(async () => {
       try {
         const s = await Network.getStatus();
+        console.log('[network] poll tick, Network.getStatus() =', s);
         notify(s.connected);
-      } catch {
+      } catch (err) {
+        console.warn('[network] poll tick threw:', err);
         // Transient — the next poll will try again.
       }
     }, 2000);
