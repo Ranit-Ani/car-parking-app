@@ -135,6 +135,49 @@ export default function Landing() {
         </div>
       </section>
 
+      <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0' }}>
+        <div
+          className="feature-card"
+          style={{
+            maxWidth: 980,
+            margin: '0 auto',
+            padding: '2.5rem',
+            textAlign: 'center',
+            animation: 'riseIn .5s ease forwards',
+          }}
+        >
+          <div className="hero-badge" style={{ marginBottom: '1.4rem' }}>
+            <span className="dot" /> ParkPoint
+          </div>
+          <p style={{ fontSize: '.95rem', color: 'var(--t2)', lineHeight: 1.8, maxWidth: 820, margin: '0 auto' }}>
+            Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
+            convenient, and efficient parking management experience for users, parking staff, and administrators.
+            Users can discover nearby parking locations, check available slots, select suitable parking spaces,
+            manage their vehicles, and make bookings with ease. Staff can efficiently manage parking slots, handle
+            vehicle check-ins and check-outs, and monitor active bookings, while administrators can manage multiple
+            parking locations, users, staff, slots, and revenue from a centralized dashboard. With real-time
+            parking information and a simple, responsive interface, ParkPoint makes parking management faster,
+            smarter, and more organized across mobile, desktop, and tablet devices.
+          </p>
+        </div>
+      </section>
+
+      <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
+          <h2 className="hero-title display-title" style={{ fontSize: 'clamp(1.5rem,3.5vw,2.4rem)', marginBottom: '.9rem' }}>
+            Ready to Park Smarter?
+          </h2>
+          <p className="hero-sub" style={{ marginBottom: '2.2rem' }}>
+            Join users who choose ParkPoint for a faster, simpler, and smarter parking experience.
+          </p>
+          <div className="hero-actions">
+            <Link to="/login" className="btn-ag primary lg">
+              <i className="bi bi-p-square-fill" /> Book Your First Slot
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="pub-support">
         <div className="pub-support-links">
           <button type="button" className="pub-support-link" onClick={() => setLegalOpen('about')}>About</button>
