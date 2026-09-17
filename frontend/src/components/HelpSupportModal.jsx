@@ -4,7 +4,7 @@ import Modal from './Modal';
 import { apiRequest } from '../lib/api';
 import { showToast } from '../lib/toast';
 
-const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'support@carparkingnetwork.com';
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'parkpoint.support@gmail.com';
 const SUPPORT_SUBJECT = 'ParkPoint Support Request';
 
 // Plain-text only, as requested — these are common categories to help a
