@@ -4,8 +4,11 @@ import Modal from './Modal';
 import { apiRequest } from '../lib/api';
 import { showToast } from '../lib/toast';
 
-const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'parkpoint.support@gmail.com';
-const SUPPORT_SUBJECT = 'ParkPoint Support Request';
+// Exported so the role-based Help & Support view reused on the Profile
+// page (see components/RoleSupportModals.jsx) can build the exact same
+// "Email Support" mailto link without duplicating these values.
+export const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'parkpoint.support@gmail.com';
+export const SUPPORT_SUBJECT = 'ParkPoint Support Request';
 
 // Plain-text only, as requested — these are common categories to help a
 // visitor recognize their issue before contacting support, not links to

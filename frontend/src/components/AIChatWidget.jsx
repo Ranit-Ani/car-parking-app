@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiRequest } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useNav } from '../context/NavContext';
 
 const SUGGESTIONS_BY_ROLE = {
   // Slot-availability and location-list/count queries ("which slots are
@@ -24,7 +25,10 @@ const INTRO_TOPICS_BY_ROLE = {
 
 export default function AIChatWidget() {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  // Open state now lives in NavContext (not local) so other parts of the
+  // app — e.g. Profile's role-based Help & Support buttons — can open this
+  // same panel instead of duplicating a second chat UI.
+  const { aiOpen: open, setAiOpen: setOpen, aiPendingPrompt, clearAiPendingPrompt } = useNav();
   const [messages, setMessages] = useState([]); // { role: 'user'|'assistant', content: string }
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -67,6 +71,17 @@ export default function AIChatWidget() {
       setError((d && d.message) || 'The assistant is unavailable right now.');
     }
   }
+
+  // A question handed off from elsewhere (e.g. a role-based suggested
+  // question in Profile's Help & Support) is sent the moment the panel is
+  // open and idle, then cleared so it never re-fires on a later open.
+  useEffect(() => {
+    if (open && aiPendingPrompt && !busy) {
+      clearAiPendingPrompt();
+      send(aiPendingPrompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, aiPendingPrompt]);
 
   if (!user) return null;
   const suggestions = SUGGESTIONS_BY_ROLE[user.role] || SUGGESTIONS_BY_ROLE.user;

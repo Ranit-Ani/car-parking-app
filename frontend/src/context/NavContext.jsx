@@ -15,7 +15,26 @@ export function NavProvider({ children }) {
     return () => document.body.classList.remove('nav-locked');
   }, [navOpen]);
 
-  const value = useMemo(() => ({ navOpen, setNavOpen }), [navOpen]);
+  // AI Assistant panel open/close state, lifted out of <AIChatWidget> (same
+  // reasoning as navOpen above) so any page — e.g. Profile's role-based
+  // Help & Support — can open the assistant from a button of its own
+  // instead of the fixed bottom-right FAB, without duplicating the widget.
+  const [aiOpen, setAiOpen] = useState(false);
+  // An optional question to auto-send the moment the panel opens, so a
+  // suggested question elsewhere in the app can "hand off" straight into
+  // a live answer instead of just opening an empty panel.
+  const [aiPendingPrompt, setAiPendingPrompt] = useState(null);
+
+  const openAIAssistant = (prompt) => {
+    if (prompt) setAiPendingPrompt(prompt);
+    setAiOpen(true);
+  };
+  const clearAiPendingPrompt = () => setAiPendingPrompt(null);
+
+  const value = useMemo(
+    () => ({ navOpen, setNavOpen, aiOpen, setAiOpen, aiPendingPrompt, openAIAssistant, clearAiPendingPrompt }),
+    [navOpen, aiOpen, aiPendingPrompt]
+  );
 
   return <NavContext.Provider value={value}>{children}</NavContext.Provider>;
 }

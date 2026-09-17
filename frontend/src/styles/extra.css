@@ -206,6 +206,13 @@ body.ag-modal-open .ag-modal-content .leaflet-container {
 
 .help-actions { display: flex; flex-direction: column; gap: .6rem; margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--t4); }
 
+/* Profile → Support & Legal: Guidelines / Help & Support / Privacy / Terms */
+.support-legal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.support-legal-grid .btn-ag { justify-content: flex-start; text-align: left; font-size: .8rem; }
+@media (max-width: 480px) {
+  .support-legal-grid { grid-template-columns: 1fr; }
+}
+
 /* Misc form select used across admin pages */
 .ag-select {
   width: 100%;

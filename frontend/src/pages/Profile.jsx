@@ -4,6 +4,7 @@ import Modal from '../components/Modal';
 import ConfirmSheet from '../components/ConfirmSheet';
 import OtpInput from '../components/OtpInput';
 import PhotoCropModal from '../components/PhotoCropModal';
+import { GuidelinesModal, PrivacyModal, TermsModal, RoleHelpSupportModal } from '../components/RoleSupportModals';
 import { ActionButton } from '../components/Bits';
 import { apiRequest } from '../lib/api';
 import { useCachedState } from '../lib/useCachedState';
@@ -88,6 +89,12 @@ export default function Profile() {
   const [vScanBusy, setVScanBusy] = useState(false);
 
   const isUserRole = user?.role === 'user';
+  const role = user?.role || profile?.role || 'user';
+
+  // Role-based Guidelines / Help & Support / Privacy / Terms — a single
+  // "which one is open" flag, same pattern the Landing page uses for its
+  // own About/Privacy/Terms/Help modals.
+  const [supportModal, setSupportModal] = useState(null); // 'guidelines' | 'help' | 'privacy' | 'terms' | null
   const vNumberValid = vPending || isValidVehicleNumber(vNumber);
 
   const loadVehicles = async () => {
@@ -446,6 +453,24 @@ export default function Profile() {
             </div>
           )}
 
+          <div className="ag-card ag-card-body">
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Support & Legal</div>
+            <div className="support-legal-grid">
+              <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('guidelines')}>
+                <i className="bi bi-signpost-2" /> Guidelines
+              </button>
+              <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('help')}>
+                <i className="bi bi-life-preserver" /> Help &amp; Support
+              </button>
+              <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('privacy')}>
+                <i className="bi bi-shield-lock" /> Privacy Policy
+              </button>
+              <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('terms')}>
+                <i className="bi bi-file-earmark-text" /> Terms &amp; Conditions
+              </button>
+            </div>
+          </div>
+
           <div className="ag-card ag-card-body" style={{ borderColor: 'rgba(255,60,120,.15)' }}>
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--nova)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1rem' }}>Danger Zone</div>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', marginBottom: '1rem', lineHeight: 1.6 }}>
@@ -528,6 +553,11 @@ export default function Profile() {
         onCancel={closeCropModal}
         onDone={handleCropDone}
       />
+
+      <GuidelinesModal role={role} show={supportModal === 'guidelines'} onClose={() => setSupportModal(null)} />
+      <RoleHelpSupportModal role={role} show={supportModal === 'help'} onClose={() => setSupportModal(null)} />
+      <PrivacyModal role={role} show={supportModal === 'privacy'} onClose={() => setSupportModal(null)} />
+      <TermsModal role={role} show={supportModal === 'terms'} onClose={() => setSupportModal(null)} />
 
       {deletePhotoConfirm && (
         <ConfirmSheet
