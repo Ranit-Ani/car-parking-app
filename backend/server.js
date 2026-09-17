@@ -21,6 +21,7 @@ const staffRoutes = require('./routes/staff.routes');
 const adminRoutes = require('./routes/admin.routes');
 const aiRoutes = require('./routes/ai.routes');
 const locationRoutes = require('./routes/location.routes');
+const supportRoutes = require('./routes/support.routes');
 const errorHandler = require('./middleware/error.middleware');
 
 const app = express();
@@ -42,11 +43,12 @@ app.use(helmet({
       // Leaflet map, never a redirect out to Google Maps or another
       // navigation app.
       imgSrc:        ["'self'", "data:", "blob:", "https://server.arcgisonline.com", "https://*.arcgisonline.com"],
-      // https://api.emailjs.com is where the Landing page's Help & Support
-      // → Contact Us form sends its message (the @emailjs/browser SDK
-      // posts directly from the browser, no backend route involved) —
-      // without it here, the CSP silently blocks that fetch() client-side.
-      connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "https://nominatim.openstreetmap.org", "https://router.project-osrm.org", "https://api.emailjs.com"],
+      // The Landing page's Contact Us form no longer calls EmailJS directly
+      // from the browser — it posts to our own /api/support/contact, which
+      // relays to EmailJS server-side using a private key (see
+      // support.controller.js). So api.emailjs.com does NOT need to be
+      // listed here; keeping the browser's connect-src narrow is deliberate.
+      connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "https://nominatim.openstreetmap.org", "https://router.project-osrm.org"],
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -113,6 +115,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/support', supportRoutes);
 
 // ─── Frontend Routes (SPA fallback) ──────────────────────────────────────────
 app.get('*', (req, res) => {

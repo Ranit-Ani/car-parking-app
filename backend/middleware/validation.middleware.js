@@ -75,6 +75,14 @@ const bookingValidator = [
   validate,
 ];
 
+// ─── Landing page "Contact Us" (Help & Support modal) ──────────────────────────
+const contactValidator = [
+  body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 100 }),
+  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
+  body('message').trim().notEmpty().withMessage('Message is required').isLength({ max: 2000 }),
+  validate,
+];
+
 module.exports = {
   registerValidator,
   loginValidator,
@@ -82,4 +90,5 @@ module.exports = {
   bookingValidator,
   locationValidator,
   staffCreateValidator,
+  contactValidator,
 };

@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { ActionButton } from './Bits';
 import Modal from './Modal';
+import { apiRequest } from '../lib/api';
 import { showToast } from '../lib/toast';
 
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'support@carparkingnetwork.com';
 const SUPPORT_SUBJECT = 'ParkPoint Support Request';
-
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-const EMAILJS_CONFIGURED = !!(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
 
 // Plain-text only, as requested — these are common categories to help a
 // visitor recognize their issue before contacting support, not links to
@@ -58,27 +54,23 @@ export default function HelpSupportModal({ show, onClose }) {
       showToast('Please fill in your name, email and message.', 'warning');
       return;
     }
-    if (!EMAILJS_CONFIGURED) {
-      showToast('Contact form is not set up yet — please use Email Support instead.', 'danger');
-      return;
-    }
 
     setBusy(true);
     try {
-      // Loaded on demand so the Landing page's initial bundle doesn't pay
-      // for the EmailJS SDK unless a visitor actually opens the form.
-      const emailjs = (await import('@emailjs/browser')).default;
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        { from_name: name.trim(), from_email: email.trim(), message: message.trim(), to_email: SUPPORT_EMAIL },
-        { publicKey: EMAILJS_PUBLIC_KEY },
-      );
-      showToast("Message sent! We'll get back to you soon.", 'success');
-      resetContactForm();
-      setView('main');
-    } catch {
-      showToast('Could not send your message. Please try Email Support instead.', 'danger');
+      // Sent to our own backend, which relays to EmailJS server-side using
+      // a private key (EmailJS's "non-browser applications" / Private Key
+      // mode) — nothing EmailJS-related is exposed to the browser bundle.
+      const data = await apiRequest('/support/contact', {
+        method: 'POST',
+        body: { name: name.trim(), email: email.trim(), message: message.trim() },
+      });
+      if (data && data.success) {
+        showToast(data.message || "Message sent! We'll get back to you soon.", 'success');
+        resetContactForm();
+        setView('main');
+      } else {
+        showToast((data && data.message) || 'Could not send your message. Please try Email Support instead.', 'danger');
+      }
     } finally {
       setBusy(false);
     }
@@ -127,12 +119,6 @@ export default function HelpSupportModal({ show, onClose }) {
           >
             <i className="bi bi-arrow-left" /> Back
           </button>
-
-          {!EMAILJS_CONFIGURED && (
-            <p style={{ fontSize: '.78rem', color: 'var(--solar)', background: 'rgba(255,184,0,.08)', border: '1px solid rgba(255,184,0,.2)', borderRadius: '10px', padding: '.65rem .8rem', marginBottom: '1rem' }}>
-              <i className="bi bi-exclamation-triangle" /> Contact form isn&apos;t configured yet — please use Email Support below instead.
-            </p>
-          )}
 
           <div className="ag-input-group">
             <label className="ag-label">Name</label>
