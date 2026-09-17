@@ -80,8 +80,8 @@ export default function Landing() {
             across every location in the network.
           </p>
           <div className="hero-actions">
-            <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
             <Link to="/login" className="btn-ag plasma lg"><i className="bi bi-shield-check" /> Authenticate</Link>
+            <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
           </div>
 
           <div style={{ display: 'flex', gap: '3rem', justifyContent: 'center', marginTop: '3.5rem', flexWrap: 'wrap', animation: 'fadeUp .7s .4s both' }}>
