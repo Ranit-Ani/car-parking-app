@@ -166,11 +166,12 @@ export default function Landing() {
             <span className="dot" /> ParkPoint
           </div>
           <p style={{ fontSize: '.95rem', color: 'var(--t2)', lineHeight: 1.8 }}>
-            Smartly find, book, and manage parking spaces with ParkPoint. Our platform gives users, staff, and
-            administrators a secure, convenient, and efficient parking experience — from discovering nearby
-            locations and booking slots to managing check-ins, vehicles, and revenue from one place. With
-            real-time information and a responsive interface, ParkPoint makes parking faster, smarter, and more
-            organized across mobile, desktop, and tablet devices.
+            Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
+            convenient, and efficient parking experience for users, parking staff, and administrators. Users can
+            discover nearby locations, check available slots, and make bookings with ease. Staff can manage slots
+            and handle check-ins and check-outs, while administrators oversee locations, users, staff, and revenue
+            from a centralized dashboard — all through a real-time, responsive interface across mobile, desktop,
+            and tablet devices.
           </p>
         </div>
       </section>
