@@ -40,6 +40,11 @@ export default function Profile() {
   const [deletePwd, setDeletePwd] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
 
+  // Saved vehicle removal — same custom confirm-sheet pattern as the
+  // profile photo delete and Sidebar's logout confirm, not window.confirm().
+  const [removeVehicleId, setRemoveVehicleId] = useState(null);
+  const [removeVehicleBusy, setRemoveVehicleBusy] = useState(false);
+
   // ─── Profile photo action menu (view / edit / delete) ──────────────────────
   // A plain anchored dropdown, not the shared Modal — see the CSS comment on
   // .photo-actions-menu for why (the shared Modal's blurred backdrop made
@@ -147,9 +152,16 @@ export default function Profile() {
     }
   }
 
-  async function removeVehicle(id) {
-    if (!confirm('Remove this vehicle from your account?')) return;
-    const d = await apiRequest('/auth/vehicles/' + id, { method: 'DELETE' });
+  function askRemoveVehicle(id) {
+    setRemoveVehicleId(id);
+  }
+
+  async function doRemoveVehicle() {
+    if (!removeVehicleId) return;
+    setRemoveVehicleBusy(true);
+    const d = await apiRequest('/auth/vehicles/' + removeVehicleId, { method: 'DELETE' });
+    setRemoveVehicleBusy(false);
+    setRemoveVehicleId(null);
     if (d && d.success) { loadVehicles(); showToast('Vehicle removed.', 'success'); }
     else showToast((d && d.message) || 'Failed to remove vehicle.', 'danger');
   }
@@ -426,7 +438,7 @@ export default function Profile() {
                         </div>
                         <small style={{ color: 'var(--t2)' }}>{v.nickname ? v.nickname + ' · ' : ''}{v.category}</small>
                       </div>
-                      <button className="btn-ag red sm" onClick={() => removeVehicle(v._id)}><i className="bi bi-trash3" /></button>
+                      <button className="btn-ag red sm" onClick={() => askRemoveVehicle(v._id)}><i className="bi bi-trash3" /></button>
                     </div>
                   ))}
                 </div>
@@ -526,6 +538,18 @@ export default function Profile() {
           busyLabel="Removing..."
           onCancel={() => setDeletePhotoConfirm(false)}
           onConfirm={doDeletePhoto}
+        />
+      )}
+
+      {removeVehicleId && (
+        <ConfirmSheet
+          show={!!removeVehicleId}
+          message="Remove this vehicle from your account?"
+          confirmLabel="Remove"
+          busy={removeVehicleBusy}
+          busyLabel="Removing..."
+          onCancel={() => setRemoveVehicleId(null)}
+          onConfirm={doRemoveVehicle}
         />
       )}
 
