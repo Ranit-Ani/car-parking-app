@@ -547,18 +547,6 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 
 .mobile-menu-btn{display:none}
 .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;max-width:900px}
-/* Profile page cards are direct grid items (not two wrapper columns) so
-   desktop can place them into two visual columns via grid-column while
-   mobile can independently force a fixed reading order via `order` below —
-   the two need to differ (desktop groups Vehicles/Support&Legal under
-   different cards depending on role; mobile always wants the original
-   Identity → Security → Vehicles → Support & Legal → Danger Zone order). */
-.pg-identity{grid-column:1}
-.pg-security{grid-column:2}
-.pg-vehicles{grid-column:1}
-.pg-support-legal{grid-column:2}
-.pg-support-legal.pg-col1{grid-column:1}
-.pg-danger{grid-column:2}
 .dash-two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
 @media(max-width:768px){
   .sidebar{
@@ -590,14 +578,6 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
     overscroll-behavior:contain;
   }
   .profile-grid{grid-template-columns:1fr}
-  /* Single-column mobile: always read Identity → Security → My Vehicles →
-     Support & Legal → Danger Zone, regardless of the two-column desktop
-     placement above. */
-  .pg-identity{order:1}
-  .pg-security{order:2}
-  .pg-vehicles{order:3}
-  .pg-support-legal{order:4}
-  .pg-danger{order:5}
   .dash-two-col{grid-template-columns:1fr}
 }
 

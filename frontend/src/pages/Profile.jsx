@@ -332,7 +332,8 @@ export default function Profile() {
     <Layout title="Operator Profile" badge={false}>
       <div className="profile-grid">
 
-        <div className="ag-card ag-card-body pg-identity">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="ag-card ag-card-body">
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.4rem' }}>Identity</div>
 
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -402,82 +403,105 @@ export default function Profile() {
           </form>
         </div>
 
-        <div className="ag-card ag-card-body pg-security">
-          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Security</div>
-          <form onSubmit={savePassword}>
-            <div className="ag-input-group">
-              <label className="ag-label">Current Password</label>
-              <div className="ag-input-icon"><i className="bi bi-lock" /><input className="ag-input" type="password" placeholder="Enter current password" required value={curPwd} onChange={(e) => setCurPwd(e.target.value)} /></div>
-            </div>
-            <div className="ag-input-group">
-              <label className="ag-label">New Password</label>
-              <div className="ag-input-icon"><i className="bi bi-lock-fill" /><input className="ag-input" type="password" placeholder="Min 6 characters" required minLength={6} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /></div>
-            </div>
-            <div className="ag-input-group">
-              <label className="ag-label">Confirm New Password</label>
-              <div className="ag-input-icon"><i className="bi bi-lock-fill" /><input className="ag-input" type="password" placeholder="Repeat new password" required value={confPwd} onChange={(e) => setConfPwd(e.target.value)} /></div>
-            </div>
-            <ActionButton type="submit" busy={pwdBusy} busyLabel="Updating..." className="btn-ag aurora full">
-              <i className="bi bi-shield-lock" /> Update Password
-            </ActionButton>
-          </form>
-        </div>
-
-        {isUserRole && (
-          <div className="ag-card ag-card-body pg-vehicles">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase' }}>My Vehicles</div>
-              <button type="button" className="btn-ag plasma sm" onClick={openAddVehicle}><i className="bi bi-plus-lg" /> Add Vehicle</button>
-            </div>
-            {vehicles.length === 0 ? (
-              <p style={{ fontSize: '.82rem', color: 'var(--t2)' }}>No saved vehicles yet. Add one so you can pick it instantly when booking a slot.</p>
-            ) : (
-              <div
-                className="vehicle-list-scroll"
-                style={{ display: 'flex', flexDirection: 'column', gap: '.6rem', height: '84px', overflowY: 'auto', paddingRight: '.4rem' }}
-              >
-                {vehicles.map((v) => (
-                  <div key={v._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '.6rem .8rem', border: '1px solid var(--t4)', borderRadius: '10px', flexShrink: 0 }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontFamily: 'monospace' }}>
-                        {v.registrationPending ? <span className="ag-badge unverified">Pending</span> : v.vehicleNumber}
-                      </div>
-                      <small style={{ color: 'var(--t2)' }}>{v.nickname ? v.nickname + ' · ' : ''}{v.category}</small>
-                    </div>
-                    <button className="btn-ag red sm" onClick={() => askRemoveVehicle(v._id)}><i className="bi bi-trash3" /></button>
-                  </div>
-                ))}
+          {isUserRole ? (
+            <div className="ag-card ag-card-body">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase' }}>My Vehicles</div>
+                <button type="button" className="btn-ag plasma sm" onClick={openAddVehicle}><i className="bi bi-plus-lg" /> Add Vehicle</button>
               </div>
-            )}
-          </div>
-        )}
-
-        <div className={`ag-card ag-card-body pg-support-legal ${!isUserRole ? 'pg-col1' : ''}`}>
-          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Support & Legal</div>
-          <div className="support-legal-grid">
-            <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('guidelines')}>
-              <i className="bi bi-signpost-2" /> Guidelines
-            </button>
-            <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('help')}>
-              <i className="bi bi-life-preserver" /> Help &amp; Support
-            </button>
-            <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('privacy')}>
-              <i className="bi bi-shield-lock" /> Privacy Policy
-            </button>
-            <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('terms')}>
-              <i className="bi bi-file-earmark-text" /> Terms &amp; Conditions
-            </button>
-          </div>
+              {vehicles.length === 0 ? (
+                <p style={{ fontSize: '.82rem', color: 'var(--t2)' }}>No saved vehicles yet. Add one so you can pick it instantly when booking a slot.</p>
+              ) : (
+                <div
+                  className="vehicle-list-scroll"
+                  style={{ display: 'flex', flexDirection: 'column', gap: '.6rem', height: '84px', overflowY: 'auto', paddingRight: '.4rem' }}
+                >
+                  {vehicles.map((v) => (
+                    <div key={v._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '.6rem .8rem', border: '1px solid var(--t4)', borderRadius: '10px', flexShrink: 0 }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontFamily: 'monospace' }}>
+                          {v.registrationPending ? <span className="ag-badge unverified">Pending</span> : v.vehicleNumber}
+                        </div>
+                        <small style={{ color: 'var(--t2)' }}>{v.nickname ? v.nickname + ' · ' : ''}{v.category}</small>
+                      </div>
+                      <button className="btn-ag red sm" onClick={() => askRemoveVehicle(v._id)}><i className="bi bi-trash3" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="ag-card ag-card-body">
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Support & Legal</div>
+              <div className="support-legal-grid">
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('guidelines')}>
+                  <i className="bi bi-signpost-2" /> Guidelines
+                </button>
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('help')}>
+                  <i className="bi bi-life-preserver" /> Help &amp; Support
+                </button>
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('privacy')}>
+                  <i className="bi bi-shield-lock" /> Privacy Policy
+                </button>
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('terms')}>
+                  <i className="bi bi-file-earmark-text" /> Terms &amp; Conditions
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="ag-card ag-card-body pg-danger" style={{ borderColor: 'rgba(255,60,120,.15)' }}>
-          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--nova)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1rem' }}>Danger Zone</div>
-          <p style={{ fontSize: '.82rem', color: 'var(--t2)', marginBottom: '1rem', lineHeight: 1.6 }}>
-            Permanently delete your account and all associated data. This action cannot be undone.
-          </p>
-          <button className="btn-ag nova full" onClick={() => { setDeletePwd(''); setDeleteModal(true); }}>
-            <i className="bi bi-exclamation-triangle" /> Delete Account
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="ag-card ag-card-body">
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Security</div>
+            <form onSubmit={savePassword}>
+              <div className="ag-input-group">
+                <label className="ag-label">Current Password</label>
+                <div className="ag-input-icon"><i className="bi bi-lock" /><input className="ag-input" type="password" placeholder="Enter current password" required value={curPwd} onChange={(e) => setCurPwd(e.target.value)} /></div>
+              </div>
+              <div className="ag-input-group">
+                <label className="ag-label">New Password</label>
+                <div className="ag-input-icon"><i className="bi bi-lock-fill" /><input className="ag-input" type="password" placeholder="Min 6 characters" required minLength={6} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /></div>
+              </div>
+              <div className="ag-input-group">
+                <label className="ag-label">Confirm New Password</label>
+                <div className="ag-input-icon"><i className="bi bi-lock-fill" /><input className="ag-input" type="password" placeholder="Repeat new password" required value={confPwd} onChange={(e) => setConfPwd(e.target.value)} /></div>
+              </div>
+              <ActionButton type="submit" busy={pwdBusy} busyLabel="Updating..." className="btn-ag aurora full">
+                <i className="bi bi-shield-lock" /> Update Password
+              </ActionButton>
+            </form>
+          </div>
+
+          {isUserRole && (
+            <div className="ag-card ag-card-body">
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Support & Legal</div>
+              <div className="support-legal-grid">
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('guidelines')}>
+                  <i className="bi bi-signpost-2" /> Guidelines
+                </button>
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('help')}>
+                  <i className="bi bi-life-preserver" /> Help &amp; Support
+                </button>
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('privacy')}>
+                  <i className="bi bi-shield-lock" /> Privacy Policy
+                </button>
+                <button type="button" className="btn-ag ghost" onClick={() => setSupportModal('terms')}>
+                  <i className="bi bi-file-earmark-text" /> Terms &amp; Conditions
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="ag-card ag-card-body" style={{ borderColor: 'rgba(255,60,120,.15)' }}>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--nova)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1rem' }}>Danger Zone</div>
+            <p style={{ fontSize: '.82rem', color: 'var(--t2)', marginBottom: '1rem', lineHeight: 1.6 }}>
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <button className="btn-ag nova full" onClick={() => { setDeletePwd(''); setDeleteModal(true); }}>
+              <i className="bi bi-exclamation-triangle" /> Delete Account
+            </button>
+          </div>
         </div>
       </div>
 
