@@ -62,7 +62,7 @@ export default function Landing() {
       <nav className="pub-nav">
         <Link className="pub-nav-brand" to="/">
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
-          CAR PARKING NETWORK
+          ParkPoint
         </Link>
         <div style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
           <Link to="/login" className="btn-ag ghost sm">Sign In</Link>
@@ -76,7 +76,7 @@ export default function Landing() {
           <h1 className="hero-title display-title">CAR PARKING<br />AT EVERY LOCATION</h1>
           <p className="hero-sub">
             One account, every parking location. Discover nearby available slots, book your preferred space
-            instantly, and manage your parking with ease. Enjoy real-time availability and automated billing
+            instantly, and take control of your parking with ease. Enjoy real-time availability and automated billing
             across every location in the network.
           </p>
           <div className="hero-actions">
@@ -156,7 +156,7 @@ export default function Landing() {
         <div style={{ maxWidth: 820, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
           <p style={{ fontSize: '.95rem', color: 'var(--t2)', lineHeight: 1.8 }}>
             Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
-            convenient, and efficient parking experience for users, parking staff, and administrators. Users can
+            convenient, and efficient parking experience for users, staff, and administrators. Users can
             discover nearby locations, check available slots, and make bookings with ease. Staff can manage slots
             and handle check-ins and check-outs, while administrators oversee locations, users, staff, and revenue
             from a centralized dashboard — all through a real-time, responsive interface across mobile, desktop,
