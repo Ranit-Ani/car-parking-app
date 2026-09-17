@@ -75,8 +75,9 @@ export default function Landing() {
           <div className="hero-badge"><span className="dot" /> MULTI-LOCATION PARKING NETWORK v2.0</div>
           <h1 className="hero-title display-title">CAR PARKING<br />AT EVERY LOCATION</h1>
           <p className="hero-sub">
-            One account, every parking location. Find nearby open slots, book instantly, and pay with
-            automated billing at any location in the network, in real time.
+            One account, every parking location. Discover nearby available slots, book your preferred space
+            instantly, and manage your parking with ease. Enjoy real-time availability and automated billing
+            across every location in the network.
           </p>
           <div className="hero-actions">
             <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
