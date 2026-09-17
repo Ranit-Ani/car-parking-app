@@ -332,6 +332,7 @@ export default function Profile() {
     <Layout title="Operator Profile" badge={false}>
       <div className="profile-grid">
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div className="ag-card ag-card-body">
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.4rem' }}>Identity</div>
 
@@ -402,7 +403,6 @@ export default function Profile() {
           </form>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div className="ag-card ag-card-body">
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Security</div>
             <form onSubmit={savePassword}>
@@ -423,7 +423,9 @@ export default function Profile() {
               </ActionButton>
             </form>
           </div>
+        </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {isUserRole && (
             <div className="ag-card ag-card-body">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
