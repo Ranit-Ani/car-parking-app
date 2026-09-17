@@ -135,17 +135,8 @@ export default function Landing() {
         </div>
       </section>
 
-      <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0' }}>
-        <div
-          className="feature-card"
-          style={{
-            maxWidth: 680,
-            margin: '0 auto',
-            padding: '2.5rem',
-            textAlign: 'center',
-            animation: 'riseIn .5s ease forwards',
-          }}
-        >
+      <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
           <h2 className="hero-title display-title" style={{ fontSize: 'clamp(1.5rem,3.5vw,2.4rem)', marginBottom: '.9rem' }}>
             Ready to Park Smarter?
           </h2>
@@ -160,11 +151,8 @@ export default function Landing() {
         </div>
       </section>
 
-      <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0', textAlign: 'center' }}>
+      <section style={{ position: 'relative', zIndex: 1, padding: '3rem 1.5rem 0', textAlign: 'center' }}>
         <div style={{ maxWidth: 820, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
-          <div className="hero-badge" style={{ marginBottom: '1.4rem' }}>
-            <span className="dot" /> ParkPoint
-          </div>
           <p style={{ fontSize: '.95rem', color: 'var(--t2)', lineHeight: 1.8 }}>
             Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
             convenient, and efficient parking experience for users, parking staff, and administrators. Users can
