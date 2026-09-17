@@ -42,7 +42,11 @@ app.use(helmet({
       // Leaflet map, never a redirect out to Google Maps or another
       // navigation app.
       imgSrc:        ["'self'", "data:", "blob:", "https://server.arcgisonline.com", "https://*.arcgisonline.com"],
-      connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "https://nominatim.openstreetmap.org", "https://router.project-osrm.org"],
+      // https://api.emailjs.com is where the Landing page's Help & Support
+      // → Contact Us form sends its message (the @emailjs/browser SDK
+      // posts directly from the browser, no backend route involved) —
+      // without it here, the CSP silently blocks that fetch() client-side.
+      connectSrc:    ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "https://nominatim.openstreetmap.org", "https://router.project-osrm.org", "https://api.emailjs.com"],
     },
   },
   crossOriginEmbedderPolicy: false,
