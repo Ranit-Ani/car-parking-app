@@ -242,7 +242,76 @@
         "admin"
       ],
       "responses": [
-        "From Admin \u2192 Locations you can add, edit, or deactivate parking locations \u2014 setting the name, address, map coordinates, and amenities. Each location can have its own slots and its own assigned staff, and Admin \u2192 Location Revenue breaks down earnings site-by-site."
+        "From Admin \u2192 Locations you can add, edit, or deactivate parking locations \u2014 setting the name, address, map coordinates, and amenities. Each location can have its own slots and its own assigned staff, and Admin \u2192 Location Revenue breaks down earnings site-by-site. Staff are assigned (or reassigned) to a location from Admin \u2192 Users, not from Locations itself \u2014 promote a user to staff, or edit an existing staff member, and pick their location there."
+      ]
+    },
+    {
+      "tag": "booking_status_reason",
+      "type": "knowledge",
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
+      "responses": [
+        "A booking only shows \"Cancelled\" if it was cancelled manually while still \"Booked\" \u2014 by you, or by staff/admin on your behalf \u2014 that never happens on its own. It shows \"Expired\" instead if check-in didn't happen within 1 hour of booking; the slot is then automatically released back to other users. Either way, no charge applies, since billing only happens at checkout, which needs an actual check-in first."
+      ]
+    },
+    {
+      "tag": "booking_qr_help",
+      "type": "knowledge",
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
+      "responses": [
+        "Your booking's QR code is only shown while it's still \"Booked\" \u2014 open My Bookings, find that booking, and tap \"Show Entry QR\". It disappears once staff check you in (status moves to \"Active\") since it's no longer needed, and it won't appear at all if the booking already expired or was cancelled. If it's still \"Booked\" and you still don't see it, refresh My Bookings first."
+      ]
+    },
+    {
+      "tag": "qr_scanner_troubleshooting",
+      "type": "knowledge",
+      "roles": [
+        "staff",
+        "admin"
+      ],
+      "responses": [
+        "If QR Check-In's camera isn't picking up a code, check that camera permission is granted, the code is well-lit, filling the frame, and not showing screen glare. QR Check-In is only an additional way to check bookings in \u2014 the regular Check-In page (look up by booking ID or vehicle details) always still works if scanning keeps failing."
+      ]
+    },
+    {
+      "tag": "staff_queue_missing_booking",
+      "type": "knowledge",
+      "roles": [
+        "staff",
+        "admin"
+      ],
+      "responses": [
+        "Your Check-In queue only ever shows \"Booked\" bookings for your own assigned location \u2014 a booking made for a different location will never appear there, by design. Otherwise, it may have already auto-expired (a booking only holds for 1 hour before check-in), already been checked in, or be hidden by a search/filter you've set \u2014 clear the search box; the queue also updates live as new bookings come in."
+      ]
+    },
+    {
+      "tag": "vehicle_overstay_policy",
+      "type": "knowledge",
+      "roles": [
+        "staff",
+        "admin"
+      ],
+      "responses": [
+        "There's no separate overstay fee or manual penalty to apply \u2014 check-out billing is always calculated automatically from the vehicle's actual check-in to check-out time, minimum 1 hour rounded up, no matter how long it stayed. Don't edit an overstaying booking manually; just check it out as normal once the driver returns, and flag anything that looks genuinely wrong to an admin instead of changing it yourself."
+      ]
+    },
+    {
+      "tag": "contact_support_escalation",
+      "type": "knowledge",
+      "roles": [
+        "user",
+        "staff",
+        "admin"
+      ],
+      "responses": [
+        "For anything I can't resolve here \u2014 account access problems, a role or location assignment that looks wrong, billing disputes, or anything else \u2014 use Profile \u2192 Help & Support \u2192 Email Support to reach our team directly. If it's specifically about your staff account or location assignment, an admin manages that and can also help directly."
       ]
     },
     {

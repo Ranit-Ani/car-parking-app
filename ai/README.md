@@ -11,7 +11,7 @@ Logistic Regression classifier trained on our own labeled dataset.
 1. A user message hits the Node backend (`POST /api/ai/chat`).
 2. The backend forwards the raw text to this Python service's `/predict`
    endpoint.
-3. The model classifies the message into one of 24 intents (e.g.
+3. The model classifies the message into one of 30 intents (e.g.
    `check_availability`, `cancellation_policy`, `revenue_report`,
    `location_list`) with a confidence score. Below a confidence threshold,
    it falls back to `unknown`.
@@ -105,7 +105,7 @@ python training/train.py
 python training/evaluate.py
 ```
 
-Current held-out test accuracy: **~91%** across 24 intents.
+Current held-out test accuracy: **~90%** across 30 intents.
 
 ## Running the API standalone
 

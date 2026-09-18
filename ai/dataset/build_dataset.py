@@ -234,12 +234,14 @@ DATA = {
             "show income report", "total revenue generated",
             "how much did parking bring in", "monthly revenue breakdown",
             "revenue for block c this month", "how much did the downtown lot earn",
-            "revenue breakdown by location",
+            "revenue breakdown by location", "how do i view revenue by location",
+            "view revenue by location", "show me revenue by location",
         ],
         [
             "how much did we earn today", "show total collections",
             "what's our revenue looking like", "give me the income breakdown",
             "how much money has parking made", "what's the total revenue so far",
+            "how can i view revenue split by location",
         ],
     ),
     "user_registry": (
@@ -283,6 +285,9 @@ DATA = {
             "can i book another slot after booking a slot", "can i book a second slot",
             "can i book more than 2 slots", "can i book multiple slots",
             "can i book 3 slots", "is booking more than one slot allowed",
+            "how do i book a parking slot", "book a parking slot",
+            "how to book a parking slot", "steps to book a parking slot",
+            "how do i book my first parking slot", "how do i make a parking booking",
         ],
         [
             "walk me through booking a slot", "can i pre-book for next week",
@@ -290,6 +295,88 @@ DATA = {
             "how many active bookings am i allowed", "what's the process to book ahead",
             "can i reserve two slots at the same time", "am i limited to one booking at a time",
             "can i book a second spot before checking in to the first", "is there a cap on simultaneous bookings",
+            "walk me through booking a parking slot", "how do i go about booking a parking slot",
+        ],
+    ),
+    "booking_status_reason": (
+        [
+            "why was my booking cancelled", "why did my booking expire",
+            "why was my booking cancelled or expired", "my booking got cancelled why",
+            "why is my booking showing as expired", "why is my booking showing as cancelled",
+            "what made my booking expire", "why did my reservation get cancelled",
+            "my reservation shows expired why", "who cancelled my booking",
+            "why does my booking say expired", "why does my booking say cancelled",
+        ],
+        [
+            "why was my reservation cancelled", "why did my slot booking expire",
+            "my booking status changed to expired why", "what causes a booking to be cancelled",
+        ],
+    ),
+    "booking_qr_help": (
+        [
+            "i can't find my booking qr code", "where's my booking qr code",
+            "how do i see my entry qr code", "i lost my booking qr code",
+            "where do i find the qr code for my booking", "my booking has no qr code option",
+            "show entry qr is missing", "how do i get my qr code for check in",
+            "where is the show entry qr button", "i can't see the qr code for my booking",
+            "how do i pull up my booking qr", "qr code for my booking is not showing",
+        ],
+        [
+            "can't locate my entry qr code", "why can't i find my booking's qr code",
+            "where has my qr code gone", "how do i view the qr code for check-in",
+        ],
+    ),
+    "qr_scanner_troubleshooting": (
+        [
+            "the qr scanner isn't detecting a code", "qr check-in camera not working",
+            "qr scanner won't read the code", "the camera won't scan the qr code",
+            "qr code scan keeps failing", "qr check in not detecting anything",
+            "scanner not picking up the qr code", "why won't the qr scanner scan",
+            "camera not reading booking qr", "qr scan isn't working for check in",
+        ],
+        [
+            "qr scanner not detecting anything", "why isn't the qr check-in camera working",
+            "the qr code won't scan for me", "camera keeps failing to read the qr",
+        ],
+    ),
+    "staff_queue_missing_booking": (
+        [
+            "a user's booking doesn't show in my queue", "booking not showing in my check in queue",
+            "i can't find a user's booking to check in", "the booking isn't in my check-in list",
+            "why isn't this booking in my queue", "a booking is missing from my check-in queue",
+            "user's reservation not appearing for check in", "can't see a booking in the checkin queue",
+            "booking not appearing in my staff queue", "missing booking from check in list",
+        ],
+        [
+            "why can't i see this user's booking in my queue", "a reservation is missing from the check-in list",
+            "the booking i need isn't showing up for check in", "user booking not listed in my queue",
+        ],
+    ),
+    "vehicle_overstay_policy": (
+        [
+            "what do i do if a vehicle overstays", "a vehicle has overstayed its booking",
+            "what happens if a car stays too long", "how do i handle an overstaying vehicle",
+            "vehicle has been parked way too long what now", "car overstayed the parking time",
+            "is there an overstay fee", "what if a vehicle doesn't leave on time",
+            "how is overstaying billed", "vehicle overstaying its slot what should i do",
+        ],
+        [
+            "what should i do about an overstaying vehicle", "how do we charge for an overstay",
+            "a car has been parked far longer than expected", "what's the process for an overstayed vehicle",
+        ],
+    ),
+    "contact_support_escalation": (
+        [
+            "who do i contact for account or access issues", "who do i contact about my account",
+            "how do i reach support", "how do i contact customer support",
+            "who handles account access problems", "who do i talk to about account issues",
+            "how do i get in touch with support", "who do i email for help",
+            "who should i contact if something's wrong with my account", "how do i escalate an issue",
+            "who do i ask about access problems", "where do i go for account support",
+        ],
+        [
+            "who can help with an account access problem", "how do i reach out to support",
+            "who do i contact for help with my account", "where can i get support for account issues",
         ],
     ),
     "cancellation_policy": (
@@ -405,11 +492,13 @@ DATA = {
             "how do i find a user's pending booking", "check in console guide for staff",
             "as staff how do i process a check in", "how do i confirm check in for a user",
             "staff check in guide", "how to check in a user's car",
-            "checking in bookings as staff",
+            "checking in bookings as staff", "how do i check in a booking",
+            "check in a booking as staff", "steps to check in a booking",
         ],
         [
             "walk me through the staff check-in flow", "how do i verify someone at check in",
             "staff steps for checking a car in", "how do i find pending check ins as staff",
+            "how do i check in a customer's booking",
         ],
     ),
     "staff_checkout_process": (
@@ -419,12 +508,14 @@ DATA = {
             "how do i confirm checkout and calculate the bill", "checkout console guide for staff",
             "as staff how do i process a checkout", "how do i close out an active booking as staff",
             "staff checkout guide", "how to check out a user's car",
-            "processing a checkout as staff",
+            "processing a checkout as staff", "how do i check out a vehicle and generate the bill",
+            "check out a vehicle and generate the bill", "generate the bill when checking out a vehicle",
         ],
         [
             "how do i close out an active booking",
             "walk me through the staff checkout flow",
             "staff steps for checking a car out", "how do i bill a user at checkout as staff",
+            "how do i check a vehicle out and produce the bill",
         ],
     ),
     "admin_slot_management": (
@@ -434,11 +525,14 @@ DATA = {
             "admin guide to managing slots", "how do i mark a slot as ev charging",
             "how do i set up a new faculty slot",
             "add a new slot", "edit slot rate", "deactivate a parking slot",
-            "how do i manage slots as admin",
+            "how do i manage slots as admin", "how do i add slots to a location",
+            "add slots to a parking location", "how do i add new slots to a location",
+            "adding slots to a location",
         ],
         [
             "steps to add a slot as admin", "how do i update a slot's rate",
             "how do i take a slot out of service", "how do i change a slot's location as admin",
+            "how do i add more slots to a site",
         ],
     ),
     "admin_user_management": (
