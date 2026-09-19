@@ -21,6 +21,23 @@ const STATUS_CLASS_MAP = {
   Maintenance: 'maintenance',
 };
 
+/**
+ * Name/email to show for whoever made a booking. Prefers the live user
+ * account, but falls back to the name/email snapshotted on the booking at
+ * creation time whenever the account is gone or has been soft-deleted
+ * (account deletion anonymizes the User doc rather than removing it, so
+ * booking.userId can still be a populated object with "Deleted User" /
+ * a randomized email — those anonymized values should never be shown).
+ */
+export function bookingUserName(booking) {
+  const deleted = !booking?.userId || booking.userId.isDeleted;
+  return (deleted ? booking?.userName : booking?.userId?.name) || booking?.userName || '—';
+}
+export function bookingUserEmail(booking) {
+  const deleted = !booking?.userId || booking.userId.isDeleted;
+  return (deleted ? booking?.userEmail : booking?.userId?.email) || booking?.userEmail || '';
+}
+
 export function statusClass(status) {
   return STATUS_CLASS_MAP[status] || 'cancelled';
 }

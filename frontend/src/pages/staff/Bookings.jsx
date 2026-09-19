@@ -4,7 +4,7 @@ import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
 import { StatusBadge, EmptyState, BookingUserInfo } from '../../components/Bits';
 import { useInfiniteList } from '../../lib/useInfiniteList';
-import { formatDate, formatDateTime } from '../../lib/utils';
+import { formatDate, formatDateTime, bookingUserName } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
 import { useRevalidate } from '../../lib/useRevalidate';
 
@@ -55,7 +55,7 @@ export default function StaffBookings() {
   const rows = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return all;
-    return all.filter((b) => b._id.toLowerCase().includes(q) || (b.userId?.name || b.userName || '').toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
+    return all.filter((b) => b._id.toLowerCase().includes(q) || (bookingUserName(b)).toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
   }, [all, search]);
 
   function clearF() { setFStatus(''); setFDate(''); setSearch(''); }

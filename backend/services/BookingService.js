@@ -332,7 +332,7 @@ class BookingService {
    */
   async getBookingById(bookingId) {
     const booking = await Booking.findById(bookingId)
-      .populate('userId', 'name email role')
+      .populate('userId', 'name email role isDeleted')
       .populate({
         path: 'slotId',
         select: 'slotNumber location floor slotType hourlyRate locationId',

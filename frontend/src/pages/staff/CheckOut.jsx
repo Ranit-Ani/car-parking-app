@@ -5,7 +5,7 @@ import Modal from '../../components/Modal';
 import { ActionButton, EmptyState } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, bookingUserName } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
 import { useRevalidate } from '../../lib/useRevalidate';
 
@@ -59,7 +59,7 @@ export default function CheckOut() {
   const rows = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return all;
-    return all.filter((b) => b._id.toLowerCase().includes(q) || (b.userId?.name || b.userName || '').toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
+    return all.filter((b) => b._id.toLowerCase().includes(q) || (bookingUserName(b)).toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
   }, [all, search]);
 
   async function confirmCheckOut() {
@@ -88,7 +88,7 @@ export default function CheckOut() {
               ) : rows.map((b) => (
                 <tr key={b._id}>
                   <td><span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b._id.slice(-8).toUpperCase()}</span></td>
-                  <td><strong>{b.userId?.name || b.userName || '—'}</strong></td>
+                  <td><strong>{bookingUserName(b)}</strong></td>
                   <td>
                     <span className="font-mono" style={{ fontWeight: 700 }}>
                       {b.registrationPending ? <span className="ag-badge unverified">Pending</span> : (b.vehicleNumber || '—')}
@@ -127,7 +127,7 @@ export default function CheckOut() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{sel.userId?.name || sel.userName}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{bookingUserName(sel)}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{sel.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700, fontFamily: 'monospace' }}>{sel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (sel.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{sel.slotId?.slotNumber}</td></tr>
@@ -155,7 +155,7 @@ export default function CheckOut() {
             <div className="bill-receipt">
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>TOTAL CHARGED</div>
               <div className="bill-amount">₹{bill.bill.totalAmount}</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{bill.booking.slotId?.slotNumber} | {bill.booking.userId?.name || bill.booking.userName}</div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{bill.booking.slotId?.slotNumber} | {bookingUserName(bill.booking)}</div>
               {(bill.booking.vehicleNumber || bill.booking.registrationPending) && (
                 <div style={{ fontSize: '0.75rem', color: 'var(--neon-cyan)', fontFamily: 'monospace', marginTop: '0.2rem' }}>
                   {bill.booking.vehicleCategory ? bill.booking.vehicleCategory + ' · ' : ''}

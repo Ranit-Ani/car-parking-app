@@ -231,7 +231,7 @@ class StaffService {
 
     const [bookings, total] = await Promise.all([
       Booking.find(query)
-        .populate('userId', 'name email role')
+        .populate('userId', 'name email role isDeleted')
         .populate('slotId', 'slotNumber location floor slotType hourlyRate')
         .sort({ bookingTime: -1 })
         .skip(skip)
@@ -267,7 +267,7 @@ class StaffService {
 
     const [bookings, total] = await Promise.all([
       Booking.find(query)
-        .populate('userId', 'name email role')
+        .populate('userId', 'name email role isDeleted')
         .populate('slotId', 'slotNumber location floor slotType hourlyRate')
         .sort({ createdAt: -1 })
         .skip(skip)

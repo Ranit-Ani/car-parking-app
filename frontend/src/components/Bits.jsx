@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { statusClass } from '../lib/utils';
+import { statusClass, bookingUserName, bookingUserEmail } from '../lib/utils';
 
 /** Status pill, mirrors statusBadge(s) from app.js */
 export function StatusBadge({ status }) {
@@ -137,13 +137,16 @@ export function RowActionsMenu({ items }) {
  * Renders a booking's "who made this booking" cell for Staff/Admin views.
  * Prefers the live user account (b.userId, populated) so profile edits stay
  * up to date; falls back to the name/email snapshotted on the booking at
- * creation time (b.userName/b.userEmail) once the account no longer exists,
- * and flags it as such so Staff/Admin can tell at a glance.
+ * creation time (b.userName/b.userEmail) once the account no longer exists
+ * OR has been soft-deleted (account deletion anonymizes the User document
+ * rather than removing it — see User.isDeleted — so b.userId is still a
+ * real, populated object in that case, just with "Deleted User" / a
+ * randomized email; we must not display those anonymized values).
  */
 export function BookingUserInfo({ booking }) {
-  const accountDeleted = !booking.userId;
-  const name = booking.userId?.name || booking.userName || '—';
-  const email = booking.userId?.email || booking.userEmail || '';
+  const accountDeleted = !booking.userId || booking.userId.isDeleted;
+  const name = bookingUserName(booking);
+  const email = bookingUserEmail(booking);
   return (
     <>
       <strong>{name}</strong><br />

@@ -79,8 +79,15 @@ function generateReceiptPDF(booking, res) {
   const textTop = cardTop + 14;
 
   doc.fillColor('#888888').fontSize(8).font('Helvetica-Bold').text('BILLED TO', col1X, textTop);
-  doc.fillColor('#0a0a0a').fontSize(11).font('Helvetica-Bold').text(booking.userId?.name || booking.userName || '—', col1X, textTop + 13);
-  doc.fillColor('#555555').fontSize(9).font('Helvetica').text(booking.userId?.email || booking.userEmail || '—', col1X, textTop + 30);
+  // See User.isDeleted comment / frontend's bookingUserName() — deletion
+  // anonymizes the User doc rather than removing it, so booking.userId can
+  // still be a populated object with "Deleted User" / a randomized email;
+  // must fall back to the booking's own snapshot in that case.
+  const accountDeleted = !booking.userId || booking.userId.isDeleted;
+  const displayName = (accountDeleted ? booking.userName : booking.userId?.name) || booking.userName || '—';
+  const displayEmail = (accountDeleted ? booking.userEmail : booking.userId?.email) || booking.userEmail || '—';
+  doc.fillColor('#0a0a0a').fontSize(11).font('Helvetica-Bold').text(displayName, col1X, textTop + 13);
+  doc.fillColor('#555555').fontSize(9).font('Helvetica').text(displayEmail, col1X, textTop + 30);
 
   doc.fillColor('#888888').fontSize(8).font('Helvetica-Bold').text('PARKING SLOT', col2X, textTop);
   doc.fillColor('#0a0a0a').fontSize(11).font('Helvetica-Bold')

@@ -5,7 +5,7 @@ import Modal from '../../components/Modal';
 import { ActionButton } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { showToast } from '../../lib/toast';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, bookingUserName } from '../../lib/utils';
 
 /**
  * QR-based entry check-in — an ADDITIONAL way for staff to check a booking
@@ -217,7 +217,7 @@ export default function QRCheckIn() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{b.userId?.name || b.userName}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{bookingUserName(b)}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-green)', fontWeight: 700 }}>{b.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'monospace' }}>{b.registrationPending ? <span className="ag-badge unverified">Pending</span> : (b.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{b.slotId?.slotNumber}</td></tr>

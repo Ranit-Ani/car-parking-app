@@ -4,7 +4,7 @@ import Modal from '../../components/Modal';
 import { StatCard, StatusBadge, EmptyState, ActionButton, BookingUserInfo } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, bookingUserName } from '../../lib/utils';
 import { showToast } from '../../lib/toast';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../lib/socket';
@@ -143,7 +143,7 @@ export default function StaffDashboard() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{ciSel.userId?.name || ciSel.userName}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{bookingUserName(ciSel)}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-green)', fontWeight: 700 }}>{ciSel.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'monospace' }}>{ciSel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (ciSel.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{ciSel.slotId?.slotNumber}</td></tr>
@@ -178,7 +178,7 @@ export default function StaffDashboard() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{coSel.userId?.name || coSel.userName}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{bookingUserName(coSel)}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{coSel.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700, fontFamily: 'monospace' }}>{coSel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (coSel.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{coSel.slotId?.slotNumber}</td></tr>
@@ -206,7 +206,7 @@ export default function StaffDashboard() {
             <div className="bill-receipt">
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>TOTAL DUE</div>
               <div className="bill-amount">₹{bill.bill.totalAmount}</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{bill.booking.slotId?.slotNumber} | {bill.booking.userId?.name || bill.booking.userName}</div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{bill.booking.slotId?.slotNumber} | {bookingUserName(bill.booking)}</div>
             </div>
             <table className="bill-table">
               <tbody>

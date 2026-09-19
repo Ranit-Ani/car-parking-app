@@ -5,7 +5,7 @@ import Modal from '../../components/Modal';
 import { ActionButton, EmptyState, BookingUserInfo } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, bookingUserName } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
 import { useRevalidate } from '../../lib/useRevalidate';
 
@@ -49,7 +49,7 @@ export default function CheckIn() {
   const rows = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return all;
-    return all.filter((b) => b._id.toLowerCase().includes(q) || (b.userId?.name || b.userName || '').toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
+    return all.filter((b) => b._id.toLowerCase().includes(q) || (bookingUserName(b)).toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
   }, [all, search]);
 
   async function confirmCheckIn() {
@@ -116,7 +116,7 @@ export default function CheckIn() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{sel.userId?.name || sel.userName}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{bookingUserName(sel)}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-green)', fontWeight: 700 }}>{sel.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'monospace' }}>{sel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (sel.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{sel.slotId?.slotNumber}</td></tr>
