@@ -18,7 +18,14 @@ export default function InfiniteSentinel({ onVisible, hasMore, loading }) {
       (entries) => {
         if (entries[0].isIntersecting) onVisible();
       },
-      { rootMargin: '250px' }
+      // Fire well before the sentinel is actually on-screen, so the next
+      // page's network request has time to finish while the admin is still
+      // scrolling through the current rows — by the time they physically
+      // reach the bottom, the new rows are usually already there instead of
+      // a visible pause. (Client-side-only lists like Manage Locations never
+      // hit this delay at all since there's no request to wait on; this is
+      // to close that gap for server-paginated lists like Manage Slots.)
+      { rootMargin: '1000px' }
     );
     observer.observe(el);
     return () => observer.disconnect();

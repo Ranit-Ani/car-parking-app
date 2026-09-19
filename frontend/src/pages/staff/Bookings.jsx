@@ -127,10 +127,13 @@ export default function StaffBookings() {
             </tbody>
           </table>
         </div>
-        {rows.length > 0 && (
-          <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
-        )}
       </div>
+
+      {/* Outside the card so "Loading more..." appears below its border,
+          not inside its padding. */}
+      {rows.length > 0 && (
+        <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
+      )}
     </Layout>
   );
 }

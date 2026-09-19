@@ -211,10 +211,13 @@ export default function AdminLocations() {
             </tbody>
           </table>
         </div>
-        {visibleLocations.length > 0 && (
-          <InfiniteSentinel onVisible={loadMore} hasMore={hasMoreToShow} loading={false} />
-        )}
       </div>
+
+      {/* Outside the card so it appears below its border, not inside its
+          padding — consistent with the other list pages. */}
+      {visibleLocations.length > 0 && (
+        <InfiniteSentinel onVisible={loadMore} hasMore={hasMoreToShow} loading={false} />
+      )}
 
       <Modal
         show={formOpen}

@@ -179,10 +179,13 @@ export default function AdminSlots() {
             </tbody>
           </table>
         </div>
-        {slots.length > 0 && (
-          <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
-        )}
       </div>
+
+      {/* Rendered outside the card so "Loading more..." appears below the
+          card's border, not inside its padding. */}
+      {slots.length > 0 && (
+        <InfiniteSentinel onVisible={loadMore} hasMore={hasMore} loading={loadingMore} />
+      )}
 
       <Modal
         show={addOpen}
