@@ -132,11 +132,15 @@ async function runTool(name, args, ctx) {
       return { ...overall, byLocation };
     }
     case 'get_user_registry_summary': {
+      // Soft-deleted accounts (see User.isDeleted) are excluded — they're
+      // anonymized placeholders, not real registered users, so counting
+      // them here would inflate/skew the registry summary.
+      const notDeleted = { isDeleted: { $ne: true } };
       const [byRole, activeCounts, staffByLocation] = await Promise.all([
-        User.aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }]),
-        User.aggregate([{ $group: { _id: '$isActive', count: { $sum: 1 } } }]),
+        User.aggregate([{ $match: notDeleted }, { $group: { _id: '$role', count: { $sum: 1 } } }]),
+        User.aggregate([{ $match: notDeleted }, { $group: { _id: '$isActive', count: { $sum: 1 } } }]),
         User.aggregate([
-          { $match: { role: 'staff', locationId: { $ne: null } } },
+          { $match: { role: 'staff', locationId: { $ne: null }, ...notDeleted } },
           { $group: { _id: '$locationId', count: { $sum: 1 } } },
           { $lookup: { from: 'parkinglocations', localField: '_id', foreignField: '_id', as: 'location' } },
           { $unwind: { path: '$location', preserveNullAndEmptyArrays: true } },

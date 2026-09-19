@@ -133,6 +133,28 @@ export function RowActionsMenu({ items }) {
   );
 }
 
+/**
+ * Renders a booking's "who made this booking" cell for Staff/Admin views.
+ * Prefers the live user account (b.userId, populated) so profile edits stay
+ * up to date; falls back to the name/email snapshotted on the booking at
+ * creation time (b.userName/b.userEmail) once the account no longer exists,
+ * and flags it as such so Staff/Admin can tell at a glance.
+ */
+export function BookingUserInfo({ booking }) {
+  const accountDeleted = !booking.userId;
+  const name = booking.userId?.name || booking.userName || '—';
+  const email = booking.userId?.email || booking.userEmail || '';
+  return (
+    <>
+      <strong>{name}</strong><br />
+      <small style={{ color: 'var(--text-muted)' }}>{email}</small>
+      {accountDeleted && (
+        <><br /><span className="ag-badge unverified" style={{ marginTop: '0.2rem' }}>Account deleted</span></>
+      )}
+    </>
+  );
+}
+
 /** Empty-state placeholder shown inside tables/grids */
 export function EmptyState({ icon = 'bi-inbox', children }) {
   return (

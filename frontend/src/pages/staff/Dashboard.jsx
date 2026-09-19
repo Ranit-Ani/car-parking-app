@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout, { PageHeader } from '../../components/Layout';
 import Modal from '../../components/Modal';
-import { StatCard, StatusBadge, EmptyState, ActionButton } from '../../components/Bits';
+import { StatCard, StatusBadge, EmptyState, ActionButton, BookingUserInfo } from '../../components/Bits';
 import { apiRequest } from '../../lib/api';
 import { useCachedState } from '../../lib/useCachedState';
 import { formatDateTime } from '../../lib/utils';
@@ -108,7 +108,7 @@ export default function StaffDashboard() {
               ) : rows.map((b) => (
                 <tr key={b._id}>
                   <td><span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b._id.slice(-6).toUpperCase()}</span></td>
-                  <td><strong>{b.userId?.name || '—'}</strong><br /><small style={{ color: 'var(--text-muted)' }}>{b.userId?.email || ''}</small></td>
+                  <td><BookingUserInfo booking={b} /></td>
                   <td><span style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{b.slotId?.slotNumber}</span><br /><small style={{ color: 'var(--text-dim)' }}>{b.slotId?.location}</small></td>
                   <td>{formatDateTime(b.bookingTime)}</td>
                   <td>{b.checkInTime ? formatDateTime(b.checkInTime) : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
@@ -143,7 +143,7 @@ export default function StaffDashboard() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{ciSel.userId?.name}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{ciSel.userId?.name || ciSel.userName}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-green)', fontWeight: 700 }}>{ciSel.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'monospace' }}>{ciSel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (ciSel.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{ciSel.slotId?.slotNumber}</td></tr>
@@ -178,7 +178,7 @@ export default function StaffDashboard() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{coSel.userId?.name}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{coSel.userId?.name || coSel.userName}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{coSel.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700, fontFamily: 'monospace' }}>{coSel.registrationPending ? <span className="ag-badge unverified">Pending</span> : (coSel.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-orange)', fontWeight: 700 }}>{coSel.slotId?.slotNumber}</td></tr>
@@ -206,7 +206,7 @@ export default function StaffDashboard() {
             <div className="bill-receipt">
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>TOTAL DUE</div>
               <div className="bill-amount">₹{bill.bill.totalAmount}</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{bill.booking.slotId?.slotNumber} | {bill.booking.userId?.name}</div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{bill.booking.slotId?.slotNumber} | {bill.booking.userId?.name || bill.booking.userName}</div>
             </div>
             <table className="bill-table">
               <tbody>

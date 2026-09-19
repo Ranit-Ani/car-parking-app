@@ -79,8 +79,8 @@ function generateReceiptPDF(booking, res) {
   const textTop = cardTop + 14;
 
   doc.fillColor('#888888').fontSize(8).font('Helvetica-Bold').text('BILLED TO', col1X, textTop);
-  doc.fillColor('#0a0a0a').fontSize(11).font('Helvetica-Bold').text(booking.userId?.name || '—', col1X, textTop + 13);
-  doc.fillColor('#555555').fontSize(9).font('Helvetica').text(booking.userId?.email || '—', col1X, textTop + 30);
+  doc.fillColor('#0a0a0a').fontSize(11).font('Helvetica-Bold').text(booking.userId?.name || booking.userName || '—', col1X, textTop + 13);
+  doc.fillColor('#555555').fontSize(9).font('Helvetica').text(booking.userId?.email || booking.userEmail || '—', col1X, textTop + 30);
 
   doc.fillColor('#888888').fontSize(8).font('Helvetica-Bold').text('PARKING SLOT', col2X, textTop);
   doc.fillColor('#0a0a0a').fontSize(11).font('Helvetica-Bold')

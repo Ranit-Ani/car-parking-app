@@ -62,6 +62,10 @@ class BookingService {
     }
 
     let resolvedVehicleId = null;
+    // Captures the user's current name/email so they can be snapshotted onto
+    // the booking below — reused across branches so we don't look the user
+    // up twice.
+    let snapshotUser = null;
 
     if (vehicleId) {
       // Booking with a saved vehicle — pull its details from the user's account.
@@ -71,6 +75,7 @@ class BookingService {
         err.statusCode = 404;
         throw err;
       }
+      snapshotUser = user;
       const vehicle = user.vehicles.id(vehicleId);
       if (!vehicle) {
         const err = new Error('Saved vehicle not found.');
@@ -109,7 +114,20 @@ class BookingService {
           await user.save();
           resolvedVehicleId = user.vehicles[user.vehicles.length - 1]._id;
         }
+        snapshotUser = user;
       }
+    }
+
+    // Snapshot the user's name/email at booking-creation time (see the
+    // model comment on Booking.userName/userEmail) — fetch it if neither
+    // branch above already did.
+    if (!snapshotUser) {
+      snapshotUser = await User.findById(userId);
+    }
+    if (!snapshotUser) {
+      const err = new Error('User not found.');
+      err.statusCode = 404;
+      throw err;
     }
 
     // Business Rule: Slot must be available.
@@ -145,6 +163,9 @@ class BookingService {
       const now = new Date();
       const booking = await Booking.create({
         userId,
+        // Snapshot — see the model comment on Booking.userName/userEmail.
+        userName: snapshotUser.name,
+        userEmail: snapshotUser.email,
         slotId,
         // Denormalized from the slot so this booking is instantly
         // filterable by location (see the model comment on this field).

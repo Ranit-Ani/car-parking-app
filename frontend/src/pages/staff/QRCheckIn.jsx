@@ -217,7 +217,7 @@ export default function QRCheckIn() {
           <>
             <table className="bill-table">
               <tbody>
-                <tr><td>User</td><td style={{ fontWeight: 700 }}>{b.userId?.name}</td></tr>
+                <tr><td>User</td><td style={{ fontWeight: 700 }}>{b.userId?.name || b.userName}</td></tr>
                 <tr><td>Vehicle</td><td style={{ color: 'var(--neon-green)', fontWeight: 700 }}>{b.vehicleCategory || '—'}</td></tr>
                 <tr><td>Registration No.</td><td style={{ color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'monospace' }}>{b.registrationPending ? <span className="ag-badge unverified">Pending</span> : (b.vehicleNumber || '—')}</td></tr>
                 <tr><td>Slot</td><td style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>{b.slotId?.slotNumber}</td></tr>

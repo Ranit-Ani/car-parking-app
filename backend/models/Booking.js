@@ -7,6 +7,21 @@ const BookingSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'User is required'],
     },
+    // Snapshot of the booking user's name/email, captured at booking-creation
+    // time. Historical bookings must keep showing who made them even after
+    // the user account is later deleted (at which point `userId` still
+    // points at the (now-gone) id but populate() resolves to null). Staff/
+    // Admin UIs should fall back to these fields whenever that happens.
+    userName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    userEmail: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     slotId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ParkingSlot',

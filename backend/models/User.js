@@ -75,6 +75,19 @@ const UserSchema = new mongoose.Schema(
     isEmailVerified: { type: Boolean, default: false },
     profilePhoto: { type: String, default: null },
 
+    // Soft-delete: when a user deletes their own account (auth.controller's
+    // deleteAccount), we no longer remove the document — we anonymize it
+    // (name/email/password/vehicles wiped) and flag it here, instead of
+    // hard-deleting. This keeps every foreign-key-style reference elsewhere
+    // in the app (Booking.userId, etc.) valid and populate()-able, and
+    // avoids losing the ability to tell "this account existed and was
+    // deleted" apart from "this id was never a real account". Historical
+    // bookings additionally keep their own userName/userEmail snapshot
+    // (see Booking.js) taken at booking-creation time, so Staff/Admin still
+    // see the *original* name/email rather than the anonymized one.
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+
     // Bumped every time an admin changes this user's role/location (see
     // AdminService.updateUserRole / removeLocationStaff). The value at the
     // time a JWT was issued is baked into that token's payload; `protect`

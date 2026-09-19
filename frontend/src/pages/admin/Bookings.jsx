@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../../components/Layout';
 import InfiniteSentinel from '../../components/InfiniteSentinel';
-import { StatusBadge, EmptyState } from '../../components/Bits';
+import { StatusBadge, EmptyState, BookingUserInfo } from '../../components/Bits';
 import { useInfiniteList } from '../../lib/useInfiniteList';
 import { useRevalidate } from '../../lib/useRevalidate';
 import { formatDate, formatDateTime } from '../../lib/utils';
@@ -57,7 +57,7 @@ export default function AdminBookings() {
   const rows = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return all;
-    return all.filter((b) => b._id.toLowerCase().includes(q) || (b.userId?.name || '').toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
+    return all.filter((b) => b._id.toLowerCase().includes(q) || (b.userId?.name || b.userName || '').toLowerCase().includes(q) || (b.slotId?.slotNumber || '').toLowerCase().includes(q) || (b.vehicleNumber || '').toLowerCase().includes(q));
   }, [all, search]);
 
   function clearF() { setFStatus(''); setFDate(''); setSearch(''); }
@@ -105,7 +105,7 @@ export default function AdminBookings() {
               ) : rows.map((b) => (
                 <tr key={b._id}>
                   <td><span className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{b._id.slice(-8).toUpperCase()}</span></td>
-                  <td><strong>{b.userId?.name || '—'}</strong><br /><small style={{ color: 'var(--text-muted)' }}>{b.userId?.email || ''}</small></td>
+                  <td><BookingUserInfo booking={b} /></td>
                   <td>
                     <span className="font-mono" style={{ fontWeight: 700 }}>
                       {b.registrationPending ? <span className="ag-badge unverified">Pending</span> : (b.vehicleNumber || '—')}

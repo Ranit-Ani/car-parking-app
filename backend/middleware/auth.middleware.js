@@ -23,6 +23,14 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ success: false, code: 'USER_NOT_FOUND', message: 'User no longer exists.' });
     }
 
+    if (user.isDeleted) {
+      return res.status(401).json({
+        success: false,
+        code: 'ACCOUNT_DELETED',
+        message: 'This account has been deleted.',
+      });
+    }
+
     if (!user.isActive) {
       return res.status(401).json({
         success: false,

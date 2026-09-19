@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const ParkingLocation = require('../models/ParkingLocation');
 const { generateOTP, sendOTP } = require('../utils/emailService');
@@ -149,6 +150,9 @@ exports.login = async (req, res, next) => {
 
     if (!user.isEmailVerified)
       return next(new AppError('Please verify your email before logging in', 403));
+
+    if (user.isDeleted)
+      return next(new AppError('This account has been deleted.', 403));
 
     if (!user.isActive)
       return next(new AppError('Account has been deactivated. Contact admin.', 403));
@@ -354,7 +358,30 @@ exports.deleteAccount = async (req, res, next) => {
     if (!user) return next(new AppError('User not found', 404));
     if (!(await user.matchPassword(password)))
       return next(new AppError('Incorrect password', 400));
-    await User.findByIdAndDelete(req.user.id);
+
+    // Soft delete: anonymize the account instead of removing the document.
+    // A hard delete would leave `Booking.userId` pointing at nothing, so
+    // Staff/Admin could no longer tell who a historical booking belonged
+    // to. Wiping the personal fields here (rather than the row) satisfies
+    // the same "account is gone" intent while keeping that reference
+    // valid — and Bookings already carry their own userName/userEmail
+    // snapshot from creation time, so booking history still shows the
+    // user's *original* details, not "Deleted User".
+    user.name = 'Deleted User';
+    user.email = `deleted_${user._id}@deleted.local`;
+    user.password = crypto.randomBytes(32).toString('hex'); // unusable, re-hashed by the pre-save hook
+    user.profilePhoto = null;
+    user.vehicles = [];
+    user.otpCode = undefined;
+    user.otpExpiresAt = undefined;
+    user.otpPurpose = undefined;
+    user.otpNewEmail = undefined;
+    user.isActive = false;
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.tokenVersion = (user.tokenVersion || 0) + 1; // invalidate any other live sessions immediately
+    await user.save();
+
     res.json({ success: true, message: 'Account permanently deleted.' });
   } catch (err) { next(err); }
 };

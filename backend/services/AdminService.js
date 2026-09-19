@@ -147,7 +147,11 @@ class AdminService {
     // Only show accounts that actually completed OTP verification.
     // Records created by /register/initiate but never verified are
     // pending signups, not real users, and should not appear here.
-    const filter = { isEmailVerified: true };
+    // Soft-deleted accounts (see User.isDeleted) are excluded too — their
+    // personal fields have been anonymized, so they'd otherwise show up
+    // here as a confusing "Deleted User" row; their bookings remain
+    // visible elsewhere via the userName/userEmail snapshot on Booking.
+    const filter = { isEmailVerified: true, isDeleted: { $ne: true } };
     if (role && ['admin', 'staff', 'user'].includes(role)) filter.role = role;
 
     if (locationId && filter.role === 'staff') {
