@@ -54,6 +54,13 @@ class BookingService {
     // (awaiting check-in) at a time. Once that booking becomes "Active"
     // (checked in), they're free to create another — for a new or
     // different saved vehicle.
+    //
+    // Self-heal first (see the comment on getUserBookings/expireStaleBookings):
+    // without this, a booking that's actually past its 1-hour window but
+    // hasn't been swept by the cron job yet (e.g. the server was asleep)
+    // would wrongly count as "awaiting check-in" and block a brand new
+    // booking the user is otherwise entitled to make.
+    await this.expireStaleBookings();
     const hasBooked = await Booking.hasBookedBooking(userId);
     if (hasBooked) {
       const err = new Error('You already have a booking awaiting check-in. Please check in or cancel it first.');
@@ -306,6 +313,19 @@ class BookingService {
   async getUserBookings(userId, opts = {}) {
     const { page = 1, limit = 20, status } = opts;
     const skip = (page - 1) * limit;
+
+    // Self-heal: the cron job in server.js (see expireStaleBookings) only
+    // runs while the Node process is alive. On free-tier hosts that spin
+    // the process down after a period of inactivity, the cron simply stops
+    // ticking — a stale "Booked" booking then keeps showing as booked
+    // indefinitely, to everyone, until *something* wakes the process back
+    // up. Rather than rely purely on that background timer, we also sweep
+    // for stale bookings right here, so the very request that wakes the
+    // process (e.g. a user opening the app) immediately sees correct data
+    // instead of waiting for the next cron tick (or forever, if the
+    // process goes back to sleep before that tick fires).
+    await this.expireStaleBookings();
+
     const query = { userId };
     if (status) query.status = status;
 

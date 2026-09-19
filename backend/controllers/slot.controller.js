@@ -1,4 +1,5 @@
 const ParkingSlot = require('../models/ParkingSlot');
+const BookingService = require('../services/BookingService');
 
 /**
  * SlotController - Handles parking slot operations for users
@@ -7,6 +8,15 @@ class SlotController {
   // GET /api/slots - Get all available slots (paginated)
   async getAvailableSlots(req, res, next) {
     try {
+      // Self-heal (see BookingService.getUserBookings) — the auto-expiry
+      // cron only runs while the process is alive, so on free-tier hosts
+      // that spin the process down when idle, a stale "Booked" booking's
+      // slot can be stuck showing as unavailable long after its 1-hour
+      // window passed. Sweeping here means the very request that wakes
+      // the process (e.g. someone opening the app) immediately sees the
+      // slot released, instead of waiting on the next cron tick.
+      await BookingService.expireStaleBookings();
+
       const { type, location, locationId } = req.query;
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
@@ -42,6 +52,9 @@ class SlotController {
   // GET /api/slots/all - Get all slots (with status), paginated
   async getAllSlots(req, res, next) {
     try {
+      // Self-heal — see getAvailableSlots() above.
+      await BookingService.expireStaleBookings();
+
       const { status, type, search, locationId } = req.query;
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
@@ -92,6 +105,12 @@ class SlotController {
   // GET /api/slots/stats
   async getSlotStats(req, res, next) {
     try {
+      // Self-heal — see getAvailableSlots() above. This endpoint is public
+      // and unauthenticated (no `protect`), so it's often the very first
+      // request the landing page makes — a good place to catch up if the
+      // process just woke from being idle.
+      await BookingService.expireStaleBookings();
+
       const stats = await ParkingSlot.getSlotStats();
       res.json({ success: true, data: stats });
     } catch (err) {

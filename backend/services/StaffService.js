@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const ParkingSlot = require('../models/ParkingSlot');
 const Revenue = require('../models/Revenue');
 const BillingService = require('./BillingService');
+const BookingService = require('./BookingService');
 const { getIO } = require('../socket');
 const { parseQrPayload, tokensMatch } = require('../utils/qrCode');
 
@@ -224,6 +225,13 @@ class StaffService {
    * @returns {Promise<{bookings: Booking[], total: number}>}
    */
   async getActiveBookings(opts = {}) {
+    // Self-heal (see BookingService.getUserBookings for the full
+    // explanation): the cron-driven auto-expiry only runs while the
+    // process is alive, so a page load is also a good moment to sweep for
+    // any stale "Booked" bookings that were missed while the process was
+    // asleep, before returning results.
+    await BookingService.expireStaleBookings();
+
     const { page = 1, limit = 30, locationId } = opts;
     const skip = (page - 1) * limit;
     const query = { status: { $in: ['Booked', 'Active'] } };
@@ -253,6 +261,9 @@ class StaffService {
    * @returns {Promise<{bookings: Booking[], total: number}>}
    */
   async getAllBookings(filters = {}) {
+    // Self-heal — see getActiveBookings() above.
+    await BookingService.expireStaleBookings();
+
     const { page = 1, limit = 30 } = filters;
     const skip = (page - 1) * limit;
     const query = {};
@@ -286,6 +297,11 @@ class StaffService {
    * @param {string|null} [locationId]
    */
   async getSlotStats(locationId = null) {
+    // Self-heal — see getActiveBookings() above. Without this, the slot
+    // status matrix could still show a slot as "Booked/Occupied" for a
+    // booking that's actually past its 1-hour window, until the cron (or
+    // some other request) catches up.
+    await BookingService.expireStaleBookings();
     return ParkingSlot.getSlotStats(locationId || undefined);
   }
 }

@@ -3,6 +3,7 @@ const ParkingSlot = require('../models/ParkingSlot');
 const ParkingLocation = require('../models/ParkingLocation');
 const Booking = require('../models/Booking');
 const Revenue = require('../models/Revenue');
+const BookingService = require('./BookingService');
 const { getIO } = require('../socket');
 
 function parseAmenities(amenities) {
@@ -47,6 +48,12 @@ function invalidateUserSession(userId, code, message) {
 class AdminService {
   // ─── Dashboard Stats ─────────────────────────────────────────────────────────
   async getDashboardStats() {
+    // Self-heal (see BookingService.getUserBookings) — the auto-expiry
+    // cron only runs while the process is alive, so a dashboard load is
+    // also a good moment to sweep for stale "Booked" bookings the cron
+    // may have missed, so "Active Bookings" and occupancy % stay accurate.
+    await BookingService.expireStaleBookings();
+
     const [slotStats, revenue, activeBookings, totalUsers] = await Promise.all([
       ParkingSlot.getSlotStats(),
       Booking.getRevenue(),
