@@ -82,6 +82,22 @@ export function AuthProvider({ children }) {
     refreshingRef.current = true;
     try {
       const d = await apiRequest('/auth/me');
+      // Guard against a race: on a slow connection (a cold-started free-tier
+      // backend can easily take 30-60s to answer its very first request),
+      // this call can still be in flight when the person is logged out for
+      // an unrelated reason — a genuinely expired token rejected by some
+      // other, faster request, or the person tapping "Log out" themselves.
+      // That logout already cleared the token and sent them to a public
+      // page (Login/Landing). If we then blindly apply THIS request's
+      // success response, we'd write the session back to localStorage and
+      // call setUser() again — silently "logging them back in" on a page
+      // that's supposed to be for logged-out visitors. AppShell's
+      // AIChatWidget checks `user` to decide whether to render, so the
+      // visible symptom is exactly that: the assistant widget "appearing on
+      // the landing page" a few seconds after the person was already
+      // logged out, right when this slow, stale request finally resolves.
+      // Bailing here if the token has since disappeared closes that gap.
+      if (!getToken()) return;
       if (d && d.success && d.user) {
         const merged = { ...getUser(), ...d.user };
         localStorage.setItem('agp_user', JSON.stringify(merged));
