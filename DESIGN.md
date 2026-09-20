@@ -163,6 +163,23 @@ A pill badge with a small solid dot (`::before`) in `currentColor`, uppercase Sy
 | `.user` | pulse | Role: user |
 | `.verified` / `.unverified` | aurora / nova | Email verification state |
 
+> **Who actually sees each badge:** the shared `<StatusBadge>` component is reused for two *different* status fields, and the audience differs accordingly:
+> - **Booking status** (`Booked`/`Active`/`Completed`/`Cancelled`/`Expired`) — shown on User Dashboard/Bookings, Staff Dashboard/Bookings, and Admin Bookings. `.occupied` never appears here — it isn't a valid `Booking.status` value.
+> - **Slot status** (`Available`/`Booked`/`Occupied`/`Maintenance`) — shown per-slot **only on the Admin → Slots page**. Staff/Admin dashboards show an *aggregate count* of occupied slots (a stat tile), not a per-slot badge. Regular users never see slot status at all — `GET /api/slots` (used by Nearby Parking) only ever returns `Available` slots, so an "Occupied" badge is something only Admin ever actually looks at.
+
+```mermaid
+flowchart TD
+    Slot["ParkingSlot.status\n(Available/Booked/Occupied/Maintenance)"] --> AdminSlots["Admin → Slots page\nper-slot badge (everyone incl. Occupied)"]
+    Slot --> Counts["Staff/Admin Dashboard\naggregate count only\n('Occupied Now: 3')"]
+    Slot -.->|"GET /api/slots\n(filter: status=Available only)"| UserView["User → Nearby Parking\nsees ONLY Available slots"]
+
+    Booking["Booking.status\n(Booked/Active/Completed/Cancelled/Expired)"] --> UserBk["User Dashboard/Bookings"]
+    Booking --> StaffBk["Staff Dashboard/Bookings"]
+    Booking --> AdminBk["Admin Bookings"]
+
+    style UserView stroke-dasharray: 5 5
+```
+
 **Status badges, shown in their actual colors:**
 
 ```mermaid
