@@ -4,8 +4,32 @@ This is a catalogue of the business rules actually enforced in code (not aspirat
 
 ## Booking rules
 
+```mermaid
+flowchart TD
+    Start(["User: Book a slot"]) --> Sweep["Self-heal:\nexpireStaleBookings()"]
+    Sweep --> Check{"User already has a\nBooked booking? (Rule 1)"}
+    Check -->|yes| Reject1["❌ Reject:\nawaiting check-in already"]
+    Check -->|no| Claim["Atomic claim:\nfindOneAndUpdate(Available→Booked) (Rule 4)"]
+    Claim --> Claimed{"Claim\nsucceeded?"}
+    Claimed -->|no, lost race / not available| Reject2["❌ Reject: slot unavailable"]
+    Claimed -->|yes| Create["Create Booking doc\nstatus=Booked, expiresAt=+1hr"]
+    Create --> Fail{"Creation\nfailed?"}
+    Fail -->|yes| Rollback["Rollback slot\nback to Available"]
+    Fail -->|no| Done(["✅ Booking created\nQR token issued"])
+```
+
 **Rule 1 — One active "awaiting check-in" booking per user.**
 A user may hold at most one booking in `Booked` status at a time. Once that booking is checked in (becomes `Active`), the user is free to create another booking (e.g. for a second vehicle). Enforced in `BookingService.createBooking` via `Booking.hasBookedBooking(userId)`, checked *after* a self-heal expiry sweep so a booking that's actually stale (but not yet swept by the cron job) doesn't wrongly block a new one.
+
+```mermaid
+flowchart LR
+    Booked["Status: Booked\nexpiresAt = now + 1hr"] --> Cron["node-cron\nevery 1 minute"]
+    Booked --> SelfHeal["Self-heal sweep\n(inline on createBooking /\ngetUserBookings)"]
+    Cron --> Sweep{"now >= expiresAt?"}
+    SelfHeal --> Sweep
+    Sweep -->|yes| Expire["status → Expired\nslot → Available"]
+    Sweep -->|no| Wait["still valid, wait"]
+```
 
 **Rule 2 — 1-hour check-in window, then auto-expiry.**
 A `Booked` booking must be checked in within 1 hour (`BOOKED_TTL_MS = 60 * 60 * 1000`) or it is automatically marked `Expired`, and its slot is released back to `Available`. Enforced by:
@@ -41,13 +65,46 @@ A brand-new, not-yet-registered vehicle can be booked/saved with `registrationPe
 
 ## Billing rules
 
+```mermaid
+flowchart LR
+    In["checkInTime"] --> Dur["duration = checkOutTime - checkInTime"]
+    Dur --> Hours["rawHours = duration / 1hr"]
+    Hours --> Round["roundedHours = ceil(rawHours)\nminimum 1 hour"]
+    Round --> Amount["totalAmount = roundedHours × slot.hourlyRate"]
+    Amount --> Bill(["Bill generated\n+ Revenue ledger entry"])
+```
+
 **Rule 10 — Round up to the next full hour, 1-hour minimum.**
 Billing = `ceil(durationHours)` (minimum 1 hour) × the slot's `hourlyRate` at checkout time. A 61-minute stay is billed as 2 hours; a 10-minute stay is billed as 1 hour. Enforced in `BillingService.calculateBill` (instantiated per hourly rate; not a static/global calculation, so slot-specific rates are always respected). Checkout time cannot be before check-in time (`BillingService.getDurationMs` throws otherwise).
 
 ## Access-control / multi-location rules
 
+```mermaid
+flowchart TD
+    Req["Staff action on a booking\n(check-in, check-out, cancel)"] --> HasLoc{"staffLocationId\npassed? (admin = none)"}
+    HasLoc -->|no, admin| Allow1["✅ Allowed\n(no location restriction)"]
+    HasLoc -->|yes, staff| Match{"booking.locationId\n== staffLocationId?"}
+    Match -->|yes| Allow2["✅ Allowed"]
+    Match -->|no| Deny["❌ 403: belongs to\na different location"]
+```
+
 **Rule 11 — Staff are pinned to exactly one location.**
 `User.locationId` is set only for `role: 'staff'`. Every staff-facing service method that touches a booking or slot accepts a `staffLocationId` and rejects operations on data belonging to a different location (`403`). Admins bypass this by not passing a `staffLocationId`. Enforced in `StaffService.checkIn/checkOut`, `BookingService.cancelBooking`, and location-scoped queries in `staff.controller`/`AdminService`.
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant DB as MongoDB (User doc)
+    participant Old as Old session (JWT v1)
+    participant Mid as protect() middleware
+
+    Admin->>DB: updateUserRole() / addLocationStaff()
+    DB->>DB: tokenVersion += 1
+    Note over Old: token still validly signed,\nnot expired
+    Old->>Mid: any request with old JWT (tokenVersion=1)
+    Mid->>DB: read current tokenVersion (now 2)
+    Mid-->>Old: 401 SESSION_INVALIDATED\n(forced re-login)
+```
 
 **Rule 12 — Role/location changes force re-login.**
 Whenever an admin changes a user's `role` or a staff member's `locationId` (`AdminService.updateUserRole`, `addLocationStaff`, `removeLocationStaff`), the target user's `tokenVersion` is incremented. `auth.middleware.protect` compares the JWT's baked-in `tokenVersion` against the current DB value on every request and rejects the request (`SESSION_INVALIDATED`, 401) if they differ — even though the token itself is still validly signed and unexpired. This is what actually revokes an already-issued session the moment permissions change.
@@ -73,6 +130,17 @@ Each intent in `ai/config/intents.json` declares which roles may trigger it (`ro
 The intent classifier only acts on a prediction if its confidence clears `confidence_threshold` (0.35 in `ai/config/intents.json`); otherwise it should fall back to a default/clarifying response rather than guessing an intent.
 
 ## QR check-in rules
+
+```mermaid
+flowchart TD
+    Create["Booking created"] --> Token["qrToken generated\nqrUsed = false"]
+    Token --> Scan["Staff scans QR at gate"]
+    Scan --> Verify{"Token matches\n& qrUsed == false?"}
+    Verify -->|no, already used\nor invalid| Reject["❌ Reject scan"]
+    Verify -->|yes| CheckIn["Check-in succeeds\nqrUsed = true, qrUsedAt = now"]
+    CheckIn --> Replay["Same QR scanned again"]
+    Replay --> Verify
+```
 
 **Rule 19 — QR tokens are single-use.**
 Each booking is issued a random `qrToken` at creation time. On successful QR-based check-in, `qrUsed` is set `true` and `qrUsedAt` is recorded — so a screenshotted/reused QR code cannot check in twice, even though the manual check-in flow never touches these fields (the two flows are independent but converge on the same booking state machine).

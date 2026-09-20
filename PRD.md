@@ -34,6 +34,32 @@ A full-stack web + Android app for managing parking slots across one or more phy
 
 A user's JWT bakes in a `tokenVersion`; if an admin changes a user's role/location, their existing session is invalidated server-side on the next request (forcing re-login) rather than waiting for token expiry.
 
+```mermaid
+flowchart TD
+    Role[["Role"]]
+    Role --> User["User\n(general public)"]
+    Role --> Staff["Staff\n(one ParkingLocation)"]
+    Role --> Admin["Admin\n(system-wide)"]
+
+    User --> U1["Register / login (OTP)"]
+    User --> U2["Manage profile & vehicles"]
+    User --> U3["Find nearby parking"]
+    User --> U4["Book a slot"]
+    User --> U5["View/cancel bookings, QR, receipt"]
+    User --> U6["AI assistant + support"]
+
+    Staff --> S1["Manual + QR check-in/out"]
+    Staff --> S2["View/cancel bookings\n(own location only)"]
+    Staff --> S3["Location-scoped dashboard"]
+    Staff --> S4["AI assistant\n(locked to own location)"]
+
+    Admin --> A1["Everything Staff can do,\nsystem-wide"]
+    Admin --> A2["Manage locations, slots, pricing"]
+    Admin --> A3["Manage staff assignment"]
+    Admin --> A4["Manage users & roles"]
+    Admin --> A5["Revenue reports\n(overall + per-location)"]
+```
+
 ## 5. Key Features (as implemented)
 
 ### 5.1 Authentication & Account
@@ -62,6 +88,26 @@ A user's JWT bakes in a `tokenVersion`; if an admin changes a user's role/locati
 - Cancellation is only allowed before check-in.
 - Every booking gets a single-use QR token at creation time for the QR check-in flow (separate from, and additive to, the manual check-in flow).
 - Users can download a PDF receipt and fetch their booking's QR code image.
+
+```mermaid
+journey
+    title End-to-end user journey: find & use a parking slot
+    section Discover
+      Register / log in: 5: User
+      Search nearby parking: 4: User
+      Pick a location on the map: 5: User
+    section Book
+      Choose a vehicle (saved or new): 4: User
+      Book an available slot: 5: User
+      Receive QR code: 5: User
+    section Park
+      Arrive, staff checks in (manual or QR): 4: User, Staff
+      Slot marked Occupied: 3: Staff
+    section Leave
+      Staff checks out: 4: Staff
+      Bill auto-calculated: 5: Staff
+      Download PDF receipt: 5: User
+```
 
 ### 5.5 Check-In / Check-Out (Staff)
 - Manual check-in/check-out by staff (location-scoped — a staff member can only act on bookings belonging to their assigned location; admins are unrestricted).
