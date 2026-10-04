@@ -82,7 +82,12 @@ export default function Landing() {
               <Link to="/login" className="btn-ag plasma lg"><i className="bi bi-shield-check" /> Authenticate</Link>
               <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
             </div>
+          </div>
 
+          <div className="hero-visual">
+            <div className="hero-visual-car">
+              <HeroCar />
+            </div>
             <div className="hero-stats">
               <div>
                 <div className="font-orbit hero-stat-num" style={{ color: 'var(--plasma)' }}>{stats.total}</div>
@@ -97,10 +102,6 @@ export default function Landing() {
                 <div className="hero-stat-label">In Use</div>
               </div>
             </div>
-          </div>
-
-          <div className="hero-visual">
-            <HeroCar />
           </div>
         </div>
       </section>

@@ -450,7 +450,11 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .hero-stats{display:flex;gap:3rem;margin-top:2.5rem;flex-wrap:wrap;animation:fadeUp .7s .4s both}
 .hero-stat-num{font-size:1.9rem;font-weight:900}
 .hero-stat-label{font-family:'Syne',sans-serif;font-size:.65rem;color:var(--t2);letter-spacing:.12em;text-transform:uppercase;margin-top:.2rem}
-.hero-visual{min-width:0;display:flex;align-items:center;justify-content:center}
+.hero-visual{min-width:0;display:flex;flex-direction:column;align-items:stretch;align-self:stretch}
+.hero-visual-car{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}
+/* Stats sit under the car, on the same row as the CTA buttons */
+.hero-visual .hero-stats{margin-top:1rem;justify-content:center;flex-wrap:nowrap;gap:3rem}
+.hero-visual .hero-stats>div{text-align:center}
 
 /* ── Hero car: drive in, reverse-park, wait, pull out (transform + opacity only) ──
    One 19s loop. Timeline (s): 0–4 drive in and brake · 4–4.8 stopped ·
@@ -550,13 +554,14 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 }
 /* Wider scene than the column on large screens: let it bleed into the page margin so the car stays close to its previous size. */
 @media(min-width:1025px){
-  .hero-visual{justify-content:flex-start}
+  .hero-visual-car{justify-content:flex-start}
   .hero-car{--bleed:min(100px,calc(max(100vw - 1200px,0px)/2 + 12px));width:calc(100% + var(--bleed));max-width:none;margin-right:calc(-1 * var(--bleed))}
 }
 @media(max-width:1024px){
   .hero-section{padding:5.5rem 1.25rem 1rem}
   .hero-inner{gap:1.5rem;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
   .hero-stats{gap:1.75rem;margin-top:2.5rem}
+  .hero-visual .hero-stats{gap:1.75rem;margin-top:1rem}
 }
 @media(max-width:768px){
   .hero-section{padding:5.5rem 1.1rem 1.5rem}
@@ -574,7 +579,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   .hero-car{margin:0 auto}
 }
 @media(max-width:420px){
-  .hero-stats{gap:1.4rem}
+  .hero-stats,.hero-visual .hero-stats{gap:1.4rem}
   .hero-stat-num{font-size:1.6rem}
 }
 @media (prefers-reduced-motion: reduce){
