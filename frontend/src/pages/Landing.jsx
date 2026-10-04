@@ -11,6 +11,7 @@ export default function Landing() {
   const [stats, setStats] = useState({ total: '--', avail: '--', occ: '--' });
   const [legalOpen, setLegalOpen] = useState(null); // 'about' | 'privacy' | 'terms' | null
   const [helpOpen, setHelpOpen] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(0);
 
   // Checked during render (not in an effect) so a logged-in user is sent
   // straight to <Navigate> before the landing markup ever paints — an
@@ -68,6 +69,7 @@ export default function Landing() {
         </div>
       </nav>
 
+      <main className="pub-body">
       <section className="hero-section">
         <div className="hero-inner">
           <div className="hero-copy">
@@ -141,6 +143,133 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── HOW IT WORKS ── */}
+      <section className="lp-section">
+        <div className="lp-head">
+          <span className="lp-eyebrow">HOW IT WORKS</span>
+          <h2 className="lp-title display-title">From Search to Parked in 4 Steps</h2>
+          <p className="lp-lead">No queues, no guesswork. Here is what a typical visit looks like.</p>
+        </div>
+        <div className="lp-steps">
+          {[
+            ['01', 'bi-person-check-fill', 'Create Your Account', 'Sign up once and verify with an email OTP. Your single account works at every location.'],
+            ['02', 'bi-geo-alt-fill', 'Find a Location', 'Browse the map or use Nearby Parking to see live availability and get turn-by-turn navigation.'],
+            ['03', 'bi-calendar-check-fill', 'Book Your Slot', 'Pick a free slot, enter your vehicle details and confirm. The slot is reserved for you instantly.'],
+            ['04', 'bi-qr-code-scan', 'Park & Check Out', 'Check in with your QR code, park, and pay through automated billing when you leave.'],
+          ].map(([n, icon, t, d]) => (
+            <div className="lp-step" key={n}>
+              <div className="lp-step-num font-orbit">{n}</div>
+              <div className="lp-step-icon"><i className={`bi ${icon}`} /></div>
+              <h5>{t}</h5>
+              <p>{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── HIGHLIGHT BAND ── */}
+      <section className="lp-section">
+        <div className="lp-band">
+          <div className="lp-band-item">
+            <i className="bi bi-lightning-charge-fill" style={{ color: 'var(--plasma)' }} />
+            <div className="font-orbit lp-band-big">Real-time</div>
+            <div className="lp-band-small">Slot availability updates live</div>
+          </div>
+          <div className="lp-band-item">
+            <i className="bi bi-qr-code" style={{ color: 'var(--aurora)' }} />
+            <div className="font-orbit lp-band-big">QR Check-in</div>
+            <div className="lp-band-small">Fast entry and exit for drivers</div>
+          </div>
+          <div className="lp-band-item">
+            <i className="bi bi-robot" style={{ color: '#a78bfa' }} />
+            <div className="font-orbit lp-band-big">AI Assistant</div>
+            <div className="lp-band-small">Instant help once you sign in</div>
+          </div>
+          <div className="lp-band-item">
+            <i className="bi bi-phone-fill" style={{ color: 'var(--solar)' }} />
+            <div className="font-orbit lp-band-big">Any Device</div>
+            <div className="lp-band-small">Mobile, tablet and desktop ready</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── BUILT FOR EVERYONE ── */}
+      <section className="lp-section">
+        <div className="lp-head">
+          <span className="lp-eyebrow">BUILT FOR EVERYONE</span>
+          <h2 className="lp-title display-title">One Platform, Three Portals</h2>
+          <p className="lp-lead">Every role gets a dashboard designed around what they actually need to do.</p>
+        </div>
+        <div className="lp-roles">
+          {[
+            ['Drivers', 'bi-car-front-fill', 'var(--plasma)', ['Discover nearby locations on the map', 'Book a slot in a few taps', 'Track every booking and receipt', 'Navigate straight to the location']],
+            ['Staff', 'bi-person-badge-fill', 'var(--aurora)', ['Check vehicles in and out', 'Scan driver QR codes', 'Manage slots at their location', 'See live bookings as they happen']],
+            ['Admins', 'bi-speedometer2', '#a78bfa', ['Oversee every location in one place', 'Manage users, staff and slots', 'Monitor bookings and revenue', 'Per-location revenue breakdown']],
+          ].map(([name, icon, color, items]) => (
+            <div className="lp-role" key={name}>
+              <div className="lp-role-icon" style={{ color }}><i className={`bi ${icon}`} /></div>
+              <h4 style={{ color }}>{name}</h4>
+              <ul>
+                {items.map((it) => (
+                  <li key={it}><i className="bi bi-check2-circle" style={{ color }} /> {it}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── BILLING ── */}
+      <section className="lp-section">
+        <div className="lp-billing">
+          <div className="lp-billing-copy">
+            <span className="lp-eyebrow">TRANSPARENT BILLING</span>
+            <h2 className="lp-title display-title" style={{ textAlign: 'left' }}>Pay for What You Use, Nothing More</h2>
+            <p className="lp-lead" style={{ textAlign: 'left', margin: '0 0 1.2rem' }}>
+              Billing is calculated automatically from your check-in and check-out time, using the same rules at every
+              location, so the amount you see is the amount you pay.
+            </p>
+            <ul className="lp-billing-list">
+              <li><i className="bi bi-check2-circle" /> Minimum charge of 1 hour</li>
+              <li><i className="bi bi-check2-circle" /> Time is rounded up to the next full hour</li>
+              <li><i className="bi bi-check2-circle" /> Same billing engine across the whole network</li>
+              <li><i className="bi bi-check2-circle" /> Receipts saved in your booking history</li>
+            </ul>
+          </div>
+          <div className="lp-billing-card">
+            <div className="lp-billing-row"><span>Parked for</span><b>25 minutes</b><em>billed as 1 hour</em></div>
+            <div className="lp-billing-row"><span>Parked for</span><b>1 h 10 min</b><em>billed as 2 hours</em></div>
+            <div className="lp-billing-row"><span>Parked for</span><b>3 h 00 min</b><em>billed as 3 hours</em></div>
+            <div className="lp-billing-note">Examples of the round-up rule. Your location's hourly rate applies.</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="lp-section">
+        <div className="lp-head">
+          <span className="lp-eyebrow">FAQ</span>
+          <h2 className="lp-title display-title">Questions? We Have Answers</h2>
+        </div>
+        <div className="lp-faq">
+          {[
+            ['Do I need a separate account for each location?', 'No. One account works at every location in the network. Sign in once and book anywhere.'],
+            ['How do I sign in?', 'Register with your email and verify it with a one-time password (OTP). After that you can sign in and manage everything from your dashboard.'],
+            ['How is my parking fee calculated?', 'From your check-in to your check-out time, with a minimum of 1 hour and the time rounded up to the next full hour. The rule is the same at every location.'],
+            ['Can I see my past bookings?', 'Yes. Your booking history shows each booking, its check-in and check-out time and your receipt, across all locations.'],
+            ['Is there help if I get stuck?', 'Use Help & Support at the bottom of this page. Once you are signed in, the AI Assistant can also answer questions about parking and bookings.'],
+          ].map(([q, a], i) => (
+            <div className={`lp-faq-item${faqOpen === i ? ' open' : ''}`} key={q}>
+              <button type="button" className="lp-faq-q" onClick={() => setFaqOpen(faqOpen === i ? -1 : i)} aria-expanded={faqOpen === i}>
+                <span>{q}</span>
+                <i className="bi bi-chevron-down" />
+              </button>
+              {faqOpen === i && <div className="lp-faq-a">{a}</div>}
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0', textAlign: 'center' }}>
         <div style={{ maxWidth: 680, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
           <h2 className="hero-title display-title" style={{ fontSize: 'clamp(1.5rem,3.5vw,2.4rem)', marginBottom: '.9rem' }}>
@@ -170,6 +299,9 @@ export default function Landing() {
         </div>
       </section>
 
+      </main>
+
+      <div className="pub-footer-zone">
       <section className="pub-support">
         <div className="pub-support-links">
           <button type="button" className="pub-support-link" onClick={() => setLegalOpen('about')}>About</button>
@@ -188,6 +320,7 @@ export default function Landing() {
           <span className="pub-footer-credit">Built by Ranit Pramanick</span>
         </div>
       </footer>
+      </div>
 
       {/* Public Landing page: no AI Assistant here (it's already gated to
           logged-in users only in AIChatWidget), just the plain support
