@@ -284,17 +284,15 @@ export default function Landing() {
         </div>
       </section>
 
-      <section style={{ position: 'relative', zIndex: 1, padding: '3rem 1.5rem 0', textAlign: 'center' }}>
-        <div style={{ maxWidth: 820, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
-          <p style={{ fontSize: '.95rem', color: 'var(--t2)', lineHeight: 1.8 }}>
-            Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
-            convenient, and efficient parking experience for users, staff, and administrators. Users can
-            discover nearby locations, check available slots, and make bookings with ease. Staff can manage slots
-            and handle check-ins and check-outs, while administrators oversee locations, users, staff, and revenue
-            from a centralized dashboard — all through a real-time, responsive interface across mobile, desktop,
-            and tablet devices.
-          </p>
-        </div>
+      <section className="lp-section lp-about">
+        <p>
+          Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
+          convenient, and efficient parking experience for users, staff, and administrators. Users can
+          discover nearby locations, check available slots, and make bookings with ease. Staff can manage slots
+          and handle check-ins and check-outs, while administrators oversee locations, users, staff, and revenue
+          from a centralized dashboard — all through a real-time, responsive interface across mobile, desktop,
+          and tablet devices.
+        </p>
       </section>
 
       </main>
