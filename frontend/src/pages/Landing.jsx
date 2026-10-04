@@ -245,43 +245,41 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── FAQ ── */}
+      {/* ── CTA (left) + FAQ (right) ── */}
       <section className="lp-section">
-        <div className="lp-head">
-          <span className="lp-eyebrow">FAQ</span>
-          <h2 className="lp-title display-title">Questions? We Have Answers</h2>
-        </div>
-        <div className="lp-faq">
-          {[
-            ['Do I need a separate account for each location?', 'No. One account works at every location in the network. Sign in once and book anywhere.'],
-            ['How do I sign in?', 'Register with your email and verify it with a one-time password (OTP). After that you can sign in and manage everything from your dashboard.'],
-            ['How is my parking fee calculated?', 'From your check-in to your check-out time, with a minimum of 1 hour and the time rounded up to the next full hour. The rule is the same at every location.'],
-            ['Can I see my past bookings?', 'Yes. Your booking history shows each booking, its check-in and check-out time and your receipt, across all locations.'],
-            ['Is there help if I get stuck?', 'Use Help & Support at the bottom of this page. Once you are signed in, the AI Assistant can also answer questions about parking and bookings.'],
-          ].map(([q, a], i) => (
-            <div className={`lp-faq-item${faqOpen === i ? ' open' : ''}`} key={q}>
-              <button type="button" className="lp-faq-q" onClick={() => setFaqOpen(faqOpen === i ? -1 : i)} aria-expanded={faqOpen === i}>
-                <span>{q}</span>
-                <i className="bi bi-chevron-down" />
-              </button>
-              {faqOpen === i && <div className="lp-faq-a">{a}</div>}
+        <div className="lp-split">
+          <div className="lp-cta">
+            <span className="lp-eyebrow">GET STARTED</span>
+            <h2 className="lp-title display-title" style={{ textAlign: 'left' }}>Ready to Park Smarter?</h2>
+            <p className="lp-lead" style={{ textAlign: 'left', margin: '0 0 2rem' }}>
+              Join users who choose ParkPoint for a faster, simpler, and smarter parking experience.
+            </p>
+            <div className="hero-actions" style={{ justifyContent: 'flex-start' }}>
+              <Link to="/login" className="btn-ag primary lg">
+                <i className="bi bi-p-square-fill" /> Book Your First Slot
+              </Link>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
 
-      <section style={{ position: 'relative', zIndex: 1, padding: '4rem 1.5rem 0', textAlign: 'center' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto', animation: 'fadeUp .65s ease both' }}>
-          <h2 className="hero-title display-title" style={{ fontSize: 'clamp(1.5rem,3.5vw,2.4rem)', marginBottom: '.9rem' }}>
-            Ready to Park Smarter?
-          </h2>
-          <p className="hero-sub" style={{ marginBottom: '2.2rem' }}>
-            Join users who choose ParkPoint for a faster, simpler, and smarter parking experience.
-          </p>
-          <div className="hero-actions">
-            <Link to="/login" className="btn-ag primary lg">
-              <i className="bi bi-p-square-fill" /> Book Your First Slot
-            </Link>
+          <div className="lp-faq-col">
+            <h3 className="lp-faq-title">Frequently Asked Questions</h3>
+            <div className="lp-faq">
+              {[
+                ['Do I need a separate account for each location?', 'No. One account works at every location in the network. Sign in once and book anywhere.'],
+                ['How do I sign in?', 'Register with your email and verify it with a one-time password (OTP). After that you can sign in and manage everything from your dashboard.'],
+                ['How is my parking fee calculated?', 'From your check-in to your check-out time, with a minimum of 1 hour and the time rounded up to the next full hour. The rule is the same at every location.'],
+                ['Can I see my past bookings?', 'Yes. Your booking history shows each booking, its check-in and check-out time and your receipt, across all locations.'],
+                ['Is there help if I get stuck?', 'Use Help & Support at the bottom of this page. Once you are signed in, the AI Assistant can also answer questions about parking and bookings.'],
+              ].map(([q, a], i) => (
+                <div className={`lp-faq-item${faqOpen === i ? ' open' : ''}`} key={q}>
+                  <button type="button" className="lp-faq-q" onClick={() => setFaqOpen(faqOpen === i ? -1 : i)} aria-expanded={faqOpen === i}>
+                    <span>{q}</span>
+                    <i className="bi bi-chevron-down" />
+                  </button>
+                  {faqOpen === i && <div className="lp-faq-a">{a}</div>}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

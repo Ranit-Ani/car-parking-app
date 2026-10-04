@@ -826,3 +826,15 @@ body.nav-locked{overflow:hidden;height:100vh}
   .lp-billing-row{grid-template-columns:1fr auto}
   .lp-billing-row em{grid-column:1/-1;text-align:left}
 }
+
+/* ── Landing: CTA + FAQ side by side ── */
+.lp-split{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(2rem,5vw,4.5rem);align-items:start}
+.lp-cta{position:sticky;top:6rem;padding:2.2rem 0}
+.lp-faq-title{font-family:'Exo 2',sans-serif;font-size:1.05rem;letter-spacing:.05em;margin:0 0 1.1rem;color:var(--t1)}
+.lp-split .lp-faq{max-width:none;margin:0}
+@media(max-width:860px){
+  .lp-split{grid-template-columns:minmax(0,1fr)}
+  .lp-cta{position:static;padding:0;text-align:center}
+  .lp-cta .lp-title,.lp-cta .lp-lead{text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+  .lp-cta .hero-actions{justify-content:center!important}
+}
