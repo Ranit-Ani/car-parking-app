@@ -3,7 +3,6 @@ import { AuthProvider } from './context/AuthContext';
 import { NavProvider } from './context/NavContext';
 import RequireAuth from './components/RequireAuth';
 import AppShell from './components/AppShell';
-import CursorEffect from './components/CursorEffect';
 import ToastHost from './components/ToastHost';
 import SessionExpiredOverlay from './components/SessionExpiredOverlay';
 
@@ -35,7 +34,6 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <NavProvider>
-        <CursorEffect />
         <ToastHost />
         <SessionExpiredOverlay />
         <AppShell>
