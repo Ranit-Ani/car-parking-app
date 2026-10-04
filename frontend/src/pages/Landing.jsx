@@ -146,7 +146,6 @@ export default function Landing() {
       {/* ── HOW IT WORKS ── */}
       <section className="lp-section">
         <div className="lp-head">
-          <span className="lp-eyebrow">HOW IT WORKS</span>
           <h2 className="lp-title display-title">From Search to Parked in 4 Steps</h2>
           <p className="lp-lead">No queues, no guesswork. Here is what a typical visit looks like.</p>
         </div>
@@ -196,7 +195,6 @@ export default function Landing() {
       {/* ── BUILT FOR EVERYONE ── */}
       <section className="lp-section">
         <div className="lp-head">
-          <span className="lp-eyebrow">BUILT FOR EVERYONE</span>
           <h2 className="lp-title display-title">One Platform, Three Portals</h2>
           <p className="lp-lead">Every role gets a dashboard designed around what they actually need to do.</p>
         </div>
@@ -223,7 +221,6 @@ export default function Landing() {
       <section className="lp-section">
         <div className="lp-billing">
           <div className="lp-billing-copy">
-            <span className="lp-eyebrow">TRANSPARENT BILLING</span>
             <h2 className="lp-title display-title" style={{ textAlign: 'left' }}>Pay for What You Use, Nothing More</h2>
             <p className="lp-lead" style={{ textAlign: 'left', margin: '0 0 1.2rem' }}>
               Billing is calculated automatically from your check-in and check-out time, using the same rules at every
@@ -249,7 +246,6 @@ export default function Landing() {
       <section className="lp-section">
         <div className="lp-split">
           <div className="lp-cta">
-            <span className="lp-eyebrow">GET STARTED</span>
             <h2 className="lp-title display-title" style={{ textAlign: 'left' }}>Ready to Park Smarter?</h2>
             <p className="lp-lead" style={{ textAlign: 'left', margin: '0 0 2rem' }}>
               Join users who choose ParkPoint for a faster, simpler, and smarter parking experience.
