@@ -1,12 +1,21 @@
 /**
- * Landing hero visual: a premium EV in side profile, hovering just above the
- * ground. Pure inline SVG + CSS transforms/opacity (see ".hero-car" in
- * styles/style.css) — no JS animation loop, no canvas, no listeners.
+ * Landing hero visual: a premium EV in side profile that drives in along the
+ * lane, reverse-parallel-parks into an empty bay, waits, then pulls out and
+ * drives away before the loop restarts. Pure inline SVG + CSS transforms and
+ * opacity (see ".hero-car" in styles/style.css) — no JS animation loop, no
+ * canvas, no listeners.
+ *
+ * The car is split into nested groups so each motion can have its own easing:
+ *   .hc-drive  forward / reverse travel along the lane (translateX)
+ *   .hc-depth  lane -> bay distance, with a touch of perspective scale + shadow
+ *   .hc-yaw    steering (rotation) and brake dive
+ *   .hc-wheel  wheel spin, keyframed to match .hc-drive distance exactly
  */
 const SPOKES = [0, 72, 144, 216, 288];
 
 const Wheel = ({ cx, cy }) => (
   <g transform={`translate(${cx} ${cy})`}>
+    <g className="hc-wheel">
     <circle r="39" fill="#05080f" />
     <circle r="37" fill="none" stroke="#1a2a40" strokeWidth="1.5" />
     <circle r="27" fill="url(#hc-rim)" />
@@ -15,13 +24,14 @@ const Wheel = ({ cx, cy }) => (
       <path key={a} d="M-3.2 -7 L-5 -25 Q0 -27.5 5 -25 L3.2 -7 Z" fill="#0a1424" transform={`rotate(${a})`} />
     ))}
     <circle r="6.5" fill="#0d1a2c" stroke="rgba(0,240,255,.5)" strokeWidth="1" />
+    </g>
   </g>
 );
 
 export default function HeroCar() {
   return (
-    <div className="hero-car" role="img" aria-label="Illustration of a modern electric car floating above the ground">
-      <svg viewBox="44 40 570 275" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+    <div className="hero-car" role="img" aria-label="Illustration of a modern electric car reverse-parking into an empty bay">
+      <svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
         <defs>
           <linearGradient id="hc-body" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#35557a" />
@@ -44,34 +54,31 @@ export default function HeroCar() {
             <stop offset=".6" stopColor="#2a3d55" />
             <stop offset="1" stopColor="#101c2d" />
           </radialGradient>
-          <radialGradient id="hc-under" cx=".5" cy=".5" r=".5">
-            <stop offset="0" stopColor="#00f0ff" stopOpacity=".55" />
-            <stop offset=".55" stopColor="#0075ff" stopOpacity=".16" />
-            <stop offset="1" stopColor="#0075ff" stopOpacity="0" />
-          </radialGradient>
           <radialGradient id="hc-ground" cx=".5" cy=".5" r=".5">
             <stop offset="0" stopColor="#000" stopOpacity=".75" />
             <stop offset=".6" stopColor="#000" stopOpacity=".28" />
             <stop offset="1" stopColor="#000" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="hc-pad" cx=".5" cy=".5" r=".5">
-            <stop offset="0" stopColor="#00f0ff" stopOpacity=".2" />
-            <stop offset="1" stopColor="#00f0ff" stopOpacity="0" />
           </radialGradient>
           <clipPath id="hc-clip">
             <path d="M66 190 C62 172 62 150 74 138 C90 130 140 124 190 112 C225 82 262 64 322 63 C380 63 430 84 475 112 C520 122 566 130 584 150 C592 160 594 176 590 190 L560 197 L518 197 A46 46 0 0 0 426 197 L216 197 A46 46 0 0 0 124 197 L78 197 Z" />
           </clipPath>
         </defs>
 
-        {/* ground: soft glow + contact shadow (stay put, breathe with the float) */}
-        <g className="hero-car-ground">
-          <ellipse cx="330" cy="292" rx="290" ry="26" fill="url(#hc-pad)" />
-          <ellipse cx="330" cy="292" rx="235" ry="15" fill="url(#hc-ground)" />
+        {/* road: curb, lane marking and the parking bay (free = green, occupied = pink) */}
+        <g className="hc-road">
+          <line x1="0" y1="134" x2="800" y2="134" stroke="rgba(0,240,255,.16)" strokeWidth="1.2" />
+          <line x1="0" y1="239" x2="800" y2="239" stroke="rgba(106,144,184,.28)" strokeWidth="1.5" strokeDasharray="26 22" />
+          <rect className="hc-bay-free" x="35" y="140" width="590" height="52" rx="2" fill="rgba(0,255,179,.05)" stroke="#00ffb3" strokeWidth="1.6" />
+          <rect className="hc-bay-busy" x="35" y="140" width="590" height="52" rx="2" fill="rgba(255,60,120,.05)" stroke="#ff3c78" strokeWidth="1.6" />
         </g>
 
-        <g className="hero-car-body">
-          {/* repulsor glow beneath the chassis */}
-          <ellipse cx="330" cy="244" rx="250" ry="16" fill="url(#hc-under)" />
+        {/* car art is unchanged; this outer transform only places its parked pose in the bay */}
+        <g transform="translate(2 -45)">
+        <g className="hc-drive">
+        <g className="hc-depth">
+          {/* contact shadow stays on the ground (not rotated with the body) */}
+          <ellipse cx="328" cy="233" rx="258" ry="8" fill="url(#hc-ground)" />
+        <g className="hc-yaw">
 
           {/* body */}
           <path
@@ -106,6 +113,9 @@ export default function HeroCar() {
           {/* wheels */}
           <Wheel cx={170} cy={192} />
           <Wheel cx={472} cy={192} />
+        </g>
+        </g>
+        </g>
         </g>
       </svg>
     </div>
