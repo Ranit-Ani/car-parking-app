@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import ThreeBackground from '../components/ThreeBackground';
+import HeroCar from '../components/HeroCar';
 import HelpSupportModal from '../components/HelpSupportModal';
 import LegalModal from '../components/LegalModal';
 import { apiRequest, getToken, getUser } from '../lib/api';
@@ -57,8 +57,6 @@ export default function Landing() {
 
   return (
     <>
-      <ThreeBackground />
-
       <nav className="pub-nav">
         <Link className="pub-nav-brand" to="/">
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
@@ -71,32 +69,38 @@ export default function Landing() {
       </nav>
 
       <section className="hero-section">
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 680 }}>
-          <div className="hero-badge"><span className="dot" /> MULTI-LOCATION PARKING NETWORK v2.0</div>
-          <h1 className="hero-title display-title">CAR PARKING<br />AT EVERY LOCATION</h1>
-          <p className="hero-sub">
-            One account, every parking location. Discover nearby available slots, book your preferred space
-            instantly, and take control of your parking with ease. Enjoy real-time availability and automated billing
-            across every location in the network.
-          </p>
-          <div className="hero-actions">
-            <Link to="/login" className="btn-ag plasma lg"><i className="bi bi-shield-check" /> Authenticate</Link>
-            <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <div className="hero-badge"><span className="dot" /> MULTI-LOCATION PARKING NETWORK v2.0</div>
+            <h1 className="hero-title display-title">CAR PARKING<br />AT EVERY LOCATION</h1>
+            <p className="hero-sub">
+              One account, every parking location. Discover nearby available slots, book your preferred space
+              instantly, and take control of your parking with ease. Enjoy real-time availability and automated billing
+              across every location in the network.
+            </p>
+            <div className="hero-actions">
+              <Link to="/login" className="btn-ag plasma lg"><i className="bi bi-shield-check" /> Authenticate</Link>
+              <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Join the Network</Link>
+            </div>
+
+            <div className="hero-stats">
+              <div>
+                <div className="font-orbit hero-stat-num" style={{ color: 'var(--plasma)' }}>{stats.total}</div>
+                <div className="hero-stat-label">Total Slots</div>
+              </div>
+              <div>
+                <div className="font-orbit hero-stat-num" style={{ color: 'var(--aurora)' }}>{stats.avail}</div>
+                <div className="hero-stat-label">Available</div>
+              </div>
+              <div>
+                <div className="font-orbit hero-stat-num" style={{ color: 'var(--nova)' }}>{stats.occ}</div>
+                <div className="hero-stat-label">In Use</div>
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '3rem', justifyContent: 'center', marginTop: '3.5rem', flexWrap: 'wrap', animation: 'fadeUp .7s .4s both' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div className="font-orbit" style={{ fontSize: '1.9rem', fontWeight: 900, color: 'var(--plasma)' }}>{stats.total}</div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.12em', textTransform: 'uppercase', marginTop: '.2rem' }}>Total Slots</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div className="font-orbit" style={{ fontSize: '1.9rem', fontWeight: 900, color: 'var(--aurora)' }}>{stats.avail}</div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.12em', textTransform: 'uppercase', marginTop: '.2rem' }}>Available</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div className="font-orbit" style={{ fontSize: '1.9rem', fontWeight: 900, color: 'var(--nova)' }}>{stats.occ}</div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '.65rem', color: 'var(--t2)', letterSpacing: '.12em', textTransform: 'uppercase', marginTop: '.2rem' }}>In Use</div>
-            </div>
+          <div className="hero-visual">
+            <HeroCar />
           </div>
         </div>
       </section>
