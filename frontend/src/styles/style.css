@@ -467,6 +467,10 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .hc-yaw{transform-origin:50% 100%;animation:carYaw 19s cubic-bezier(.45,0,.55,1) infinite}
 .hc-wheel{transform-origin:50% 50%;animation:carWheel 19s linear infinite}
 .hc-drive{animation:carDrive 19s linear infinite}
+.hc-glint{animation:carGlint 19s linear infinite}
+.hc-brake{opacity:.62;animation:carBrake 19s linear infinite}
+.hc-rev{opacity:0;animation:carRev 19s linear infinite}
+.hc-head{opacity:.55;animation:carHead 19s linear infinite}
 .hc-bay-free{opacity:0;animation:bayFree 19s linear infinite}
 .hc-bay-busy{opacity:.55;animation:bayBusy 19s linear infinite}
 
@@ -479,6 +483,29 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   54.74%{transform:translateX(0);animation-timing-function:linear}
   69.47%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
   92.63%,100%{transform:translateX(760px)}
+}
+/* paint reflection slides against the direction of travel (same easing as carDrive, so it reads as the car moving through the light) */
+@keyframes carGlint{
+  0%{transform:translateX(128px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
+  21.05%{transform:translateX(-30px);animation-timing-function:linear}
+  25.26%{transform:translateX(-30px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  49.47%{transform:translateX(2.8px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  54.74%{transform:translateX(0);animation-timing-function:linear}
+  69.47%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
+  92.63%,100%{transform:translateX(-152px)}
+}
+/* tail lamps: dim running light, bright when braking to a stop, dim while parked */
+@keyframes carBrake{
+  0%,19%{opacity:.62} 20.5%,25.5%{opacity:1} 27%,48.5%{opacity:.62}
+  49.5%,55%{opacity:1} 56.5%,68%{opacity:.3} 70%,100%{opacity:.62}
+}
+/* white reverse lamp only while backing into the bay */
+@keyframes carRev{
+  0%,25%{opacity:0} 26.5%,49%{opacity:1} 50.5%,100%{opacity:0}
+}
+/* headlamp glow: full on the approach and exit, softer while manoeuvring, off when parked */
+@keyframes carHead{
+  0%,25%{opacity:.9} 30%,50%{opacity:.45} 57%,68%{opacity:.08} 72%,100%{opacity:.9}
 }
 /* wheel spin = distance / radius, using the exact same easing as carDrive so tyres never slip */
 @keyframes carWheel{
