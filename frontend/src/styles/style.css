@@ -468,6 +468,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .hc-wheel{transform-origin:50% 50%;animation:carWheel 19s linear infinite}
 .hc-drive{animation:carDrive 19s linear infinite}
 .hc-glint{animation:carGlint 19s linear infinite}
+.hc-door{transform-box:view-box;transform-origin:448px 128px;animation:carDoor 19s infinite}
 .hc-brake{opacity:.62;animation:carBrake 19s linear infinite}
 .hc-rev{opacity:0;animation:carRev 19s linear infinite}
 .hc-head{opacity:.55;animation:carHead 19s linear infinite}
@@ -493,6 +494,12 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
   54.74%{transform:translateX(0);animation-timing-function:linear}
   69.47%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
   92.63%,100%{transform:translateX(-152px)}
+}
+/* scissor door lifts while the car sits parked (pivot = A-pillar base), then closes before it pulls out */
+@keyframes carDoor{
+  0%,56%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
+  59.5%,65%{transform:rotate(32deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
+  68.5%,100%{transform:rotate(0deg)}
 }
 /* tail lamps: dim running light, bright when braking to a stop, dim while parked */
 @keyframes carBrake{
