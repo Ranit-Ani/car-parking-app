@@ -98,6 +98,12 @@ const LANDING_FX_CSS = `
 @media (max-width:900px){
   .reveal.reveal.reveal-left,.reveal.reveal.reveal-right{translate:0 28px}
 }
+/* Mobile: breathing room between the "Ready to Park Smarter?" CTA and the FAQ */
+@media (max-width:860px){
+  .lp-split.lp-split{gap:3.5rem}
+  .lp-cta.lp-cta{padding-bottom:.5rem}
+  .lp-cta .hero-actions{margin-bottom:0}
+}
 /* Never let reveal offsets create a horizontal scrollbar */
 .pub-body{overflow-x:clip}
 html,body{max-width:100%;overflow-x:hidden}
