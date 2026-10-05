@@ -94,6 +94,14 @@ const LANDING_FX_CSS = `
   .spot:hover::before{opacity:1}
 }
 
+/* Mobile/tablet: no sideways slide (it caused horizontal scrolling) - rise from below instead */
+@media (max-width:900px){
+  .reveal.reveal.reveal-left,.reveal.reveal.reveal-right{translate:0 28px}
+}
+/* Never let reveal offsets create a horizontal scrollbar */
+.pub-body{overflow-x:clip}
+html,body{max-width:100%;overflow-x:hidden}
+
 @media (prefers-reduced-motion:reduce){
   .reveal.reveal{opacity:1;translate:none;scale:1;transition:none}
   .spot::before{display:none}
