@@ -8,9 +8,8 @@
  *   (bay indicator, car, bike, rickshaw) stays in step.
  * - Wheels are separate nodes in the .glb files; they spin by "rolling without slipping":
  *   angle = -distance travelled / wheel radius.
- * - The SVG vehicles stay on screen until both models are loaded; the hand-over happens while
- *   only the Lamborghini is in the lane (see isQuietMoment), so there is no visible pop.
- *   If WebGL or the files fail, the SVG vehicles simply keep running.
+ * - The SVG vehicles stay on screen only until both models are loaded; the moment they are
+ *   ready the 3D versions take over. If WebGL or the files fail, the SVG vehicles keep running.
  */
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
@@ -18,7 +17,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import bikeUrl from '../assets/models/kawasaki-h2r.glb?url';
 import rickshawUrl from '../assets/models/auto-rickshaw.glb?url';
-import { BIKE, RICKSHAW, LOOP_MS, sampleVehicle, isQuietMoment } from '../lib/heroTimeline.js';
+import { BIKE, RICKSHAW, LOOP_MS, sampleVehicle } from '../lib/heroTimeline.js';
 
 // Same coordinate system as the SVG (viewBox 0 0 800 250); 1 world unit = 1 SVG px, y flipped.
 const VIEW_W = 800;
@@ -118,6 +117,13 @@ export default function HeroVehicles3D({ active, onReady }) {
     const vehicles = [];
 
     const loader = new GLTFLoader();
+    // The server's CSP allows blob: images (img-src) but not blob: fetches (connect-src). By default
+    // GLTFLoader decodes the textures embedded in a .glb with fetch(blob:...) (ImageBitmapLoader),
+    // which that CSP blocks - so use a plain <img>-based TextureLoader instead.
+    loader.register((parser) => {
+      parser.textureLoader = new THREE.TextureLoader(parser.options.manager);
+      return { name: 'HERO_IMG_TEXTURES' };
+    });
     Promise.all(SPECS.map((sp) => loader.loadAsync(sp.url)))
       .then((gltfs) => {
         if (disposed) return;
@@ -160,9 +166,10 @@ export default function HeroVehicles3D({ active, onReady }) {
       if (!ready) return;
       const t = clock();
 
-      // hand-over from the SVG vehicles: ask the parent only while the lane is clear
-      if (!announced && isQuietMoment(t)) {
+      // hand over from the SVG vehicles as soon as both models are loaded
+      if (!announced) {
         announced = true;
+        console.info('[hero] 3D vehicles loaded - switching from SVG to GLB');
         if (onReadyRef.current) onReadyRef.current();
       }
       if (!activeRef.current || !inView) return;
