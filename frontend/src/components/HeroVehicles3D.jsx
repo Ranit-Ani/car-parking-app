@@ -25,9 +25,14 @@ const VIEW_H = 250;
 const PARK_X = 332;     // bay centre (330 + the 2px outer translate used by the SVG art)
 const GROUND_Y = 186.8; // tyre contact line (SVG y) when parked; the lane is `ty` px lower
 
+// The H2R model ships with black mirror paint (its only green is the hidden frame). The body-panel
+// material 'Vt_Liu.001' is re-painted Kawasaki green here - change `color` to taste, or delete the
+// `paint` line below to get the original black bike back.
+const BIKE_PAINT = { material: 'Vt_Liu.001', color: '#4ee21a', metalness: 0.35, roughness: 0.28 };
+
 // lengthPx = on-screen length at lane scale (parked scale is x0.92)
 const SPECS = [
-  { key: 'bike', url: bikeUrl, track: BIKE, lengthPx: 340, wheelNames: ['wheel_f', 'wheel_r'] },
+  { key: 'bike', url: bikeUrl, track: BIKE, lengthPx: 340, wheelNames: ['wheel_f', 'wheel_r'], paint: BIKE_PAINT },
   { key: 'rickshaw', url: rickshawUrl, track: RICKSHAW, lengthPx: 290, wheelNames: ['wheel_f', 'wheel_rr', 'wheel_rl'] },
 ];
 
@@ -130,6 +135,16 @@ export default function HeroVehicles3D({ active, onReady }) {
         gltfs.forEach((gltf, i) => {
           const sp = SPECS[i];
           const model = gltf.scene;
+          if (sp.paint) {
+            model.traverse((o) => {
+              const mat = o.isMesh && o.material;
+              if (mat && !Array.isArray(mat) && mat.name === sp.paint.material) {
+                mat.color.set(sp.paint.color);
+                mat.metalness = sp.paint.metalness;
+                mat.roughness = sp.paint.roughness;
+              }
+            });
+          }
           model.updateMatrixWorld(true);
           const box = new THREE.Box3().setFromObject(model);
           const size = box.getSize(new THREE.Vector3());
