@@ -3,10 +3,10 @@
  *
  * This is a 1:1 port of the CSS keyframes in styles/style.css (bkDrive/bkDepth/bkYaw) so the
  * 3D bike moves exactly like the SVG one did and stays in
- * step with the CSS-animated bay indicator and the Lamborghini (same 33 s loop).
+ * step with the CSS-animated bay indicator and the Lamborghini (same 37 s loop).
  * Keyframes are [percentOfLoop, value, easingToNextKeyframe].
  */
-export const LOOP_MS = 33000;
+export const LOOP_MS = 37000;
 
 function cubicBezier(x1, y1, x2, y2) {
   const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
@@ -60,11 +60,11 @@ function sampleTrack(track, pct) {
 
 /* ── 2-wheeler: 0 – 14 s ── */
 export const BIKE = {
-  active: [0, 42.5],
-  drive: [[0, -560, 'out'], [11.878, -40, 'io'], [16.97, 0, 'lin'], [31.395, 0, 'exit'], [41.152, 760, 'lin'], [42.424, 760, 'lin'], [100, 760, 'lin']],
-  ty: [[0, 36, 'io'], [11.878, 36, 'io'], [16.97, 0, 'io'], [29.697, 0, 'io'], [35.636, 36, 'io'], [42.424, 36, 'lin'], [100, 36, 'lin']],
-  scale: [[0, 1, 'io'], [11.878, 1, 'io'], [16.97, 0.92, 'io'], [29.697, 0.92, 'io'], [35.636, 1, 'io'], [42.424, 1, 'lin'], [100, 1, 'lin']],
-  yaw: [[0, 0, 'io'], [11.878, 0, 'io'], [14.425, -4, 'io'], [17.394, 0, 'io'], [29.697, 0, 'io'], [32.242, 3.5, 'io'], [36.485, 0, 'io'], [42.424, 0, 'lin'], [100, 0, 'lin']],
+  active: [0, 38],
+  drive: [[0, -560, 'out'], [10.594, -40, 'io'], [15.135, 0, 'lin'], [28.001, 0, 'exit'], [36.703, 760, 'lin'], [37.838, 760, 'lin'], [100, 760, 'lin']],
+  ty: [[0, 36, 'io'], [10.594, 36, 'io'], [15.135, 0, 'io'], [26.487, 0, 'io'], [31.783, 36, 'io'], [37.838, 36, 'lin'], [100, 36, 'lin']],
+  scale: [[0, 1, 'io'], [10.594, 1, 'io'], [15.135, 0.92, 'io'], [26.487, 0.92, 'io'], [31.783, 1, 'io'], [37.838, 1, 'lin'], [100, 1, 'lin']],
+  yaw: [[0, 0, 'io'], [10.594, 0, 'io'], [12.866, -4, 'io'], [15.514, 0, 'io'], [26.487, 0, 'io'], [28.756, 3.5, 'io'], [32.541, 0, 'io'], [37.838, 0, 'lin'], [100, 0, 'lin']],
 };
 
 /** State of one vehicle at `tMs` into the loop. x = lane travel in SVG px, ty = lane->bay depth shift in px,
@@ -83,5 +83,5 @@ export function sampleVehicle(v, tMs) {
 /** True while the GLB bike is off screen (only the Lamborghini slot) - safe moment to swap SVG -> 3D. */
 export function isQuietMoment(tMs) {
   const pct = ((tMs % LOOP_MS) + LOOP_MS) % LOOP_MS / LOOP_MS * 100;
-  return pct > 43.7 && pct < 97;
+  return pct > 39 && pct < 97;
 }

@@ -1,7 +1,7 @@
 /**
- * Landing hero visual - two vehicles take turns in one parking bay (one 33s loop):
+ * Landing hero visual - two vehicles take turns in one parking bay (one 37s loop):
  *   1) a Kawasaki Ninja H2R 2-wheeler (0-14s)   <- real-time 3D, from kawasaki-h2r.glb
- *   2) a Lamborghini Centenario       (14-33s)  <- pre-rendered images (see below)
+ *   2) a Lamborghini Centenario       (14-37s)  <- pre-rendered images (see below)
  * Each one drives in, parks, waits, then leaves before the next one arrives.
  *
  * Bike: <HeroVehicles3D/> draws the .glb model with three.js on a transparent
@@ -16,7 +16,7 @@
  *   .hc-drive  forward / reverse travel      .hc-depth  lane -> bay distance
  *   .hc-yaw    steering + brake dive         .hc-wheel  wheel spin (keyframed to the travel)
  *   .hc-brake / .hc-rev / .hc-head  lamp glows
- * The bay indicator, the Lamborghini and the 3D bike all share the same 33s clock.
+ * The bay indicator, the Lamborghini and the 3D bike all share the same 37s clock.
  */
 import { Component, lazy, Suspense, useState, useCallback } from 'react';
 import lamboBody from '../assets/lambo-body.webp';
@@ -122,7 +122,7 @@ export default function HeroCar() {
   const handleFail = useCallback(() => setMode('svg'), []);
   return (
     <div className="hero-car" role="img" aria-label="A motorbike and a supercar taking turns to park in an empty bay">
-      <svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+      <svg viewBox="0 -60 800 310" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
         <defs>
           <radialGradient id="hc-underglow" cx=".5" cy=".5" r=".5">
             <stop offset="0" stopColor="#00f0ff" stopOpacity=".28" />
@@ -158,6 +158,13 @@ export default function HeroCar() {
             <stop offset=".4" stopColor="#a7b5c4" />
             <stop offset="1" stopColor="#4b5a6c" />
           </linearGradient>
+          {/* scissor door: panel cut out of the body image (so it matches pixel for pixel when shut) */}
+          <clipPath id="hc-door-clip"><polygon points="452,142 430,133 405,125 375,118 340,112 300,110 268,113 262,122 282,138 298,186 394,186 425,158 446,148" /></clipPath>
+          <linearGradient id="hc-cabin" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#4a5a6b" />
+            <stop offset=".3" stopColor="#141c26" />
+            <stop offset="1" stopColor="#05080c" />
+          </linearGradient>
         </defs>
 
         {/* road: curb, lane marking and the parking bay (free = green, occupied = pink) */}
@@ -183,6 +190,21 @@ export default function HeroCar() {
         <g className="hc-yaw">
           {/* body shell rendered from the GLB (wheels removed so they can spin) */}
           <image href={lamboBody} x="54.68" y="100.66" width="561.55" height="117.57" preserveAspectRatio="none" />
+
+          {/* scissor door: the cabin shows through while it is open, the door panel swings up about the A-pillar hinge */}
+          <g className="hc-door-hole" clipPath="url(#hc-door-clip)">
+            <rect x="255" y="105" width="205" height="90" fill="url(#hc-cabin)" />
+            <path d="M318 188 L326 130 Q330 119 342 119 L356 121 Q363 125 360 136 L352 160 L388 168 Q398 171 398 180 L396 190 Z" fill="#1b2835" stroke="#2f4254" strokeWidth="1" />
+            <path d="M298 184 L396 184" stroke="#0b1118" strokeWidth="6" />
+          </g>
+          <g transform="translate(446 146)">
+            <g className="hc-door">
+              <g transform="translate(-446 -146)">
+                <image href={lamboBody} x="54.68" y="100.66" width="561.55" height="117.57" preserveAspectRatio="none" clipPath="url(#hc-door-clip)" />
+                <polygon points="452,142 430,133 405,125 375,118 340,112 300,110 268,113 262,122 282,138 298,186 394,186 425,158 446,148" fill="none" stroke="rgba(0,20,40,.28)" strokeWidth=".8" strokeLinejoin="round" />
+              </g>
+            </g>
+          </g>
 
           {/* spinning wheels: rear 42.6 r, front 40.8 r (front tyre is a touch smaller on the real car, but must cover the arch liner) */}
           <g transform="translate(170 188.37)">

@@ -21,6 +21,7 @@ import { BIKE, LOOP_MS, sampleVehicle } from '../lib/heroTimeline.js';
 // Same coordinate system as the SVG (viewBox 0 0 800 250); 1 world unit = 1 SVG px, y flipped.
 const VIEW_W = 800;
 const VIEW_H = 250;
+const VIEW_TOP = 60;    // extra headroom above the old 250px scene (the SVG viewBox starts at y=-60) so the open door fits
 const PARK_X = 332;     // bay centre (330 + the 2px outer translate used by the SVG art)
 const GROUND_Y = 186.8; // tyre contact line (SVG y) when parked; the lane is `ty` px lower
 
@@ -74,7 +75,7 @@ export default function HeroVehicles3D({ active, onReady, onFail }) {
     host.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(0, VIEW_W, VIEW_H, 0, 0.1, 4000);
+    const camera = new THREE.OrthographicCamera(0, VIEW_W, VIEW_H + VIEW_TOP, 0, 0.1, 4000);
     camera.position.set(0, 0, 1500); // looks down -Z at the vehicle's right-hand side (+X = forward on screen)
 
     // procedural studio reflections (no network / HDR file needed) + a key light and a cyan rim light
