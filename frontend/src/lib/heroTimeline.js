@@ -1,12 +1,12 @@
 /**
- * Landing-hero timeline for the two GLB vehicles (2-wheeler + 3-wheeler).
+ * Landing-hero timeline for the GLB 2-wheeler.
  *
- * This is a 1:1 port of the CSS keyframes in styles/style.css (bkDrive/bkDepth/bkYaw and
- * rkDrive/rkDepth/rkYaw) so the 3D vehicles move exactly like the SVG ones did and stay in
- * step with the CSS-animated bay indicator and the Lamborghini (same 47 s loop).
+ * This is a 1:1 port of the CSS keyframes in styles/style.css (bkDrive/bkDepth/bkYaw) so the
+ * 3D bike moves exactly like the SVG one did and stays in
+ * step with the CSS-animated bay indicator and the Lamborghini (same 33 s loop).
  * Keyframes are [percentOfLoop, value, easingToNextKeyframe].
  */
-export const LOOP_MS = 47000;
+export const LOOP_MS = 33000;
 
 function cubicBezier(x1, y1, x2, y2) {
   const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
@@ -60,20 +60,11 @@ function sampleTrack(track, pct) {
 
 /* ── 2-wheeler: 0 – 14 s ── */
 export const BIKE = {
-  active: [0, 29.8],
-  drive: [[0, -560, 'out'], [8.34, -40, 'io'], [11.915, 0, 'lin'], [22.043, 0, 'exit'], [28.894, 760, 'lin'], [29.787, 760, 'lin'], [100, 760, 'lin']],
-  ty: [[0, 36, 'io'], [8.34, 36, 'io'], [11.915, 0, 'io'], [20.851, 0, 'io'], [25.021, 36, 'io'], [29.787, 36, 'lin'], [100, 36, 'lin']],
-  scale: [[0, 1, 'io'], [8.34, 1, 'io'], [11.915, 0.92, 'io'], [20.851, 0.92, 'io'], [25.021, 1, 'io'], [29.787, 1, 'lin'], [100, 1, 'lin']],
-  yaw: [[0, 0, 'io'], [8.34, 0, 'io'], [10.128, -4, 'io'], [12.213, 0, 'io'], [20.851, 0, 'io'], [22.638, 3.5, 'io'], [25.617, 0, 'io'], [29.787, 0, 'lin'], [100, 0, 'lin']],
-};
-
-/* ── 3-wheeler: 14 – 28 s ── */
-export const RICKSHAW = {
-  active: [29.7, 59.6],
-  drive: [[0, -560, 'lin'], [29.787, -560, 'out'], [38.128, -40, 'io'], [41.702, 0, 'lin'], [51.83, 0, 'exit'], [58.681, 760, 'lin'], [59.574, 760, 'lin'], [100, 760, 'lin']],
-  ty: [[0, 36, 'lin'], [29.787, 36, 'io'], [38.128, 36, 'io'], [41.702, 0, 'io'], [50.638, 0, 'io'], [54.809, 36, 'io'], [59.574, 36, 'lin'], [100, 36, 'lin']],
-  scale: [[0, 1, 'lin'], [29.787, 1, 'io'], [38.128, 1, 'io'], [41.702, 0.92, 'io'], [50.638, 0.92, 'io'], [54.809, 1, 'io'], [59.574, 1, 'lin'], [100, 1, 'lin']],
-  yaw: [[0, 0, 'lin'], [29.787, 0, 'io'], [38.128, 0, 'io'], [39.915, -4, 'io'], [42, 0, 'io'], [50.638, 0, 'io'], [52.426, 3.5, 'io'], [55.404, 0, 'io'], [59.574, 0, 'lin'], [100, 0, 'lin']],
+  active: [0, 42.5],
+  drive: [[0, -560, 'out'], [11.878, -40, 'io'], [16.97, 0, 'lin'], [31.395, 0, 'exit'], [41.152, 760, 'lin'], [42.424, 760, 'lin'], [100, 760, 'lin']],
+  ty: [[0, 36, 'io'], [11.878, 36, 'io'], [16.97, 0, 'io'], [29.697, 0, 'io'], [35.636, 36, 'io'], [42.424, 36, 'lin'], [100, 36, 'lin']],
+  scale: [[0, 1, 'io'], [11.878, 1, 'io'], [16.97, 0.92, 'io'], [29.697, 0.92, 'io'], [35.636, 1, 'io'], [42.424, 1, 'lin'], [100, 1, 'lin']],
+  yaw: [[0, 0, 'io'], [11.878, 0, 'io'], [14.425, -4, 'io'], [17.394, 0, 'io'], [29.697, 0, 'io'], [32.242, 3.5, 'io'], [36.485, 0, 'io'], [42.424, 0, 'lin'], [100, 0, 'lin']],
 };
 
 /** State of one vehicle at `tMs` into the loop. x = lane travel in SVG px, ty = lane->bay depth shift in px,
@@ -89,8 +80,8 @@ export function sampleVehicle(v, tMs) {
   };
 }
 
-/** True while neither GLB vehicle is on screen (only the Lamborghini slot) - safe moment to swap SVG -> 3D. */
+/** True while the GLB bike is off screen (only the Lamborghini slot) - safe moment to swap SVG -> 3D. */
 export function isQuietMoment(tMs) {
   const pct = ((tMs % LOOP_MS) + LOOP_MS) % LOOP_MS / LOOP_MS * 100;
-  return pct > 60.5 && pct < 98;
+  return pct > 43.7 && pct < 97;
 }

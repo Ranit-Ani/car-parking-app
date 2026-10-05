@@ -1,15 +1,14 @@
 /**
- * Landing hero visual - three vehicles take turns in one parking bay (one 47s loop):
+ * Landing hero visual - two vehicles take turns in one parking bay (one 33s loop):
  *   1) a Kawasaki Ninja H2R 2-wheeler (0-14s)   <- real-time 3D, from kawasaki-h2r.glb
- *   2) a yellow auto-rickshaw         (14-28s)  <- real-time 3D, from auto-rickshaw.glb
- *   3) a Lamborghini Centenario       (28-47s)  <- pre-rendered images (see below)
+ *   2) a Lamborghini Centenario       (14-33s)  <- pre-rendered images (see below)
  * Each one drives in, parks, waits, then leaves before the next one arrives.
  *
- * Bike + rickshaw: <HeroVehicles3D/> draws the two .glb models with three.js on a transparent
- * canvas laid over the SVG (lazy-loaded, so it never blocks first paint). Their wheels are
- * separate nodes in the models and spin as the vehicle rolls. While the models load nothing
- * is drawn for these two (the 3D canvas then fades in); the hand-drawn SVG versions below are
- * only used as a fallback if WebGL / the files fail or the user prefers reduced motion.
+ * Bike: <HeroVehicles3D/> draws the .glb model with three.js on a transparent
+ * canvas laid over the SVG (lazy-loaded, so it never blocks first paint). Its wheels are
+ * separate nodes in the model and spin as the vehicle rolls. While the model loads nothing
+ * is drawn for it (the 3D canvas then fades in); the hand-drawn SVG version below is
+ * only used as a fallback if WebGL / the file fails or the user prefers reduced motion.
  *
  * The Lamborghini is NOT a live 3D scene (its .glb is ~20 MB / 325k triangles, far too
  * heavy for a landing page). Instead the model was rendered once from the side into two
@@ -17,7 +16,7 @@
  *   .hc-drive  forward / reverse travel      .hc-depth  lane -> bay distance
  *   .hc-yaw    steering + brake dive         .hc-wheel  wheel spin (keyframed to the travel)
  *   .hc-brake / .hc-rev / .hc-head  lamp glows
- * The bay indicator, the Lamborghini and the 3D vehicles all share the same 47s clock.
+ * The bay indicator, the Lamborghini and the 3D bike all share the same 33s clock.
  */
 import { Component, lazy, Suspense, useState, useCallback } from 'react';
 import lamboBody from '../assets/lambo-body.webp';
@@ -111,98 +110,18 @@ const Bike = ({ art = true }) => (
   </g>
 );
 
-/* ───────────────────────── 3-wheeler (auto-rickshaw, yellow + black roof) ───────────────────────── */
-const RK_HOLES = [0, 72, 144, 216, 288];
-const RickWheel = ({ cx }) => (
-  <g transform={`translate(${cx} 205)`}>
-    <g className="rk-wheel">
-      <circle r="26" fill="#07090d" />
-      <circle r="25.2" fill="none" stroke="#202c3a" strokeWidth="1" />
-      <circle r="16.5" fill="url(#rk-rim)" />
-      <circle r="16.5" fill="none" stroke="#5a6879" strokeWidth="1" />
-      {RK_HOLES.map((a) => (
-        <circle key={a} cx="0" cy="-10" r="2.1" fill="#1b2430" transform={`rotate(${a})`} />
-      ))}
-      <circle r="4.6" fill="#3a4757" stroke="#111823" strokeWidth=".8" />
-    </g>
-    <path d="M-18 -13 A22 22 0 0 1 8 -22" fill="none" stroke="rgba(255,255,255,.22)" strokeWidth="1.6" strokeLinecap="round" />
-  </g>
-);
-
-const Rickshaw = ({ art = true }) => (
-  <g className="hv-veh" transform="translate(2 -45)">
-    <g className="rk-drive">
-      <g className="rk-depth">
-        <ellipse cx="330" cy="233" rx="170" ry="6" fill="url(#hc-underglow)" />
-        <ellipse cx="330" cy="233" rx="176" ry="7" fill="url(#hc-ground)" />
-        {art && (<>
-        <ellipse cx="225" cy="231.5" rx="24" ry="3" fill="#000" opacity=".6" />
-        <ellipse cx="438" cy="231.5" rx="24" ry="3" fill="#000" opacity=".6" />
-        <g className="rk-yaw">
-          {/* lower body */}
-          <path d="M188 134 L366 134 L366 198 L188 198 Z" fill="url(#rk-yellow)" />
-          <path d="M258 196 L366 198 L366 207 L258 205 Z" fill="#2f97a6" />
-          {/* dark rear canvas panel */}
-          <path d="M190 134 L194 68 C196 60 206 56 222 56 L252 56 L252 134 Z" fill="url(#rk-dark)" />
-          {/* open passenger area with seat + handrail */}
-          <path d="M252 62 L366 62 L366 134 L252 134 Z" fill="#0e1519" />
-          <path d="M262 96 L352 96 L352 134 L262 134 Z" fill="#1c2c31" />
-          <path d="M262 96 L352 96" stroke="rgba(190,230,240,.25)" strokeWidth="1" />
-          <g stroke="#d4dde5" strokeWidth="2.6" strokeLinecap="round">
-            <path d="M298 112 L366 112" />
-            <path d="M300 106 L300 128" />
-            <path d="M334 106 L334 128" />
-          </g>
-          {/* wheel wells, fender lips, wheels */}
-          <path d="M194 192 A31 31 0 0 1 256 192 Z" fill="#04070c" />
-          <RickWheel cx={225} />
-          <path d="M192 196 C192 166 258 166 258 196 L250 196 C248 180 202 180 200 196 Z" fill="url(#rk-yellow)" stroke="rgba(0,0,0,.35)" strokeWidth=".8" />
-          {/* front cowl */}
-          <path d="M366 62 L446 58 C456 80 466 116 470 136 C488 148 486 178 474 198 L366 198 Z" fill="url(#rk-yellow)" />
-          <path d="M374 66 L444 64 C452 84 460 108 463 128 L374 128 Z" fill="url(#rk-glass)" stroke="#1a2024" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M386 68 L400 67 L386 126 L376 126 Z" fill="rgba(255,255,255,.35)" />
-          <path d="M366 62 L374 66 L374 198" stroke="rgba(0,0,0,.35)" strokeWidth="1.4" fill="none" />
-          <path d="M366 130 L470 134" stroke="rgba(255,255,255,.55)" strokeWidth="1.4" />
-          <path d="M366 133 L470 137" stroke="rgba(120,70,0,.4)" strokeWidth="2" />
-          <path d="M458 140 C476 144 488 160 486 184 L466 190 Z" fill="#090d10" />
-          <circle className="hv-rk-head" cx="474" cy="162" r="16" fill="url(#hc-lampglow)" />
-          <circle cx="474" cy="162" r="9" fill="#eaf6ff" stroke="#8a98a6" strokeWidth="1.4" />
-          <circle cx="471" cy="159" r="3.2" fill="#fff" />
-          <path d="M396 150 L430 150 L430 168 L396 168 Z" fill="#241710" stroke="rgba(0,0,0,.6)" strokeWidth="1" />
-          <path d="M400 154 L426 154 L426 164 L400 164 Z" fill="#ff7a1a" />
-          <path d="M432 140 L456 142 L456 150 L432 148 Z" fill="#e9eff3" />
-          <path d="M374 172 L470 174" stroke="rgba(0,0,0,.25)" strokeWidth="1.2" />
-          {/* roof */}
-          <path d="M184 58 C196 44 232 40 280 40 L440 42 C452 42 464 46 470 50 L474 58 L190 63 Z" fill="url(#rk-dark)" stroke="rgba(190,240,255,.25)" strokeWidth=".8" />
-          <path d="M438 46 L478 52 L476 59 L436 55 Z" fill="url(#rk-yellow)" />
-          <path d="M196 47 C216 42 250 42 280 42" fill="none" stroke="rgba(255,255,255,.28)" strokeWidth="1.2" strokeLinecap="round" />
-          {/* mirror + tail lamp */}
-          <path d="M360 62 L372 54" stroke="#10161a" strokeWidth="2.4" strokeLinecap="round" />
-          <ellipse cx="372" cy="50" rx="6" ry="8" fill="#10161a" stroke="rgba(190,240,255,.4)" strokeWidth=".8" />
-          <path d="M188 150 L197 150 L197 162 L188 162 Z" fill="#ff2b6a" />
-          {/* front fork + fender + wheel */}
-          <path d="M446 168 L438 205" stroke="#0c1117" strokeWidth="5" strokeLinecap="round" />
-          <RickWheel cx={438} />
-          <path d="M406 200 C406 174 470 174 470 200 L462 200 C458 184 416 184 414 200 Z" fill="url(#rk-yellow)" stroke="rgba(0,0,0,.35)" strokeWidth=".8" />
-        </g>
-        </>)}
-      </g>
-    </g>
-  </g>
-);
-
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function HeroCar() {
-  // 'loading' = GLB vehicles still downloading (bike + rickshaw not drawn yet) | '3d' = GLB vehicles running |
+  // 'loading' = GLB vehicles still downloading (bike not drawn yet) | '3d' = GLB vehicles running |
   // 'svg' = fallback to the hand-drawn SVG vehicles (reduced motion, no WebGL, or the files failed)
   const [reduced] = useState(prefersReducedMotion);
   const [mode, setMode] = useState(() => (prefersReducedMotion() ? 'svg' : 'loading'));
   const handleReady = useCallback(() => setMode('3d'), []);
   const handleFail = useCallback(() => setMode('svg'), []);
   return (
-    <div className="hero-car" role="img" aria-label="A motorbike, an auto-rickshaw and a supercar taking turns to park in an empty bay">
+    <div className="hero-car" role="img" aria-label="A motorbike and a supercar taking turns to park in an empty bay">
       <svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
         <defs>
           <radialGradient id="hc-underglow" cx=".5" cy=".5" r=".5">
@@ -224,7 +143,7 @@ export default function HeroCar() {
             <stop offset=".5" stopColor="#ff3c78" stopOpacity=".28" />
             <stop offset="1" stopColor="#ff3c78" stopOpacity="0" />
           </radialGradient>
-          {/* 2-wheeler + 3-wheeler paints */}
+          {/* 2-wheeler paints */}
           <linearGradient id="bk-black" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#3b4656" />
             <stop offset=".35" stopColor="#141b25" />
@@ -239,24 +158,6 @@ export default function HeroCar() {
             <stop offset=".4" stopColor="#a7b5c4" />
             <stop offset="1" stopColor="#4b5a6c" />
           </linearGradient>
-          <linearGradient id="rk-yellow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#ffe066" />
-            <stop offset=".35" stopColor="#ffbe12" />
-            <stop offset=".8" stopColor="#d98a00" />
-            <stop offset="1" stopColor="#8a5200" />
-          </linearGradient>
-          <linearGradient id="rk-dark" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#32464a" />
-            <stop offset="1" stopColor="#121b1d" />
-          </linearGradient>
-          <linearGradient id="rk-glass" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#e6f7ff" stopOpacity=".92" />
-            <stop offset="1" stopColor="#6fa9c9" stopOpacity=".8" />
-          </linearGradient>
-          <radialGradient id="rk-rim" cx=".4" cy=".35" r=".8">
-            <stop offset="0" stopColor="#dfe7ef" />
-            <stop offset="1" stopColor="#6b7a8c" />
-          </radialGradient>
         </defs>
 
         {/* road: curb, lane marking and the parking bay (free = green, occupied = pink) */}
@@ -267,9 +168,8 @@ export default function HeroCar() {
           <rect className="hc-bay-busy" x="35" y="140" width="590" height="52" rx="2" fill="rgba(255,60,120,.05)" stroke="#ff3c78" strokeWidth="1.6" />
         </g>
 
-        {/* three vehicles take turns in the same bay: 2-wheeler, 3-wheeler, then the supercar */}
+        {/* two vehicles take turns in the same bay: 2-wheeler, then the supercar */}
         {mode !== 'loading' && <Bike art={mode === 'svg'} />}
-        {mode !== 'loading' && <Rickshaw art={mode === 'svg'} />}
 
         {/* car art; this outer transform only places its parked pose in the bay */}
         <g className="hv-veh" transform="translate(2 -45)">

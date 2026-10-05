@@ -1,11 +1,11 @@
 /**
- * Real-time 3D layer for the landing hero: the Kawasaki 2-wheeler and the auto-rickshaw are
- * rendered straight from their .glb models (three.js), on a transparent canvas laid exactly
+ * Real-time 3D layer for the landing hero: the Kawasaki 2-wheeler is
+ * rendered straight from its .glb model (three.js), on a transparent canvas laid exactly
  * over the hero SVG (same 800x250 coordinate system, orthographic side-on camera).
  *
  * - Movement (travel, lane->bay depth, steering/dive) follows lib/heroTimeline.js, a port of
  *   the CSS keyframes, and is slaved to the Lamborghini's CSS animation clock so everything
- *   (bay indicator, car, bike, rickshaw) stays in step.
+ *   (bay indicator, car, bike) stays in step.
  * - Wheels are separate nodes in the .glb files; they spin by "rolling without slipping":
  *   angle = -distance travelled / wheel radius.
  * - Nothing is drawn for these two vehicles until both models are loaded; then the canvas fades in.
@@ -16,8 +16,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import bikeUrl from '../assets/models/kawasaki-h2r.glb?url';
-import rickshawUrl from '../assets/models/auto-rickshaw.glb?url';
-import { BIKE, RICKSHAW, LOOP_MS, sampleVehicle } from '../lib/heroTimeline.js';
+import { BIKE, LOOP_MS, sampleVehicle } from '../lib/heroTimeline.js';
 
 // Same coordinate system as the SVG (viewBox 0 0 800 250); 1 world unit = 1 SVG px, y flipped.
 const VIEW_W = 800;
@@ -33,61 +32,9 @@ const BIKE_PAINT = { material: 'Vt_Liu.001', color: '#4ee21a', metalness: 0.35, 
 // lengthPx = on-screen length at lane scale (parked scale is x0.92)
 const SPECS = [
   { key: 'bike', url: bikeUrl, track: BIKE, lengthPx: 340, wheelNames: ['wheel_f', 'wheel_r'], paint: BIKE_PAINT },
-  { key: 'rickshaw', url: rickshawUrl, track: RICKSHAW, lengthPx: 290, wheelNames: ['wheel_f', 'wheel_rr', 'wheel_rl'], solidWheels: true },
 ];
 
 
-/* The auto-rickshaw .glb ships with very rough wheel meshes: lumpy (not round), hollow inside and with
-   a stray mudguard sliver that spins along with the tyre - so the wheels looked gappy and hard to read.
-   For that model the original wheel meshes are hidden and replaced with clean, solid, procedural wheels
-   (rubber tyre + steel rim + hub + dark spoke holes, so the rotation is clearly visible). */
-function buildSolidWheel(R, W) {
-  const g = new THREE.Group();
-  const rubber = new THREE.MeshStandardMaterial({ color: 0x0b0d11, roughness: 0.92, metalness: 0.0 });
-  const steel = new THREE.MeshStandardMaterial({ color: 0xc3ccd6, roughness: 0.35, metalness: 0.85 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x141a22, roughness: 0.7, metalness: 0.3 });
-  const hub = new THREE.MeshStandardMaterial({ color: 0x7d8a99, roughness: 0.3, metalness: 0.9 });
-
-  // tyre: rounded cross-section, revolved around the axle (lathe axis = Y, rotated to Z below)
-  const hw = W / 2, r0 = R * 0.62, rc = Math.min(hw * 0.9, R * 0.2);
-  const prof = [new THREE.Vector2(r0, -hw * 0.9)];
-  for (let i = 0; i <= 8; i++) {
-    const a = -Math.PI / 2 + (i / 8) * Math.PI; // round shoulder/tread
-    prof.push(new THREE.Vector2(R - rc + Math.cos(a) * rc * 0.9 + rc * 0.1, Math.sin(a) * hw));
-  }
-  prof.push(new THREE.Vector2(r0, hw * 0.9));
-  const tyre = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), rubber);
-  tyre.rotation.x = Math.PI / 2;
-  tyre.material.side = THREE.DoubleSide;
-  g.add(tyre);
-
-  // rim: disc on each side so the wheel is solid from either view
-  const rimR = R * 0.66;
-  for (const sgn of [1, -1]) {
-    const z = sgn * (hw + 0.004); // just outside the tyre side so the rim is never hidden by it
-    const face = new THREE.Mesh(new THREE.CircleGeometry(rimR, 40), steel);
-    face.position.z = z;
-    if (sgn < 0) face.rotation.y = Math.PI;
-    g.add(face);
-    const lip = new THREE.Mesh(new THREE.RingGeometry(rimR * 0.93, rimR, 40), dark);
-    lip.position.z = z + sgn * 0.001;
-    if (sgn < 0) lip.rotation.y = Math.PI;
-    g.add(lip);
-    // 5 dark spoke holes
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2 + Math.PI / 2;
-      const hole = new THREE.Mesh(new THREE.CircleGeometry(rimR * 0.17, 20), dark);
-      hole.position.set(Math.cos(a) * rimR * 0.58, Math.sin(a) * rimR * 0.58, z + sgn * 0.002);
-      if (sgn < 0) hole.rotation.y = Math.PI;
-      g.add(hole);
-    }
-    const cap = new THREE.Mesh(new THREE.CircleGeometry(rimR * 0.22, 24), hub);
-    cap.position.z = z + sgn * 0.003;
-    if (sgn < 0) cap.rotation.y = Math.PI;
-    g.add(cap);
-  }
-  return g;
-}
 
 function disposeScene(scene) {
   scene.traverse((o) => {
@@ -212,21 +159,7 @@ export default function HeroVehicles3D({ active, onReady, onFail }) {
             const node = model.getObjectByName(name);
             if (!node) return;
             const wb = new THREE.Box3().setFromObject(node);
-            if (sp.solidWheels) {
-              // true wheel radius = axle height above the ground (model min y); width/side from the old mesh
-              const R = node.position.y - box.min.y;
-              const W = Math.max(wb.max.z - wb.min.z, 0.12);
-              const centre = node.worldToLocal(wb.getCenter(new THREE.Vector3()));
-              // NB: the wheel node is itself a mesh, so don't hide it (that would hide the solid wheel
-              // added below too) - just empty the old geometry. Material is shared with the body: untouched.
-              node.traverse((o) => { if (o.isMesh) o.geometry = new THREE.BufferGeometry(); });
-              const solid = buildSolidWheel(R, W);
-              solid.position.z = centre.z;
-              node.add(solid);
-              wheels.push({ node, radius: R * k, fudge: 1 });
-              return;
-            }
-            wheels.push({ node, radius: ((wb.max.y - wb.min.y) / 2) * k, fudge: 0.96 });
+            wheels.push({ node, radius: ((wb.max.y - wb.min.y) / 2) * k });
           });
 
           // origin of the model = bottom-centre (ground contact), like the SVG art's transform-origin
@@ -272,7 +205,7 @@ export default function HeroVehicles3D({ active, onReady, onFail }) {
         v.root.position.set(PARK_X + s.x, VIEW_H - (GROUND_Y + s.ty), 0);
         v.root.scale.setScalar(s.scale);
         v.yaw.rotation.z = (-s.yaw * Math.PI) / 180; // CSS rotate(+deg) is clockwise; three +z is counter-clockwise
-        for (const w of v.wheels) w.node.rotation.z = -s.x / (w.radius * w.fudge); // rolling: forward = clockwise
+        for (const w of v.wheels) w.node.rotation.z = -s.x / (w.radius * 0.96); // rolling: forward = clockwise
       }
       if (any || !drawnEmpty) {
         renderer.render(scene, camera);
