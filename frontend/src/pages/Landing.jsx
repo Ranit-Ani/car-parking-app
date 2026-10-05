@@ -7,6 +7,99 @@ import { apiRequest, getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { useRevalidate } from '../lib/useRevalidate';
 
+/**
+ * Landing-page effects (ported from the portfolio):
+ *  1. Scroll reveal  - any element with class `.reveal` fades/slides in once
+ *     when it scrolls into view (IntersectionObserver, no library needed).
+ *  2. Spotlight      - any element with class `.spot` gets a soft glow that
+ *     follows the mouse while hovering it (drives --mx / --my CSS vars).
+ */
+function useLandingFx(enabled = true) {
+  useEffect(() => {
+    if (!enabled) return undefined;
+
+    /* ── scroll reveal ── */
+    const items = Array.from(document.querySelectorAll('.reveal'));
+    let io = null;
+    if (typeof IntersectionObserver === 'undefined') {
+      items.forEach((el) => el.classList.add('is-visible'));
+    } else {
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((en) => {
+            if (en.isIntersecting) {
+              en.target.classList.add('is-visible');
+              io.unobserve(en.target); // animate only once
+            }
+          });
+        },
+        { threshold: 0.15, rootMargin: '0px 0px -6% 0px' },
+      );
+      items.forEach((el) => io.observe(el));
+    }
+
+    /* ── spotlight that follows the cursor ── */
+    const onMove = (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      const card = e.target && e.target.closest ? e.target.closest('.spot') : null;
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    };
+    document.addEventListener('pointermove', onMove, { passive: true });
+
+    return () => {
+      if (io) io.disconnect();
+      document.removeEventListener('pointermove', onMove);
+    };
+  }, [enabled]);
+}
+
+// Scroll-reveal + cursor-spotlight styles (kept in this file so Landing.jsx is self-contained).
+const LANDING_FX_CSS = `
+/* ───────── Scroll reveal ───────── */
+.reveal.reveal{
+  opacity:0;
+  translate:0 34px;
+  transition:
+    opacity .7s cubic-bezier(.22,.8,.3,1) var(--rd,0s),
+    translate .7s cubic-bezier(.22,.8,.3,1) var(--rd,0s),
+    transform .3s, border-color .3s, box-shadow .3s;
+  animation:none;
+  will-change:opacity,translate;
+}
+.reveal.reveal-left{translate:-44px 0}
+.reveal.reveal-right{translate:44px 0}
+.reveal.reveal-zoom{translate:0 24px;scale:.96}
+.reveal.reveal.is-visible{opacity:1;translate:0 0;scale:1;will-change:auto}
+
+/* stagger children one after another */
+.reveal-stagger>.reveal:nth-child(1){--rd:0s}
+.reveal-stagger>.reveal:nth-child(2){--rd:.09s}
+.reveal-stagger>.reveal:nth-child(3){--rd:.18s}
+.reveal-stagger>.reveal:nth-child(4){--rd:.27s}
+.reveal-stagger>.reveal:nth-child(5){--rd:.36s}
+.reveal-stagger>.reveal:nth-child(6){--rd:.45s}
+
+/* ───────── Cursor spotlight on cards ───────── */
+.spot{position:relative;isolation:isolate}
+.spot::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  border-radius:inherit;pointer-events:none;
+  opacity:0;transition:opacity .3s;
+  background:radial-gradient(300px circle at var(--mx,50%) var(--my,50%),var(--spot,rgba(0,240,255,.16)),transparent 70%);
+}
+@media (hover:hover){
+  .spot:hover::before{opacity:1}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .reveal.reveal{opacity:1;translate:none;scale:1;transition:none}
+  .spot::before{display:none}
+}
+`;
+
 export default function Landing() {
   const [stats, setStats] = useState({ total: '--', avail: '--', occ: '--' });
   const [legalOpen, setLegalOpen] = useState(null); // 'about' | 'privacy' | 'terms' | null
@@ -52,12 +145,16 @@ export default function Landing() {
   // still open instead.
   useRevalidate(loadStats, { enabled: !authenticated });
 
+  // Scroll-reveal + cursor spotlight for the sections below the hero.
+  useLandingFx(!authenticated);
+
   if (authenticated) {
     return <Navigate to={homeForRole(user.role)} replace />;
   }
 
   return (
     <>
+      <style>{LANDING_FX_CSS}</style>
       <nav className="pub-nav">
         <Link className="pub-nav-brand" to="/">
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
@@ -109,33 +206,33 @@ export default function Landing() {
       </section>
 
       <section style={{ position: 'relative', zIndex: 1, paddingBottom: '1rem' }}>
-        <div className="feature-grid">
-          <div className="feature-card s1">
+        <div className="feature-grid reveal-stagger">
+          <div className="feature-card spot reveal s1">
             <div className="feature-icon" style={{ background: 'rgba(0,240,255,.08)', color: 'var(--plasma)' }}><i className="bi bi-geo-alt-fill" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Multiple Locations</h5>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Every location is on the map with live availability, address, and turn-by-turn navigation.</p>
           </div>
-          <div className="feature-card s2">
+          <div className="feature-card spot reveal s2">
             <div className="feature-icon" style={{ background: 'rgba(0,255,179,.08)', color: 'var(--aurora)' }}><i className="bi bi-compass-fill" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Find Nearby Parking</h5>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Geo-aware search surfaces the closest location with an open slot, wherever you are.</p>
           </div>
-          <div className="feature-card s3">
+          <div className="feature-card spot reveal s3">
             <div className="feature-icon" style={{ background: 'rgba(139,92,246,.1)', color: '#a78bfa' }}><i className="bi bi-shield-lock-fill" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>One Account, Every Location</h5>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Sign in once with email OTP verification and book at any location in the network.</p>
           </div>
-          <div className="feature-card s4">
+          <div className="feature-card spot reveal s4">
             <div className="feature-icon" style={{ background: 'rgba(255,184,0,.08)', color: 'var(--solar)' }}><i className="bi bi-calculator-fill" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Zero-Error Billing</h5>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Min 1-hour, auto round-up billing engine, consistent across every location. No disputes.</p>
           </div>
-          <div className="feature-card s5">
+          <div className="feature-card spot reveal s5">
             <div className="feature-icon" style={{ background: 'rgba(255,71,87,.08)', color: '#ff4757' }}><i className="bi bi-clock-history" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Full Booking History</h5>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Track every booking, check-in/out time, and receipt across all locations, in one place.</p>
           </div>
-          <div className="feature-card s6">
+          <div className="feature-card spot reveal s6">
             <div className="feature-icon" style={{ background: 'rgba(0,240,255,.08)', color: 'var(--plasma)' }}><i className="bi bi-diagram-3-fill" /></div>
             <h5 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: '.88rem', letterSpacing: '.05em', marginBottom: '.5rem' }}>Role-Based Portals</h5>
             <p style={{ fontSize: '.82rem', color: 'var(--t2)', lineHeight: 1.65 }}>Dedicated dashboards for drivers, per-location staff check-in/out, and admins overseeing every site.</p>
@@ -145,18 +242,18 @@ export default function Landing() {
 
       {/* ── HOW IT WORKS ── */}
       <section className="lp-section">
-        <div className="lp-head">
+        <div className="lp-head reveal">
           <h2 className="lp-title display-title">From Search to Parked in 4 Steps</h2>
           <p className="lp-lead">No queues, no guesswork. Here is what a typical visit looks like.</p>
         </div>
-        <div className="lp-steps">
+        <div className="lp-steps reveal-stagger">
           {[
             ['01', 'bi-person-check-fill', 'Create Your Account', 'Sign up once and verify with an email OTP. Your single account works at every location.'],
             ['02', 'bi-geo-alt-fill', 'Find a Location', 'Browse the map or use Nearby Parking to see live availability and get turn-by-turn navigation.'],
             ['03', 'bi-calendar-check-fill', 'Book Your Slot', 'Pick a free slot, enter your vehicle details and confirm. The slot is reserved for you instantly.'],
             ['04', 'bi-qr-code-scan', 'Park & Check Out', 'Check in with your QR code, park, and pay through automated billing when you leave.'],
           ].map(([n, icon, t, d]) => (
-            <div className="lp-step" key={n}>
+            <div className="lp-step spot reveal" key={n}>
               <div className="lp-step-num font-orbit">{n}</div>
               <div className="lp-step-icon"><i className={`bi ${icon}`} /></div>
               <h5>{t}</h5>
@@ -168,7 +265,7 @@ export default function Landing() {
 
       {/* ── HIGHLIGHT BAND ── */}
       <section className="lp-section">
-        <div className="lp-band">
+        <div className="lp-band spot reveal reveal-zoom">
           <div className="lp-band-item">
             <i className="bi bi-lightning-charge-fill" style={{ color: 'var(--plasma)' }} />
             <div className="font-orbit lp-band-big">Real-time</div>
@@ -194,17 +291,17 @@ export default function Landing() {
 
       {/* ── BUILT FOR EVERYONE ── */}
       <section className="lp-section">
-        <div className="lp-head">
+        <div className="lp-head reveal">
           <h2 className="lp-title display-title">One Platform, Three Portals</h2>
           <p className="lp-lead">Every role gets a dashboard designed around what they actually need to do.</p>
         </div>
-        <div className="lp-roles">
+        <div className="lp-roles reveal-stagger">
           {[
             ['Drivers', 'bi-car-front-fill', 'var(--plasma)', ['Discover nearby locations on the map', 'Book a slot in a few taps', 'Track every booking and receipt', 'Navigate straight to the location']],
             ['Staff', 'bi-person-badge-fill', 'var(--aurora)', ['Check vehicles in and out', 'Scan driver QR codes', 'Manage slots at their location', 'See live bookings as they happen']],
             ['Admins', 'bi-speedometer2', '#a78bfa', ['Oversee every location in one place', 'Manage users, staff and slots', 'Monitor bookings and revenue', 'Per-location revenue breakdown']],
           ].map(([name, icon, color, items]) => (
-            <div className="lp-role" key={name}>
+            <div className="lp-role spot reveal" key={name}>
               <div className="lp-role-icon" style={{ color }}><i className={`bi ${icon}`} /></div>
               <h4 style={{ color }}>{name}</h4>
               <ul>
@@ -220,7 +317,7 @@ export default function Landing() {
       {/* ── BILLING ── */}
       <section className="lp-section">
         <div className="lp-billing">
-          <div className="lp-billing-copy">
+          <div className="lp-billing-copy reveal reveal-left">
             <h2 className="lp-title display-title" style={{ textAlign: 'left' }}>Pay for What You Use, Nothing More</h2>
             <p className="lp-lead" style={{ textAlign: 'left', margin: '0 0 1.2rem' }}>
               Billing is calculated automatically from your check-in and check-out time, using the same rules at every
@@ -233,7 +330,7 @@ export default function Landing() {
               <li><i className="bi bi-check2-circle" /> Receipts saved in your booking history</li>
             </ul>
           </div>
-          <div className="lp-billing-card">
+          <div className="lp-billing-card spot reveal reveal-right">
             <div className="lp-billing-row"><span>Parked for</span><b>25 minutes</b><em>billed as 1 hour</em></div>
             <div className="lp-billing-row"><span>Parked for</span><b>1 h 10 min</b><em>billed as 2 hours</em></div>
             <div className="lp-billing-row"><span>Parked for</span><b>3 h 00 min</b><em>billed as 3 hours</em></div>
@@ -245,7 +342,7 @@ export default function Landing() {
       {/* ── CTA (left) + FAQ (right) ── */}
       <section className="lp-section">
         <div className="lp-split">
-          <div className="lp-cta">
+          <div className="lp-cta reveal reveal-left">
             <h2 className="lp-title display-title" style={{ textAlign: 'left' }}>Ready to Park Smarter?</h2>
             <p className="lp-lead" style={{ textAlign: 'left', margin: '0 0 2rem' }}>
               Join users who choose ParkPoint for a faster, simpler, and smarter parking experience.
@@ -258,8 +355,8 @@ export default function Landing() {
           </div>
 
           <div className="lp-faq-col">
-            <h3 className="lp-faq-title">Frequently Asked Questions</h3>
-            <div className="lp-faq">
+            <h3 className="lp-faq-title reveal">Frequently Asked Questions</h3>
+            <div className="lp-faq reveal-stagger">
               {[
                 ['Do I need a separate account for each location?', 'No. One account works at every location in the network. Sign in once and book anywhere.'],
                 ['How do I sign in?', 'Register with your email and verify it with a one-time password (OTP). After that you can sign in and manage everything from your dashboard.'],
@@ -267,7 +364,7 @@ export default function Landing() {
                 ['Can I see my past bookings?', 'Yes. Your booking history shows each booking, its check-in and check-out time and your receipt, across all locations.'],
                 ['Is there help if I get stuck?', 'Use Help & Support at the bottom of this page. Once you are signed in, the AI Assistant can also answer questions about parking and bookings.'],
               ].map(([q, a], i) => (
-                <div className={`lp-faq-item${faqOpen === i ? ' open' : ''}`} key={q}>
+                <div className={`lp-faq-item spot reveal${faqOpen === i ? ' open' : ''}`} key={q}>
                   <button type="button" className="lp-faq-q" onClick={() => setFaqOpen(faqOpen === i ? -1 : i)} aria-expanded={faqOpen === i}>
                     <span>{q}</span>
                     <i className="bi bi-chevron-down" />
@@ -281,7 +378,7 @@ export default function Landing() {
       </section>
 
       <section className="lp-section lp-about">
-        <p>
+        <p className="reveal">
           Smartly find, book, and manage parking spaces with ParkPoint. Our platform provides a secure,
           convenient, and efficient parking experience for users, staff, and administrators. Users can
           discover nearby locations, check available slots, and make bookings with ease. Staff can manage slots
