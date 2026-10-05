@@ -457,7 +457,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .hero-visual .hero-stats>div{text-align:center}
 
 /* ── Hero car: drive in, reverse-park, wait, pull out (transform + opacity only) ──
-   One 47s loop = 2-wheeler (0–14s), 3-wheeler (14–28s), then the car (28–47s). Car timeline within its 19s slot (s): 0–4 drive in and brake · 4–4.8 stopped ·
+   One 19s loop. Timeline (s): 0–4 drive in and brake · 4–4.8 stopped ·
    4.8–9.4 reverse in, steering · 9.4–10.4 nudge forward to centre ·
    10.4–13.2 parked · 13.2–17.6 pull out and drive away · 17.6–19 empty lane.
    The car enters and leaves outside the masked edges, so the loop restart is never seen. */
@@ -467,255 +467,91 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
 .hero-car svg{display:block;width:100%;height:auto;overflow:hidden}
 /* Un-animated (reduced motion) pose = parked in the bay. */
 .hc-depth,.hc-yaw,.hc-wheel{transform-box:fill-box}
-.hc-depth{transform-origin:50% 100%;transform:translateY(0) scale(.92);animation:carDepth 47s cubic-bezier(.4,0,.6,1) infinite}
-.hc-yaw{transform-origin:50% 100%;animation:carYaw 47s cubic-bezier(.45,0,.55,1) infinite}
-.hc-wheel{transform-origin:50% 50%;animation:carWheel 47s linear infinite}
-.hc-drive{animation:carDrive 47s linear infinite}
-.hc-glint{animation:carGlint 47s linear infinite}
-.hc-door{transform-box:view-box;transform-origin:448px 128px;animation:carDoor 47s infinite}
-.hc-brake{opacity:.62;animation:carBrake 47s linear infinite}
-.hc-rev{opacity:0;animation:carRev 47s linear infinite}
-.hc-head{opacity:.55;animation:carHead 47s linear infinite}
-.hc-bay-free{opacity:0;animation:bayFree 47s linear infinite}
-.hc-bay-busy{opacity:.55;animation:bayBusy 47s linear infinite}
+.hc-depth{transform-origin:50% 100%;transform:translateY(0) scale(.92);animation:carDepth 19s cubic-bezier(.4,0,.6,1) infinite}
+.hc-yaw{transform-origin:50% 100%;animation:carYaw 19s cubic-bezier(.45,0,.55,1) infinite}
+.hc-wheel{transform-origin:50% 50%;animation:carWheel 19s linear infinite}
+.hc-drive{animation:carDrive 19s linear infinite}
+.hc-glint{animation:carGlint 19s linear infinite}
+.hc-door{transform-box:view-box;transform-origin:448px 128px;animation:carDoor 19s infinite}
+.hc-brake{opacity:.62;animation:carBrake 19s linear infinite}
+.hc-rev{opacity:0;animation:carRev 19s linear infinite}
+.hc-head{opacity:.55;animation:carHead 19s linear infinite}
+.hc-bay-free{opacity:0;animation:bayFree 19s linear infinite}
+.hc-bay-busy{opacity:.55;animation:bayBusy 19s linear infinite}
 
 /* travel along the lane: eases out into the stop, eases in/out through the reverse, eases in to leave */
 @keyframes carDrive{
-  0%{transform:translateX(-640px);}
-  59.574%{transform:translateX(-640px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  68.084%{transform:translateX(150px);animation-timing-function:linear}
-  69.786%{transform:translateX(150px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  79.573%{transform:translateX(-14px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  81.703%{transform:translateX(0);animation-timing-function:linear}
-  87.658%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  97.021%{transform:translateX(760px)}
-  100%{transform:translateX(760px)}
+  0%{transform:translateX(-640px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
+  21.05%{transform:translateX(150px);animation-timing-function:linear}
+  25.26%{transform:translateX(150px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  49.47%{transform:translateX(-14px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  54.74%{transform:translateX(0);animation-timing-function:linear}
+  69.47%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
+  92.63%,100%{transform:translateX(760px)}
 }
 /* paint reflection slides against the direction of travel (same easing as carDrive, so it reads as the car moving through the light) */
 @keyframes carGlint{
-  0%{transform:translateX(128px);}
-  59.574%{transform:translateX(128px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  68.084%{transform:translateX(-30px);animation-timing-function:linear}
-  69.786%{transform:translateX(-30px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  79.573%{transform:translateX(2.8px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  81.703%{transform:translateX(0);animation-timing-function:linear}
-  87.658%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  97.021%{transform:translateX(-152px)}
-  100%{transform:translateX(-152px)}
+  0%{transform:translateX(128px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
+  21.05%{transform:translateX(-30px);animation-timing-function:linear}
+  25.26%{transform:translateX(-30px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  49.47%{transform:translateX(2.8px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  54.74%{transform:translateX(0);animation-timing-function:linear}
+  69.47%{transform:translateX(0);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
+  92.63%,100%{transform:translateX(-152px)}
 }
 /* scissor door lifts while the car sits parked (pivot = A-pillar base), then closes before it pulls out */
 @keyframes carDoor{
-  0%{transform:rotate(0deg);}
-  59.574%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
-  82.213%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
-  83.628%{transform:rotate(32deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
-  85.851%{transform:rotate(32deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
-  87.266%{transform:rotate(0deg)}
-  100%{transform:rotate(0deg)}
+  0%,56%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
+  59.5%,65%{transform:rotate(32deg);animation-timing-function:cubic-bezier(.35,0,.25,1)}
+  68.5%,100%{transform:rotate(0deg)}
 }
 /* tail lamps: dim running light, bright when braking to a stop, dim while parked */
 @keyframes carBrake{
-  0%{opacity:.62;}
-  59.574%{opacity:.62}
-  67.255%{opacity:.62}
-  67.862%{opacity:1}
-  69.883%{opacity:1}
-  70.489%{opacity:.62}
-  79.181%{opacity:.62}
-  79.585%{opacity:1}
-  81.809%{opacity:1}
-  82.415%{opacity:.3}
-  87.064%{opacity:.3}
-  87.872%{opacity:.62}
-  100%{opacity:.62}
+  0%,19%{opacity:.62} 20.5%,25.5%{opacity:1} 27%,48.5%{opacity:.62}
+  49.5%,55%{opacity:1} 56.5%,68%{opacity:.3} 70%,100%{opacity:.62}
 }
 /* white reverse lamp only while backing into the bay */
 @keyframes carRev{
-  0%{opacity:0;}
-  59.574%{opacity:0}
-  69.681%{opacity:0}
-  70.287%{opacity:1}
-  79.383%{opacity:1}
-  79.989%{opacity:0}
-  100%{opacity:0}
+  0%,25%{opacity:0} 26.5%,49%{opacity:1} 50.5%,100%{opacity:0}
 }
 /* headlamp glow: full on the approach and exit, softer while manoeuvring, off when parked */
 @keyframes carHead{
-  0%{opacity:.9;}
-  59.574%{opacity:.9}
-  69.681%{opacity:.9}
-  71.702%{opacity:.45}
-  79.787%{opacity:.45}
-  82.617%{opacity:.08}
-  87.064%{opacity:.08}
-  88.681%{opacity:.9}
-  100%{opacity:.9}
+  0%,25%{opacity:.9} 30%,50%{opacity:.45} 57%,68%{opacity:.08} 72%,100%{opacity:.9}
 }
 /* wheel spin = distance / radius, using the exact same easing as carDrive so tyres never slip */
 @keyframes carWheel{
-  0%{transform:rotate(0deg);}
-  59.574%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  68.084%{transform:rotate(1160.6deg);animation-timing-function:linear}
-  69.786%{transform:rotate(1160.6deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  79.573%{transform:rotate(919.7deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  81.703%{transform:rotate(940.2deg);animation-timing-function:linear}
-  87.658%{transform:rotate(940.2deg);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  97.021%{transform:rotate(2056.8deg)}
-  100%{transform:rotate(2056.8deg)}
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
+  21.05%{transform:rotate(1160.6deg);animation-timing-function:linear}
+  25.26%{transform:rotate(1160.6deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  49.47%{transform:rotate(919.7deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  54.74%{transform:rotate(940.2deg);animation-timing-function:linear}
+  69.47%{transform:rotate(940.2deg);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
+  92.63%,100%{transform:rotate(2056.8deg)}
 }
 /* lane -> bay: slides toward the far side while shrinking a touch (perspective), and back out */
 @keyframes carDepth{
-  0%{transform:translateY(36px) scale(1);}
-  59.574%{transform:translateY(36px) scale(1)}
-  69.786%{transform:translateY(36px) scale(1)}
-  79.573%{transform:translateY(0) scale(.92)}
-  87.658%{transform:translateY(0) scale(.92)}
-  97.021%{transform:translateY(36px) scale(1)}
-  100%{transform:translateY(36px) scale(1)}
+  0%,25.26%{transform:translateY(36px) scale(1)}
+  49.47%,69.47%{transform:translateY(0) scale(.92)}
+  92.63%,100%{transform:translateY(36px) scale(1)}
 }
 /* steering: rear swings toward the bay, counter-steer to straighten; small brake dive; nose swings out on exit */
 @keyframes carYaw{
-  0%{transform:rotate(0deg);}
-  59.574%{transform:rotate(0deg)}
-  66.447%{transform:rotate(0deg)}
-  68.084%{transform:rotate(.9deg)}
-  69.277%{transform:rotate(0deg)}
-  69.786%{transform:rotate(0deg)}
-  72.511%{transform:rotate(6deg)}
-  77.766%{transform:rotate(-1.8deg)}
-  80.191%{transform:rotate(0deg)}
-  87.658%{transform:rotate(0deg)}
-  90.298%{transform:rotate(5deg)}
-  94.745%{transform:rotate(0deg)}
-  100%{transform:rotate(0deg)}
+  0%,17%{transform:rotate(0deg)}
+  21.05%{transform:rotate(.9deg)}
+  24%,25.26%{transform:rotate(0deg)}
+  32%{transform:rotate(6deg)}
+  45%{transform:rotate(-1.8deg)}
+  51%,69.47%{transform:rotate(0deg)}
+  76%{transform:rotate(5deg)}
+  87%,100%{transform:rotate(0deg)}
 }
 /* bay indicator: green while free, pink once the car is in */
-
-
 @keyframes bayFree{
-  0%{opacity:0.6}
-  8.936%{opacity:0.6}
-  11.915%{opacity:0}
-  20.851%{opacity:0}
-  23.234%{opacity:0.6}
-  38.723%{opacity:0.6}
-  41.702%{opacity:0}
-  50.638%{opacity:0}
-  53.021%{opacity:0.6}
-  77.362%{opacity:0.6}
-  79.787%{opacity:0}
-  87.67%{opacity:0}
-  89.894%{opacity:0.6}
-  100%{opacity:0.6}
+  0%,44%{opacity:.6} 49%,70%{opacity:0} 76%,100%{opacity:.6}
 }
 @keyframes bayBusy{
-  0%{opacity:0}
-  8.936%{opacity:0}
-  11.915%{opacity:0.55}
-  20.851%{opacity:0.55}
-  23.234%{opacity:0}
-  38.723%{opacity:0}
-  41.702%{opacity:0.55}
-  50.638%{opacity:0.55}
-  53.021%{opacity:0}
-  77.362%{opacity:0}
-  79.787%{opacity:0.55}
-  87.67%{opacity:0.55}
-  89.894%{opacity:0}
-  100%{opacity:0}
+  0%,44%{opacity:0} 50%,69.5%{opacity:.55} 75%,100%{opacity:0}
 }
-/* ── 2-wheeler (bk) + 3-wheeler (rk): same 47s loop as the car; each is parked in the bay for a few seconds ── */
-@keyframes bkDrive{
-  0%{transform:translateX(-560px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  8.34%{transform:translateX(-40px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  11.915%{transform:translateX(0px);animation-timing-function:linear}
-  22.043%{transform:translateX(0px);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  28.894%{transform:translateX(760px)}
-  29.787%{transform:translateX(760px)}
-  100%{transform:translateX(760px)}
-}
-@keyframes bkWheel{
-  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  8.34%{transform:rotate(726.7deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  11.915%{transform:rotate(782.6deg);animation-timing-function:linear}
-  22.043%{transform:rotate(782.6deg);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  28.894%{transform:rotate(1844.6deg)}
-  29.787%{transform:rotate(1844.6deg)}
-  100%{transform:rotate(1844.6deg)}
-}
-@keyframes bkDepth{
-  0%{transform:translateY(36px) scale(1);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  8.34%{transform:translateY(36px) scale(1);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  11.915%{transform:translateY(0) scale(.92);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  20.851%{transform:translateY(0) scale(.92);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  25.021%{transform:translateY(36px) scale(1);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  29.787%{transform:translateY(36px) scale(1)}
-  100%{transform:translateY(36px) scale(1)}
-}
-@keyframes bkYaw{
-  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  8.34%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  10.128%{transform:rotate(-4deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  12.213%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  20.851%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  22.638%{transform:rotate(3.5deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  25.617%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  29.787%{transform:rotate(0deg)}
-  100%{transform:rotate(0deg)}
-}
-.bk-drive{animation:bkDrive 47s linear infinite}
-.bk-depth{transform-box:fill-box;transform-origin:50% 100%;transform:translateY(0) scale(.92);animation:bkDepth 47s linear infinite}
-.bk-yaw{transform-box:fill-box;transform-origin:50% 100%;animation:bkYaw 47s linear infinite}
-.bk-wheel{transform-box:fill-box;transform-origin:50% 50%;animation:bkWheel 47s linear infinite}
-@keyframes rkDrive{
-  0%{transform:translateX(-560px)}
-  29.787%{transform:translateX(-560px);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  38.128%{transform:translateX(-40px);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  41.702%{transform:translateX(0px);animation-timing-function:linear}
-  51.83%{transform:translateX(0px);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  58.681%{transform:translateX(760px)}
-  59.574%{transform:translateX(760px)}
-  100%{transform:translateX(760px)}
-}
-@keyframes rkWheel{
-  0%{transform:rotate(0deg)}
-  29.787%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.22,.6,.3,1)}
-  38.128%{transform:rotate(1145.9deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  41.702%{transform:rotate(1234.1deg);animation-timing-function:linear}
-  51.83%{transform:rotate(1234.1deg);animation-timing-function:cubic-bezier(.5,0,.9,.55)}
-  58.681%{transform:rotate(2908.9deg)}
-  59.574%{transform:rotate(2908.9deg)}
-  100%{transform:rotate(2908.9deg)}
-}
-@keyframes rkDepth{
-  0%{transform:translateY(36px) scale(1)}
-  29.787%{transform:translateY(36px) scale(1);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  38.128%{transform:translateY(36px) scale(1);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  41.702%{transform:translateY(0) scale(.92);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  50.638%{transform:translateY(0) scale(.92);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  54.809%{transform:translateY(36px) scale(1);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  59.574%{transform:translateY(36px) scale(1)}
-  100%{transform:translateY(36px) scale(1)}
-}
-@keyframes rkYaw{
-  0%{transform:rotate(0deg)}
-  29.787%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  38.128%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  39.915%{transform:rotate(-4deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  42%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  50.638%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  52.426%{transform:rotate(3.5deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  55.404%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
-  59.574%{transform:rotate(0deg)}
-  100%{transform:rotate(0deg)}
-}
-.rk-drive{animation:rkDrive 47s linear infinite}
-.rk-depth{transform-box:fill-box;transform-origin:50% 100%;transform:translateY(0) scale(.92);animation:rkDepth 47s linear infinite}
-.rk-yaw{transform-box:fill-box;transform-origin:50% 100%;animation:rkYaw 47s linear infinite}
-.rk-wheel{transform-box:fill-box;transform-origin:50% 50%;animation:rkWheel 47s linear infinite}
-.hv-bike-head,.hv-rk-head{opacity:.7}
-@media (prefers-reduced-motion: reduce){.bk-drive,.rk-drive{display:none}}
-
 /* Wider scene than the column on large screens: let it bleed into the page margin so the car stays close to its previous size. */
 @media(min-width:1025px){
   .hero-visual-car{justify-content:flex-start}
