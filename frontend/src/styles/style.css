@@ -930,8 +930,12 @@ body.nav-locked{overflow:hidden;height:100vh}
 .pub-footer-zone .pub-footer{max-width:none;margin:0;padding:2.5rem 0 3rem}
 .pub-footer-zone .pub-footer-bottom{gap:1rem 2rem}
 @media(max-width:560px){
-  .pub-footer-zone{margin-top:3rem;padding:0 1.25rem}
-  .pub-footer-zone .pub-footer{padding:2rem 0 2.5rem}
+  .pub-footer-zone{margin-top:2rem;padding:0 1.25rem}
+  .pub-footer-zone .pub-support{padding:1.2rem 0 0}
+  .pub-footer-zone .pub-support-links{gap:0}
+  .pub-footer-zone .pub-support-link{padding:.3rem .75rem}
+  .pub-footer-zone .pub-footer{padding:.8rem 0 1.4rem}
+  .pub-footer-zone .pub-footer-bottom{gap:.3rem 1rem}
 }
 
 /* ── Landing: extra content sections ── */
