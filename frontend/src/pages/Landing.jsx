@@ -372,12 +372,18 @@ export default function Landing() {
                 ['Can I see my past bookings?', 'Yes. Your booking history shows each booking, its check-in and check-out time and your receipt, across all locations.'],
                 ['Is there help if I get stuck?', 'Use Help & Support at the bottom of this page. Once you are signed in, the AI Assistant can also answer questions about parking and bookings.'],
               ].map(([q, a], i) => (
-                <div className={`lp-faq-item spot reveal${faqOpen === i ? ' open' : ''}`} key={q}>
-                  <button type="button" className="lp-faq-q" onClick={() => setFaqOpen(faqOpen === i ? -1 : i)} aria-expanded={faqOpen === i}>
-                    <span>{q}</span>
-                    <i className="bi bi-chevron-down" />
-                  </button>
-                  {faqOpen === i && <div className="lp-faq-a">{a}</div>}
+                // The scroll-reveal class lives on a wrapper with a STATIC className.
+                // Putting it on the item itself broke the FAQ: its className changes on
+                // every click, and React rewrote it, wiping the 'is-visible' class and
+                // hiding the card again.
+                <div className="reveal" key={q}>
+                  <div className={`lp-faq-item spot${faqOpen === i ? ' open' : ''}`}>
+                    <button type="button" className="lp-faq-q" onClick={() => setFaqOpen(faqOpen === i ? -1 : i)} aria-expanded={faqOpen === i}>
+                      <span>{q}</span>
+                      <i className="bi bi-chevron-down" />
+                    </button>
+                    {faqOpen === i && <div className="lp-faq-a">{a}</div>}
+                  </div>
                 </div>
               ))}
             </div>
