@@ -217,7 +217,9 @@ export default function HeroVehicles3D({ active, onReady, onFail }) {
               const R = node.position.y - box.min.y;
               const W = Math.max(wb.max.z - wb.min.z, 0.12);
               const centre = node.worldToLocal(wb.getCenter(new THREE.Vector3()));
-              node.traverse((o) => { if (o.isMesh) o.visible = false; });
+              // NB: the wheel node is itself a mesh, so don't hide it (that would hide the solid wheel
+              // added below too) - just empty the old geometry. Material is shared with the body: untouched.
+              node.traverse((o) => { if (o.isMesh) o.geometry = new THREE.BufferGeometry(); });
               const solid = buildSolidWheel(R, W);
               solid.position.z = centre.z;
               node.add(solid);
