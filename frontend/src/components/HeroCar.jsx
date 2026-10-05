@@ -7,9 +7,9 @@
  *
  * Bike + rickshaw: <HeroVehicles3D/> draws the two .glb models with three.js on a transparent
  * canvas laid over the SVG (lazy-loaded, so it never blocks first paint). Their wheels are
- * separate nodes in the models and spin as the vehicle rolls. The hand-drawn SVG versions
- * below stay on screen until the models have loaded (and forever if WebGL / the files fail
- * or the user prefers reduced motion).
+ * separate nodes in the models and spin as the vehicle rolls. While the models load nothing
+ * is drawn for these two (the 3D canvas then fades in); the hand-drawn SVG versions below are
+ * only used as a fallback if WebGL / the files fail or the user prefers reduced motion.
  *
  * The Lamborghini is NOT a live 3D scene (its .glb is ~20 MB / 325k triangles, far too
  * heavy for a landing page). Instead the model was rendered once from the side into two
@@ -19,11 +19,19 @@
  *   .hc-brake / .hc-rev / .hc-head  lamp glows
  * The bay indicator, the Lamborghini and the 3D vehicles all share the same 47s clock.
  */
-import { lazy, Suspense, useState, useCallback } from 'react';
+import { Component, lazy, Suspense, useState, useCallback } from 'react';
 import lamboBody from '../assets/lambo-body.webp';
 import lamboWheel from '../assets/lambo-wheel.webp';
 
 const HeroVehicles3D = lazy(() => import('./HeroVehicles3D.jsx'));
+
+// If the 3D chunk itself fails to load (offline, blocked...) fall back to the SVG vehicles instead of crashing the page.
+class Hero3DBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { if (this.props.onFail) this.props.onFail(); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 
 /* ───────────────────────── 2-wheeler (sport-tourer, black + green) ───────────────────────── */
 const BIKE_SPOKES = [0, 72, 144, 216, 288];
@@ -187,10 +195,12 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function HeroCar() {
-  // true once the GLB vehicles have loaded and taken over from the SVG ones
-  const [use3d, setUse3d] = useState(false);
-  const [wantsMotion] = useState(() => !prefersReducedMotion());
-  const handleReady = useCallback(() => setUse3d(true), []);
+  // 'loading' = GLB vehicles still downloading (bike + rickshaw not drawn yet) | '3d' = GLB vehicles running |
+  // 'svg' = fallback to the hand-drawn SVG vehicles (reduced motion, no WebGL, or the files failed)
+  const [reduced] = useState(prefersReducedMotion);
+  const [mode, setMode] = useState(() => (prefersReducedMotion() ? 'svg' : 'loading'));
+  const handleReady = useCallback(() => setMode('3d'), []);
+  const handleFail = useCallback(() => setMode('svg'), []);
   return (
     <div className="hero-car" role="img" aria-label="A motorbike, an auto-rickshaw and a supercar taking turns to park in an empty bay">
       <svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
@@ -258,8 +268,8 @@ export default function HeroCar() {
         </g>
 
         {/* three vehicles take turns in the same bay: 2-wheeler, 3-wheeler, then the supercar */}
-        <Bike art={!use3d} />
-        <Rickshaw art={!use3d} />
+        {mode !== 'loading' && <Bike art={mode === 'svg'} />}
+        {mode !== 'loading' && <Rickshaw art={mode === 'svg'} />}
 
         {/* car art; this outer transform only places its parked pose in the bay */}
         <g className="hv-veh" transform="translate(2 -45)">
@@ -298,10 +308,12 @@ export default function HeroCar() {
         </g>
         </g>
       </svg>
-      {wantsMotion && (
-        <Suspense fallback={null}>
-          <HeroVehicles3D active={use3d} onReady={handleReady} />
-        </Suspense>
+      {!reduced && mode !== 'svg' && (
+        <Hero3DBoundary onFail={handleFail}>
+          <Suspense fallback={null}>
+            <HeroVehicles3D active={mode === '3d'} onReady={handleReady} onFail={handleFail} />
+          </Suspense>
+        </Hero3DBoundary>
       )}
     </div>
   );

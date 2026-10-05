@@ -8,8 +8,8 @@
  *   (bay indicator, car, bike, rickshaw) stays in step.
  * - Wheels are separate nodes in the .glb files; they spin by "rolling without slipping":
  *   angle = -distance travelled / wheel radius.
- * - The SVG vehicles stay on screen only until both models are loaded; the moment they are
- *   ready the 3D versions take over. If WebGL or the files fail, the SVG vehicles keep running.
+ * - Nothing is drawn for these two vehicles until both models are loaded; then the canvas fades in.
+ *   If WebGL or the files fail, onFail() tells the parent to show the SVG vehicles instead.
  */
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
@@ -47,12 +47,14 @@ function disposeScene(scene) {
   });
 }
 
-export default function HeroVehicles3D({ active, onReady }) {
+export default function HeroVehicles3D({ active, onReady, onFail }) {
   const hostRef = useRef(null);
   const activeRef = useRef(active);
   const onReadyRef = useRef(onReady);
+  const onFailRef = useRef(onFail);
   activeRef.current = active;
   onReadyRef.current = onReady;
+  onFailRef.current = onFail;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -62,7 +64,8 @@ export default function HeroVehicles3D({ active, onReady }) {
     try {
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     } catch (err) {
-      console.warn('[hero] WebGL unavailable, keeping SVG vehicles', err);
+      console.warn('[hero] WebGL unavailable, using SVG vehicles', err);
+      if (onFailRef.current) onFailRef.current();
       return undefined;
     }
     renderer.setClearColor(0x000000, 0);
@@ -173,7 +176,11 @@ export default function HeroVehicles3D({ active, onReady }) {
         });
         ready = true;
       })
-      .catch((err) => console.warn('[hero] could not load 3D models, keeping SVG vehicles', err));
+      .catch((err) => {
+        if (disposed) return;
+        console.warn('[hero] could not load 3D models, using SVG vehicles', err);
+        if (onFailRef.current) onFailRef.current();
+      });
 
     let raf = 0;
     const tick = () => {
@@ -220,5 +227,5 @@ export default function HeroVehicles3D({ active, onReady }) {
     };
   }, []);
 
-  return <div ref={hostRef} className="hero-3d" aria-hidden="true" />;
+  return <div ref={hostRef} className={active ? 'hero-3d on' : 'hero-3d'} aria-hidden="true" />;
 }
