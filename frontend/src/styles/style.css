@@ -461,10 +461,13 @@ h1,h2,h3,h4,h5,h6{font-family:'Exo 2',sans-serif;letter-spacing:.02em;color:var(
    4.8–9.4 reverse in, steering · 9.4–10.4 nudge forward to centre ·
    10.4–13.2 parked · 13.2–17.6 pull out and drive away · 17.6–19 empty lane.
    The car enters and leaves outside the masked edges, so the loop restart is never seen. */
-.hero-car{width:100%;max-width:560px;animation:fadeUp .9s .25s ease both;
+.hero-car{position:relative;width:100%;max-width:560px;animation:fadeUp .9s .25s ease both;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
   mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
 .hero-car svg{display:block;width:100%;height:auto;overflow:hidden}
+/* real-time 3D layer (bike + rickshaw .glb): transparent canvas exactly over the 800x250 SVG */
+.hero-3d{position:absolute;inset:0;pointer-events:none}
+.hero-3d canvas{display:block;width:100%;height:100%}
 /* Un-animated (reduced motion) pose = parked in the bay. */
 .hc-depth,.hc-yaw,.hc-wheel{transform-box:fill-box}
 .hc-depth{transform-origin:50% 100%;transform:translateY(0) scale(.92);animation:carDepth 47s cubic-bezier(.4,0,.6,1) infinite}
@@ -930,12 +933,8 @@ body.nav-locked{overflow:hidden;height:100vh}
 .pub-footer-zone .pub-footer{max-width:none;margin:0;padding:2.5rem 0 3rem}
 .pub-footer-zone .pub-footer-bottom{gap:1rem 2rem}
 @media(max-width:560px){
-  .pub-footer-zone{margin-top:2rem;padding:0 1.25rem}
-  .pub-footer-zone .pub-support{padding:1.2rem 0 0}
-  .pub-footer-zone .pub-support-links{gap:0}
-  .pub-footer-zone .pub-support-link{padding:.3rem .75rem}
-  .pub-footer-zone .pub-footer{padding:.8rem 0 1.4rem}
-  .pub-footer-zone .pub-footer-bottom{gap:.3rem 1rem}
+  .pub-footer-zone{margin-top:3rem;padding:0 1.25rem}
+  .pub-footer-zone .pub-footer{padding:2rem 0 2.5rem}
 }
 
 /* ── Landing: extra content sections ── */

@@ -1,21 +1,29 @@
 /**
  * Landing hero visual - three vehicles take turns in one parking bay (one 47s loop):
- *   1) a Kawasaki-style 2-wheeler   (0-14s)
- *   2) a yellow auto-rickshaw       (14-28s)
- *   3) a Lamborghini Centenario     (28-47s)  <- rendered from the supplied .glb model
+ *   1) a Kawasaki Ninja H2R 2-wheeler (0-14s)   <- real-time 3D, from kawasaki-h2r.glb
+ *   2) a yellow auto-rickshaw         (14-28s)  <- real-time 3D, from auto-rickshaw.glb
+ *   3) a Lamborghini Centenario       (28-47s)  <- pre-rendered images (see below)
  * Each one drives in, parks, waits, then leaves before the next one arrives.
  *
- * The Lamborghini is NOT a live 3D scene (the .glb is ~20 MB / 325k triangles, far too
+ * Bike + rickshaw: <HeroVehicles3D/> draws the two .glb models with three.js on a transparent
+ * canvas laid over the SVG (lazy-loaded, so it never blocks first paint). Their wheels are
+ * separate nodes in the models and spin as the vehicle rolls. The hand-drawn SVG versions
+ * below stay on screen until the models have loaded (and forever if WebGL / the files fail
+ * or the user prefers reduced motion).
+ *
+ * The Lamborghini is NOT a live 3D scene (its .glb is ~20 MB / 325k triangles, far too
  * heavy for a landing page). Instead the model was rendered once from the side into two
- * tiny transparent images (body ~60 KB, wheel ~15 KB) that slot into the same CSS
- * animation system as the other two vehicles:
+ * tiny transparent images (body ~60 KB, wheel ~15 KB) that slot into the CSS animation system:
  *   .hc-drive  forward / reverse travel      .hc-depth  lane -> bay distance
  *   .hc-yaw    steering + brake dive         .hc-wheel  wheel spin (keyframed to the travel)
  *   .hc-brake / .hc-rev / .hc-head  lamp glows
- * Pure inline SVG + CSS transforms/opacity - no JS animation loop, canvas or listeners.
+ * The bay indicator, the Lamborghini and the 3D vehicles all share the same 47s clock.
  */
+import { lazy, Suspense, useState, useCallback } from 'react';
 import lamboBody from '../assets/lambo-body.webp';
 import lamboWheel from '../assets/lambo-wheel.webp';
+
+const HeroVehicles3D = lazy(() => import('./HeroVehicles3D.jsx'));
 
 /* ───────────────────────── 2-wheeler (sport-tourer, black + green) ───────────────────────── */
 const BIKE_SPOKES = [0, 72, 144, 216, 288];
@@ -36,12 +44,13 @@ const BikeWheel = ({ cx }) => (
   </g>
 );
 
-const Bike = () => (
+const Bike = ({ art = true }) => (
   <g className="hv-veh" transform="translate(2 -45)">
     <g className="bk-drive">
       <g className="bk-depth">
         <ellipse cx="330" cy="233" rx="190" ry="6" fill="url(#hc-underglow)" />
         <ellipse cx="330" cy="233" rx="196" ry="7" fill="url(#hc-ground)" />
+        {art && (<>
         <ellipse cx="205" cy="231.5" rx="30" ry="3" fill="#000" opacity=".6" />
         <ellipse cx="455" cy="231.5" rx="30" ry="3" fill="#000" opacity=".6" />
         <g className="bk-yaw">
@@ -88,6 +97,7 @@ const Bike = () => (
           <path d="M450 100 L470 94 L478 104 L458 110 Z" fill="#0a0e14" stroke="rgba(150,205,245,.45)" strokeWidth=".8" strokeLinejoin="round" />
           </g>
         </g>
+        </>)}
       </g>
     </g>
   </g>
@@ -111,12 +121,13 @@ const RickWheel = ({ cx }) => (
   </g>
 );
 
-const Rickshaw = () => (
+const Rickshaw = ({ art = true }) => (
   <g className="hv-veh" transform="translate(2 -45)">
     <g className="rk-drive">
       <g className="rk-depth">
         <ellipse cx="330" cy="233" rx="170" ry="6" fill="url(#hc-underglow)" />
         <ellipse cx="330" cy="233" rx="176" ry="7" fill="url(#hc-ground)" />
+        {art && (<>
         <ellipse cx="225" cy="231.5" rx="24" ry="3" fill="#000" opacity=".6" />
         <ellipse cx="438" cy="231.5" rx="24" ry="3" fill="#000" opacity=".6" />
         <g className="rk-yaw">
@@ -166,14 +177,22 @@ const Rickshaw = () => (
           <RickWheel cx={438} />
           <path d="M406 200 C406 174 470 174 470 200 L462 200 C458 184 416 184 414 200 Z" fill="url(#rk-yellow)" stroke="rgba(0,0,0,.35)" strokeWidth=".8" />
         </g>
+        </>)}
       </g>
     </g>
   </g>
 );
 
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export default function HeroCar() {
+  // true once the GLB vehicles have loaded and taken over from the SVG ones
+  const [use3d, setUse3d] = useState(false);
+  const [wantsMotion] = useState(() => !prefersReducedMotion());
+  const handleReady = useCallback(() => setUse3d(true), []);
   return (
-    <div className="hero-car" role="img" aria-label="Illustration of a motorbike, an auto-rickshaw and a supercar taking turns to park in an empty bay">
+    <div className="hero-car" role="img" aria-label="A motorbike, an auto-rickshaw and a supercar taking turns to park in an empty bay">
       <svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
         <defs>
           <radialGradient id="hc-underglow" cx=".5" cy=".5" r=".5">
@@ -239,8 +258,8 @@ export default function HeroCar() {
         </g>
 
         {/* three vehicles take turns in the same bay: 2-wheeler, 3-wheeler, then the supercar */}
-        <Bike />
-        <Rickshaw />
+        <Bike art={!use3d} />
+        <Rickshaw art={!use3d} />
 
         {/* car art; this outer transform only places its parked pose in the bay */}
         <g className="hv-veh" transform="translate(2 -45)">
@@ -279,6 +298,11 @@ export default function HeroCar() {
         </g>
         </g>
       </svg>
+      {wantsMotion && (
+        <Suspense fallback={null}>
+          <HeroVehicles3D active={use3d} onReady={handleReady} />
+        </Suspense>
+      )}
     </div>
   );
 }
