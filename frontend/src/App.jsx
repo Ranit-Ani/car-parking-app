@@ -10,6 +10,10 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import About from './pages/public/About';
+import Help from './pages/public/Help';
+import Privacy from './pages/public/Privacy';
+import Terms from './pages/public/Terms';
 
 import UserDashboard from './pages/user/Dashboard';
 import UserBookings from './pages/user/Bookings';
@@ -41,6 +45,10 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
 
           <Route path="/profile" element={<RequireAuth roles={['user', 'staff', 'admin']}><Profile /></RequireAuth>} />
 

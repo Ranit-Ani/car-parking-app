@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import HeroCar from '../components/HeroCar';
-import HelpSupportModal from '../components/HelpSupportModal';
-import LegalModal from '../components/LegalModal';
+import { PublicFooter } from '../components/PublicPageLayout';
 import { apiRequest, getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { useRevalidate } from '../lib/useRevalidate';
@@ -116,8 +115,6 @@ html,body{max-width:100%;overflow-x:hidden}
 
 export default function Landing() {
   const [stats, setStats] = useState({ total: '--', avail: '--', occ: '--' });
-  const [legalOpen, setLegalOpen] = useState(null); // 'about' | 'privacy' | 'terms' | null
-  const [helpOpen, setHelpOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(0);
 
   // Checked during render (not in an effect) so a logged-in user is sent
@@ -410,32 +407,7 @@ export default function Landing() {
 
       </main>
 
-      <div className="pub-footer-zone">
-      <section className="pub-support">
-        <div className="pub-support-links">
-          <button type="button" className="pub-support-link" onClick={() => setLegalOpen('about')}>About</button>
-          <span className="pub-support-sep">&bull;</span>
-          <button type="button" className="pub-support-link" onClick={() => setHelpOpen(true)}>Help &amp; Support</button>
-          <span className="pub-support-sep">&bull;</span>
-          <button type="button" className="pub-support-link" onClick={() => setLegalOpen('privacy')}>Privacy Policy</button>
-          <span className="pub-support-sep">&bull;</span>
-          <button type="button" className="pub-support-link" onClick={() => setLegalOpen('terms')}>Terms &amp; Conditions</button>
-        </div>
-      </section>
-
-      <footer className="pub-footer">
-        <div className="pub-footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Car Parking Network. All rights reserved.</span>
-          <span className="pub-footer-credit">Built by Ranit Pramanick</span>
-        </div>
-      </footer>
-      </div>
-
-      {/* Public Landing page: no AI Assistant here (it's already gated to
-          logged-in users only in AIChatWidget), just the plain support
-          entry points below. */}
-      <HelpSupportModal show={helpOpen} onClose={() => setHelpOpen(false)} />
-      <LegalModal type={legalOpen} onClose={() => setLegalOpen(null)} />
+      <PublicFooter />
     </>
   );
 }
