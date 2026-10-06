@@ -68,7 +68,7 @@ export default function Help() {
           <input className="ag-input" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="ag-input-group"><label className="ag-label">Message</label>
           <textarea className="ag-input" rows={5} placeholder="Describe the issue you are facing" required style={{ resize: 'vertical', minHeight: '7rem', paddingTop: '.65rem' }} value={message} onChange={(e) => setMessage(e.target.value)} /></div>
-        <ActionButton type="submit" busy={busy} busyLabel="Sending..." className="btn-ag primary"><i className="bi bi-send" /> Send Message</ActionButton>
+        <ActionButton type="submit" busy={busy} busyLabel="Sending..." className="btn-ag primary full"><i className="bi bi-send" /> Send Message</ActionButton>
       </form>
     </PublicPageLayout>
   );
