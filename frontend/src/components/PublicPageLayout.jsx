@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 
@@ -10,15 +10,31 @@ export const FOOTER_COLS = [
   { title: 'Get Started', links: [{ to: '/login', text: 'Sign In' }, { to: '/register', text: 'Create Account' }] },
 ];
 
+/**
+ * "ParkPoint" brand link used in headers/footers. Normal navigation to a
+ * different page; but if you are already on the target page, a plain <Link>
+ * does nothing - so scroll smoothly to the top instead.
+ */
+export function BrandLink({ to = '/', children }) {
+  const { pathname } = useLocation();
+  const onClick = (e) => {
+    if (pathname === to) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  return <Link className="pub-nav-brand" to={to} onClick={onClick}>{children}</Link>;
+}
+
 export function PublicFooter() {
   return (
     <footer className="pp-footer">
       <div className="pp-footer-grid">
         <div className="pp-footer-brand">
-          <Link className="pub-nav-brand" to="/">
+          <BrandLink to="/">
             <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
             ParkPoint
-          </Link>
+          </BrandLink>
           <p>One account, every parking location. Find, book and pay for parking across the whole network in seconds.</p>
         </div>
         {FOOTER_COLS.map((c) => (
@@ -57,10 +73,10 @@ export default function PublicPageLayout({ title, subtitle, children }) {
   return (
     <div className={`pp-shell ${authed ? 'main-content' : ''}`}>
       <nav className="pp-nav">
-        <Link className="pub-nav-brand" to={authed ? homeForRole(user.role) : '/'}>
+        <BrandLink to={authed ? homeForRole(user.role) : '/'}>
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
           ParkPoint
-        </Link>
+        </BrandLink>
         <div className="pp-nav-links">
           {links.map(([to, t]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'active' : '')}>{t}</NavLink>)}
         </div>

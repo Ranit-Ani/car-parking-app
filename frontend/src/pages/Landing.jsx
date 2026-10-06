@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import HeroCar from '../components/HeroCar';
-import { PublicFooter } from '../components/PublicPageLayout';
+import { BrandLink, PublicFooter } from '../components/PublicPageLayout';
 import { apiRequest, getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
 import { useRevalidate } from '../lib/useRevalidate';
@@ -167,10 +167,10 @@ export default function Landing() {
     <>
       <style>{LANDING_FX_CSS}</style>
       <nav className="pub-nav">
-        <Link className="pub-nav-brand" to="/">
+        <BrandLink to="/">
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
           ParkPoint
-        </Link>
+        </BrandLink>
         <div style={{ display: 'flex', gap: '.6rem', alignItems: 'center' }}>
           <Link to="/login" className="btn-ag ghost sm">Sign In</Link>
           <Link to="/register" className="btn-ag primary sm"><i className="bi bi-person-plus" /> Sign Up</Link>

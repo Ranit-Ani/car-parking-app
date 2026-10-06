@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NavProvider } from './context/NavContext';
 import RequireAuth from './components/RequireAuth';
@@ -33,9 +34,23 @@ import AdminRevenue from './pages/admin/Revenue';
 import AdminLocationRevenue from './pages/admin/LocationRevenue';
 import AdminBookings from './pages/admin/Bookings';
 
+// React Router keeps the previous page's scroll position when you navigate,
+// so landing on a new page could drop you mid-page. Start every normal
+// navigation (link click) at the top; Back/Forward (POP) keeps the
+// browser's own scroll restoration.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navType = useNavigationType();
+  useEffect(() => {
+    if (navType !== 'POP') window.scrollTo(0, 0);
+  }, [pathname, navType]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <NavProvider>
         <ToastHost />
