@@ -1,107 +1,52 @@
 import { Link } from 'react-router-dom';
 import PublicPageLayout from '../../components/PublicPageLayout';
 
-const STATS = [
-  ['Multi-location', 'One account for every site', 'bi-geo-alt-fill'],
-  ['Real-time', 'Live slot availability', 'bi-lightning-charge-fill'],
-  ['1 hour', 'Check-in window per booking', 'bi-clock-history'],
-  ['24 / 7', 'Book any time, anywhere', 'bi-globe2'],
-];
-const STEPS = [
-  ['bi-person-plus', 'Create your account', 'Sign up in under a minute and verify with a one-time code sent to your email.'],
-  ['bi-geo-alt', 'Find nearby parking', 'Browse connected locations on a live map and see exactly how many slots are free.'],
-  ['bi-calendar-check', 'Book instantly', 'Pick a slot and your vehicle. You get a QR code immediately.'],
-  ['bi-qr-code-scan', 'Scan, park & go', 'Staff scan your QR at the gate; billing is automatic when you check out.'],
-];
-const FEATURES = [
-  ['bi-map', 'Live location map', 'Discover parking near you with distance, availability and navigation in one place.'],
-  ['bi-shield-check', 'Secure by design', 'Email OTP verification, hashed passwords and role-based access protect every account.'],
-  ['bi-receipt', 'Fair, automatic billing', 'Transparent minimum 1-hour round-up pricing, with a receipt for every trip.'],
-  ['bi-car-front', 'Multiple vehicles', 'Save all your vehicles with validated registration numbers and choose one per booking.'],
-  ['bi-robot', 'AI assistant', 'Ask about bookings, policies or your saved vehicles and get instant answers.'],
-  ['bi-phone', 'Works everywhere', 'Responsive on desktop, tablet and mobile — with a native Android app.'],
-];
-const ROLES = [
-  ['bi-person', 'For Drivers', ['Find and book slots in seconds', 'Track active and past bookings', 'Download receipts and QR codes']],
-  ['bi-person-badge', 'For Staff', ['Fast QR and manual check-in', 'One-tap check-out and billing', 'Live view of the location\'s slots']],
-  ['bi-speedometer2', 'For Admins', ['Manage locations, slots and users', 'Revenue dashboards per location', 'Full oversight of every booking']],
-];
-const VALUES = [
-  ['Simplicity', 'Parking should take seconds, not minutes of circling and guessing.'],
-  ['Transparency', 'Clear availability, clear pricing, clear rules. No surprises at the exit.'],
-  ['Privacy', 'We collect only what we need and we never sell your data.'],
-  ['Reliability', 'Atomic bookings and automatic expiry mean no double-booked slots.'],
-];
-
 export default function About() {
   return (
-    <PublicPageLayout icon="bi-info-circle" eyebrow="ABOUT PARKPOINT" title="Parking, made effortless"
-      subtitle="ParkPoint is a multi-location parking network that lets you find, book and pay for a spot anywhere in the network with a single account.">
-      <section className="pp-stats">
-        {STATS.map(([big, small, ic]) => (
-          <div key={big} className="pp-stat"><i className={`bi ${ic}`} /><strong>{big}</strong><span>{small}</span></div>
-        ))}
-      </section>
+    <PublicPageLayout
+      title="About Us"
+      subtitle="ParkPoint is a multi-location parking platform that allows drivers to find, book and pay for parking at any connected location using a single account."
+    >
+      <h2>Who We Are</h2>
+      <p>Finding parking has traditionally meant using a different application, a different account and a great deal of guesswork at every site. ParkPoint replaces this with one connected network. Drivers sign in once, view real-time slot availability across all participating locations, and reserve a space before they arrive.</p>
+      <p>For the people who operate the locations, ParkPoint brings check-ins, check-outs, billing and reporting together in a single real-time dashboard, so that staff can spend less time on paperwork and more time assisting drivers.</p>
 
-      <section className="pp-section pp-split">
-        <div>
-          <div className="pp-kicker">OUR STORY</div>
-          <h2>Why we built ParkPoint</h2>
-        </div>
-        <div className="pp-prose">
-          <p>Finding parking usually means a different app, a different account and a lot of guesswork for every site. ParkPoint replaces that with one connected network: sign in once, see live availability across every location, and reserve a slot before you arrive.</p>
-          <p>For the people running the locations, ParkPoint brings check-ins, check-outs, billing and reporting into one real-time dashboard, so staff spend less time on paperwork and more time helping drivers.</p>
-          <p>Our goal is simple: make finding a parking spot as effortless as parking itself.</p>
-        </div>
-      </section>
+      <h2>Our Mission</h2>
+      <p>Our mission is to make finding a parking space as simple as parking itself, while keeping the process transparent, secure and reliable for everyone involved.</p>
 
-      <section className="pp-section">
-        <div className="pp-kicker center">HOW IT WORKS</div>
-        <h2 className="center">From search to exit in four steps</h2>
-        <div className="pp-grid-4">
-          {STEPS.map(([ic, t, d], i) => (
-            <div key={t} className="pp-card"><span className="pp-step">{i + 1}</span><i className={`bi ${ic} pp-card-icon`} /><h3>{t}</h3><p>{d}</p></div>
-          ))}
-        </div>
-      </section>
+      <h2>How It Works</h2>
+      <ol>
+        <li>Create an account and verify your email address with a one-time code.</li>
+        <li>Browse nearby parking locations and check how many slots are currently available.</li>
+        <li>Select a slot and a vehicle to book. A QR code is issued immediately.</li>
+        <li>Present the QR code to staff at the location to check in. Billing is calculated automatically when you check out.</li>
+      </ol>
 
-      <section className="pp-section">
-        <div className="pp-kicker center">FEATURES</div>
-        <h2 className="center">Everything you need, nothing you don't</h2>
-        <div className="pp-grid-3">
-          {FEATURES.map(([ic, t, d]) => (
-            <div key={t} className="pp-card"><i className={`bi ${ic} pp-card-icon`} /><h3>{t}</h3><p>{d}</p></div>
-          ))}
-        </div>
-      </section>
+      <h2>What We Offer</h2>
+      <ul>
+        <li>Real-time slot availability across all connected locations.</li>
+        <li>Instant booking with QR-based check-in.</li>
+        <li>Automatic billing with a minimum one-hour, round-up model and a receipt for every completed booking.</li>
+        <li>Support for multiple saved vehicles with validated registration numbers.</li>
+        <li>Email OTP verification and role-based access to protect every account.</li>
+        <li>An AI assistant that answers questions about bookings and parking policies.</li>
+        <li>Access from desktop, tablet and mobile devices, including an Android application.</li>
+      </ul>
 
-      <section className="pp-section">
-        <div className="pp-kicker center">BUILT FOR EVERYONE</div>
-        <h2 className="center">One platform, three experiences</h2>
-        <div className="pp-grid-3">
-          {ROLES.map(([ic, t, list]) => (
-            <div key={t} className="pp-card"><i className={`bi ${ic} pp-card-icon`} /><h3>{t}</h3>
-              <ul className="pp-check">{list.map((x) => <li key={x}><i className="bi bi-check2-circle" />{x}</li>)}</ul></div>
-          ))}
-        </div>
-      </section>
+      <h2>Who Uses ParkPoint</h2>
+      <p><strong>Drivers</strong> use ParkPoint to find and book parking, track their bookings and download receipts.</p>
+      <p><strong>Staff</strong> manage check-ins and check-outs at their assigned location and view slot status in real time.</p>
+      <p><strong>Administrators</strong> manage locations, slots, users and bookings, and review revenue across the network.</p>
 
-      <section className="pp-section">
-        <div className="pp-kicker center">OUR VALUES</div>
-        <h2 className="center">What we stand for</h2>
-        <div className="pp-grid-4">
-          {VALUES.map(([t, d]) => (<div key={t} className="pp-card"><h3>{t}</h3><p>{d}</p></div>))}
-        </div>
-      </section>
+      <h2>Our Commitments</h2>
+      <ul>
+        <li><strong>Transparency:</strong> clear availability, clear pricing and clear rules.</li>
+        <li><strong>Privacy:</strong> we collect only the information required to operate the service and we do not sell personal data.</li>
+        <li><strong>Reliability:</strong> bookings are processed atomically, so a slot cannot be booked twice.</li>
+      </ul>
 
-      <section className="pp-cta">
-        <h2>Ready to park smarter?</h2>
-        <p>Join the network and book your first spot in minutes.</p>
-        <div className="pp-cta-actions">
-          <Link to="/register" className="btn-ag primary lg"><i className="bi bi-rocket-takeoff" /> Create Account</Link>
-          <Link to="/help" className="btn-ag ghost lg"><i className="bi bi-life-preserver" /> Talk to Support</Link>
-        </div>
-      </section>
+      <h2>Get in Touch</h2>
+      <p>To start using ParkPoint, <Link to="/register">create an account</Link>. If you need assistance, please visit our <Link to="/help">Help &amp; Support</Link> page. You may also read our <Link to="/privacy">Privacy Policy</Link> and <Link to="/terms">Terms &amp; Conditions</Link>.</p>
     </PublicPageLayout>
   );
 }

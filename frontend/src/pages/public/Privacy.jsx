@@ -45,7 +45,7 @@ const SECTIONS = [
 
 export default function Privacy() {
   return (
-    <PublicPageLayout icon="bi-shield-lock" eyebrow="YOUR DATA, PROTECTED" title="Privacy Policy"
+    <PublicPageLayout title="Privacy Policy"
       subtitle="Clear, plain-language details on what we collect, why we collect it, and how you stay in control.">
       <LegalDoc updated="October 2026" sections={SECTIONS} />
     </PublicPageLayout>

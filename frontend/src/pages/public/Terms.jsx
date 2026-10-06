@@ -37,7 +37,7 @@ const SECTIONS = [
 
 export default function Terms() {
   return (
-    <PublicPageLayout icon="bi-file-earmark-text" eyebrow="THE GROUND RULES" title="Terms & Conditions"
+    <PublicPageLayout title="Terms & Conditions"
       subtitle="Everything you need to know about bookings, billing and responsible use of the network.">
       <LegalDoc updated="October 2026" sections={SECTIONS} />
     </PublicPageLayout>

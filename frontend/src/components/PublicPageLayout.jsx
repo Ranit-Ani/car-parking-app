@@ -41,7 +41,7 @@ export function PublicFooter() {
  * Props: icon, eyebrow, title, subtitle, children.
  * Works for both visitors and logged-in users (inside the app's sidebar layout).
  */
-export default function PublicPageLayout({ icon, eyebrow, title, subtitle, children }) {
+export default function PublicPageLayout({ title, subtitle, children }) {
   const authed = !!(getToken() && getUser());
   const user = authed ? getUser() : null;
 
@@ -76,51 +76,31 @@ export default function PublicPageLayout({ icon, eyebrow, title, subtitle, child
         </div>
       </nav>
 
-      <header className="pp-hero">
-        <div className="pp-hero-inner">
-          <div className="pp-hero-icon"><i className={`bi ${icon}`} /></div>
-          <div className="hero-badge"><span className="dot" /> {eyebrow}</div>
-          <h1 className="display-title">{title}</h1>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-      </header>
-
-      <main className="pp-main">{children}</main>
+      <main className="pp-main pp-doc">
+        <h1 className="pp-title">{title}</h1>
+        {subtitle && <p className="pp-lead">{subtitle}</p>}
+        {children}
+      </main>
       <PublicFooter />
     </div>
   );
 }
 
-/** Two-column legal layout: sticky table of contents + numbered sections. */
+/** Plain formal legal document: numbered headings with paragraphs and lists. */
 export function LegalDoc({ updated, sections }) {
   return (
-    <div className="pp-legal">
-      <aside className="pp-toc">
-        <div className="pp-toc-title">On this page</div>
-        {sections.map((s, i) => (
-          <a key={s.id} href={`#${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
-            <span>{i + 1}.</span> {s.title}
-          </a>
-        ))}
-      </aside>
-      <article className="pp-doc">
-        <div className="pp-updated"><i className="bi bi-clock-history" /> Last updated: {updated}</div>
-        {sections.map((s, i) => (
-          <section key={s.id} id={s.id}>
-            <h2><span>{String(i + 1).padStart(2, '0')}</span>{s.title}</h2>
-            {s.paras?.map((p, k) => <p key={k}>{p}</p>)}
-            {s.items && <ul>{s.items.map((it, k) => <li key={k}>{it}</li>)}</ul>}
-            {s.after && <p>{s.after}</p>}
-          </section>
-        ))}
-        <div className="pp-doc-contact">
-          <i className="bi bi-envelope-paper" />
-          <div>
-            <strong>Questions about this document?</strong>
-            <span>Reach our team any time from the <Link to="/help">Help &amp; Support</Link> page.</span>
-          </div>
-        </div>
-      </article>
-    </div>
+    <>
+      <p className="pp-updated">Last updated: {updated}</p>
+      {sections.map((s, i) => (
+        <section key={s.id} id={s.id}>
+          <h2>{i + 1}. {s.title}</h2>
+          {s.paras?.map((p, k) => <p key={k}>{p}</p>)}
+          {s.items && <ul>{s.items.map((it, k) => <li key={k}>{it}</li>)}</ul>}
+          {s.after && <p>{s.after}</p>}
+        </section>
+      ))}
+      <h2>Contact</h2>
+      <p>If you have any questions about this document, please contact us through the <Link to="/help">Help &amp; Support</Link> page.</p>
+    </>
   );
 }

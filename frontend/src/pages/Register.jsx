@@ -35,6 +35,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const [otp, setOtp] = useState('');
   const [verifyBusy, setVerifyBusy] = useState(false);
@@ -67,6 +68,7 @@ export default function Register() {
     if (!name || !email || !password) return showToast('All fields are required.', 'warning');
     if (password !== confirm) return showToast('Passwords do not match.', 'danger');
     if (password.length < 6) return showToast('Password must be at least 6 characters.', 'warning');
+    if (!agreed) return showToast('Please accept the Terms & Conditions and Privacy Policy to continue.', 'warning');
 
     setBusy(true);
     const d = await apiRequest('/auth/register/initiate', { method: 'POST', body: { name, email: email.toLowerCase(), password } });
@@ -170,7 +172,16 @@ export default function Register() {
                       <input className="ag-input" type="password" placeholder="Repeat password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
                     </div>
                   </div>
-                  <ActionButton type="submit" busy={busy} busyLabel="Sending..." className="btn-ag primary full lg">
+                  <label className="terms-check">
+                    <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+                    <span>
+                      I agree to the{' '}
+                      <Link to="/terms" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</Link>
+                      {' '}and{' '}
+                      <Link to="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>.
+                    </span>
+                  </label>
+                  <ActionButton type="submit" busy={busy} disabled={busy || !agreed} busyLabel="Sending..." className="btn-ag primary full lg">
                     <i className="bi bi-send" /> Send Verification Code
                   </ActionButton>
                 </form>
