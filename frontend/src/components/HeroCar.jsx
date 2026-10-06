@@ -21,6 +21,7 @@
 import { Component, lazy, Suspense, useState, useCallback } from 'react';
 import lamboBody from '../assets/lambo-body.webp';
 import lamboWheel from '../assets/lambo-wheel.webp';
+import lamboCabin from '../assets/lambo-cabin.webp';
 
 const HeroVehicles3D = lazy(() => import('./HeroVehicles3D.jsx'));
 
@@ -160,11 +161,6 @@ export default function HeroCar() {
           </linearGradient>
           {/* scissor door: panel cut out of the body image (so it matches pixel for pixel when shut) */}
           <clipPath id="hc-door-clip"><polygon points="452,142 430,133 405,125 375,118 340,112 300,110 268,113 262,122 282,138 298,186 394,186 425,158 446,148" /></clipPath>
-          <linearGradient id="hc-cabin" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#4a5a6b" />
-            <stop offset=".3" stopColor="#141c26" />
-            <stop offset="1" stopColor="#05080c" />
-          </linearGradient>
         </defs>
 
         {/* road: curb, lane marking and the parking bay (free = green, occupied = pink) */}
@@ -193,9 +189,9 @@ export default function HeroCar() {
 
           {/* scissor door: the cabin shows through while it is open, the door panel swings up about the A-pillar hinge */}
           <g className="hc-door-hole" clipPath="url(#hc-door-clip)">
-            <rect x="255" y="105" width="205" height="90" fill="url(#hc-cabin)" />
-            <path d="M318 188 L326 130 Q330 119 342 119 L356 121 Q363 125 360 136 L352 160 L388 168 Q398 171 398 180 L396 190 Z" fill="#1b2835" stroke="#2f4254" strokeWidth="1" />
-            <path d="M298 184 L396 184" stroke="#0b1118" strokeWidth="6" />
+            {/* cabin seen through the open door: seat, door trim, dash and wheel, rendered once from the real Centenario .glb (same side-on camera as the body image) */}
+            <rect x="250" y="100" width="220" height="100" fill="#05080c" />
+            <image href={lamboCabin} x="250" y="100" width="220" height="100" preserveAspectRatio="none" />
           </g>
           <g transform="translate(446 146)">
             <g className="hc-door">
