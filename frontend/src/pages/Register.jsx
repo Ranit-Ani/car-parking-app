@@ -71,7 +71,7 @@ export default function Register() {
     if (!agreed) return showToast('Please accept the Terms & Conditions and Privacy Policy to continue.', 'warning');
 
     setBusy(true);
-    const d = await apiRequest('/auth/register/initiate', { method: 'POST', body: { name, email: email.toLowerCase(), password } });
+    const d = await apiRequest('/auth/register/initiate', { method: 'POST', body: { name, email: email.toLowerCase(), password, acceptedTerms: agreed } });
     setBusy(false);
 
     if (d && d.success) {
@@ -105,7 +105,8 @@ export default function Register() {
   }
 
   async function resendOTP() {
-    const d = await apiRequest('/auth/register/initiate', { method: 'POST', body: { name, email: email.toLowerCase(), password } });
+    if (!agreed) return showToast('Please accept the Terms & Conditions and Privacy Policy to continue.', 'warning');
+    const d = await apiRequest('/auth/register/initiate', { method: 'POST', body: { name, email: email.toLowerCase(), password, acceptedTerms: agreed } });
     if (d && d.success) {
       showToast('New code sent to ' + email, 'success');
       setOtp('');

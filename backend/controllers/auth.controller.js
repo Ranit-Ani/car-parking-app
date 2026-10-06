@@ -38,11 +38,14 @@ const sendToken = async (res, user, statusCode, message) => {
 // ─── POST /api/auth/register/initiate ─────────────────────────────────────────
 exports.initiateRegister = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, acceptedTerms } = req.body;
     if (!name || !email || !password)
       return next(new AppError('Name, email and password are required', 400));
     if (password.length < 6)
       return next(new AppError('Password must be at least 6 characters', 400));
+    // Must be the boolean true (not "true", 1, etc.) - enforced before any user/OTP is created or email sent
+    if (acceptedTerms !== true)
+      return next(new AppError('Please accept the Terms & Conditions and Privacy Policy to continue.', 400));
 
     const normalEmail = email.toLowerCase().trim();
 
