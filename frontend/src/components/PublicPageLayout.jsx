@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { getToken, getUser } from '../lib/api';
 import { homeForRole } from '../lib/utils';
@@ -10,12 +10,50 @@ export const FOOTER_COLS = [
   { title: 'Get Started', links: [{ to: '/login', text: 'Sign In' }, { to: '/register', text: 'Create Account' }] },
 ];
 
+
+/**
+ * Decides whether the nav links fit between the brand and the CTA buttons.
+ * If they fit -> stay in that gap (centered). If not -> `stacked` = true and the
+ * links drop to their own centered row below. Works for any screen width.
+ */
+function useNavStacked() {
+  const navRef = useRef(null);
+  const brandRef = useRef(null);
+  const linksRef = useRef(null);
+  const ctaRef = useRef(null);
+  const [stacked, setStacked] = useState(false);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current, brand = brandRef.current, links = linksRef.current, cta = ctaRef.current;
+    if (!nav || !brand || !links || !cta) return undefined;
+    const check = () => {
+      const cs = getComputedStyle(nav);
+      const avail = nav.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const gap = parseFloat(cs.columnGap) || 0;
+      const lcs = getComputedStyle(links);
+      const lgap = parseFloat(lcs.columnGap) || 0;
+      const items = Array.from(links.children);
+      const linksW = items.reduce((w, el) => w + el.offsetWidth, 0) + lgap * Math.max(0, items.length - 1);
+      const need = brand.offsetWidth + linksW + cta.offsetWidth + gap * 2 + 8;
+      setStacked(need > avail);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(nav);
+    window.addEventListener('resize', check);
+    if (document.fonts?.ready) document.fonts.ready.then(check);
+    return () => { ro.disconnect(); window.removeEventListener('resize', check); };
+  }, []);
+
+  return { navRef, brandRef, linksRef, ctaRef, stacked };
+}
+
 /**
  * "ParkPoint" brand link used in headers/footers. Normal navigation to a
  * different page; but if you are already on the target page, a plain <Link>
  * does nothing - so scroll smoothly to the top instead.
  */
-export function BrandLink({ to = '/', children }) {
+export function BrandLink({ to = '/', children, innerRef }) {
   const { pathname } = useLocation();
   const onClick = (e) => {
     if (pathname === to) {
@@ -23,7 +61,7 @@ export function BrandLink({ to = '/', children }) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
-  return <Link className="pub-nav-brand" to={to} onClick={onClick}>{children}</Link>;
+  return <Link ref={innerRef} className="pub-nav-brand" to={to} onClick={onClick}>{children}</Link>;
 }
 
 export function PublicFooter() {
@@ -60,6 +98,7 @@ export function PublicFooter() {
 export default function PublicPageLayout({ title, subtitle, children }) {
   const authed = !!(getToken() && getUser());
   const user = authed ? getUser() : null;
+  const { navRef, brandRef, linksRef, ctaRef, stacked } = useNavStacked();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -72,15 +111,15 @@ export default function PublicPageLayout({ title, subtitle, children }) {
 
   return (
     <div className={`pp-shell ${authed ? 'main-content' : ''}`}>
-      <nav className="pp-nav">
-        <BrandLink to={authed ? homeForRole(user.role) : '/'}>
+      <nav ref={navRef} className={`pp-nav ${stacked ? 'stacked' : ''}`}>
+        <BrandLink innerRef={brandRef} to={authed ? homeForRole(user.role) : '/'}>
           <div className="nav-logo"><i className="bi bi-p-square-fill" /></div>
           ParkPoint
         </BrandLink>
-        <div className="pp-nav-links">
+        <div ref={linksRef} className="pp-nav-links">
           {links.map(([to, t]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'active' : '')}>{t}</NavLink>)}
         </div>
-        <div className="pp-nav-cta">
+        <div ref={ctaRef} className="pp-nav-cta">
           {authed ? (
             <Link to={homeForRole(user.role)} className="btn-ag primary sm"><i className="bi bi-speedometer2" /> Dashboard</Link>
           ) : (
