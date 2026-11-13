@@ -56,7 +56,7 @@ export function getSocket() {
     // purely a "notify the user right now" nicety on top of it, so a
     // missed/dropped socket event can never leave stale access in place.
     socket.on('sessionInvalidated', (payload) => {
-      triggerSessionExpired(payload);
+      triggerSessionExpired(payload, { userId: payload?.userId });
     });
   }
   return socket;

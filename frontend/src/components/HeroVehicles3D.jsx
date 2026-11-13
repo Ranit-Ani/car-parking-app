@@ -192,7 +192,6 @@ export default function HeroVehicles3D({ active, onReady, onFail }) {
       // hand over from the SVG vehicles as soon as both models are loaded
       if (!announced) {
         announced = true;
-        console.info('[hero] 3D vehicles loaded - switching from SVG to GLB');
         if (onReadyRef.current) onReadyRef.current();
       }
       if (!activeRef.current || !inView) return;

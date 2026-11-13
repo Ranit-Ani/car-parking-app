@@ -231,7 +231,18 @@ export function setSessionExpiredHandler(fn) {
  *    this near-instant instead of waiting for the next API call the
  *    affected tab happens to make (a background poll, a click, etc.)
  */
-export function triggerSessionExpired(body) {
+export function triggerSessionExpired(body, { userId, token } = {}) {
+  // localStorage is shared by EVERY tab/window of this browser profile. If
+  // an admin has one tab open as the admin and another as the user whose
+  // role they just changed, that second tab's "session terminated" event
+  // must not wipe the shared token and log the admin out too. So only act
+  // when the event/request really belongs to the session currently stored.
+  if (userId) {
+    const cur = getUser();
+    const curId = cur?.id || cur?._id;
+    if (curId && String(curId) !== String(userId)) return;
+  }
+  if (token && getToken() && getToken() !== token) return;
   clearSession();
   if (sessionExpiredHandler) sessionExpiredHandler(body);
 }
@@ -283,8 +294,8 @@ export async function apiRequest(endpoint, options = {}, onUnauthorized) {
       // without a recognized code, like a bad login attempt) is a
       // different situation and shouldn't pop the blocking screen.
       if (token && body && SESSION_TERMINATION_CODES.has(body.code)) {
-        triggerSessionExpired(body);
-      } else {
+        triggerSessionExpired(body, { token });
+      } else if (!token || getToken() === token) {
         clearSession();
       }
       if (onUnauthorized) onUnauthorized();

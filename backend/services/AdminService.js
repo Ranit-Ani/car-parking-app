@@ -34,7 +34,7 @@ function parseLatLng(latitude, longitude) {
 // access in place).
 function invalidateUserSession(userId, code, message) {
   try {
-    getIO().to(`user:${userId}`).emit('sessionInvalidated', { code, message });
+    getIO().to(`user:${userId}`).emit('sessionInvalidated', { code, message, userId: String(userId) });
   } catch {
     // getIO() throws if socket.io hasn't been initialized (e.g. some test
     // contexts) — the REST-layer check is the real guarantee, so a missing
